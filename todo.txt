@@ -1,0 +1,9 @@
+- Change the QR code color in the QR for testing to black
+- Change the icon near QR for testing to QR icon
+- Change the color of the + icon in Create QR to white color
+- change the background of the notification received after receiving an order to white color, border with orange color
+- The data inside the grid in inventory grid is not displaying correctly so fix it as before
+- The QR image in the inventory grid is shown as blurred, show it clearly
+- The search box row and the create QR button row is overriden by the form, they both are merging, fix it
+- The notification is overriden by create QR button row, fix it
+- While creating QR don't insert the data material, type, Rack

@@ -49,20 +49,44 @@
 
 <body class="flex flex-col">
     <main class="main-container mx-auto w-full">
-        <div class="flex justify-between items-center mb-10">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
             <div>
                 <h1 class="text-3xl font-bold text-slate-800">QR Identification Gallery</h1>
                 <p class="text-slate-500">View and print QR codes for all yarn rolls</p>
             </div>
-            <button onclick="window.print()"
-                class="bg-orange-600 hover:bg-orange-500 text-white px-6 py-2 rounded-lg font-bold flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
-                    </path>
-                </svg>
-                Print All
-            </button>
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="relative">
+                    <input type="text" id="gallerySearch" placeholder="Search ID..."
+                        class="pl-10 pr-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none w-48">
+                    <svg class="w-5 h-5 absolute left-3 top-2.5 text-slate-400" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+                <select id="binFilter"
+                    class="px-4 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-orange-500">
+                    <option value="">All Bins</option>
+                    <option value="1">Bin 1</option>
+                    <option value="2">Bin 2</option>
+                    <option value="3">Bin 3</option>
+                    <option value="4">Bin 4</option>
+                    <option value="5">Bin 5</option>
+                    <option value="6">Bin 6</option>
+                    <option value="7">Bin 7</option>
+                    <option value="8">Bin 8</option>
+                    <option value="9">Bin 9</option>
+                </select>
+                <button onclick="window.print()"
+                    class="bg-orange-600 hover:bg-orange-500 text-white px-6 py-2 rounded-xl font-bold flex items-center transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                        </path>
+                    </svg>
+                    Print
+                </button>
+            </div>
         </div>
 
         <div id="galleryGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -77,11 +101,13 @@
     </main>
 
     <script>
+        let allRolls = [];
+
         async function loadGallery() {
             try {
                 const response = await fetch('/api/rolls');
-                const rolls = await response.json();
-                renderGallery(rolls);
+                allRolls = await response.json();
+                renderGallery(allRolls);
             } catch (err) {
                 console.error(err);
             }
@@ -90,7 +116,7 @@
         function renderGallery(rolls) {
             const container = document.getElementById('galleryGrid');
             if (rolls.length === 0) {
-                container.innerHTML = '<div class="col-span-full text-center py-20 text-gray-500">No rolls found in inventory.</div>';
+                container.innerHTML = '<div class="col-span-full text-center py-20 text-gray-500">No matching rolls found.</div>';
                 return;
             }
 
@@ -98,11 +124,31 @@
                 <div class="qr-card">
                     <img src="/qrcodes/${roll.id}.png" alt="QR ${roll.id}" class="qr-img" onerror="this.src='https://via.placeholder.com/400?text=No+QR+Generated'">
                     <h3 class="font-bold text-slate-800 mb-1">${roll.id}</h3>
-                    <p class="text-xs text-slate-500 mb-3">${roll.yarn_type}</p>
-                    <a href="/details.html?id=${roll.id}" class="text-orange-600 text-xs hover:underline font-semibold uppercase tracking-wider">View Details</a>
+                    <div class="space-y-0.5 mb-2">
+                        <p class="text-xs text-slate-500">${roll.yarn_type}</p>
+                        <p class="text-[10px] font-bold text-orange-600">BIN: ${roll.bin || '1'} | RACK: ${roll.rack_id || 'N/A'}</p>
+                    </div>
+                    <a href="/details.html?id=${roll.id}" class="text-orange-600 text-[10px] hover:underline font-bold uppercase tracking-wider">View Details</a>
                 </div>
             `).join('');
         }
+
+        function applyFilters() {
+            const search = document.getElementById('gallerySearch').value.toLowerCase();
+            const bin = document.getElementById('binFilter').value;
+
+            const filtered = allRolls.filter(roll => {
+                const matchSearch = roll.id.toLowerCase().includes(search) ||
+                    (roll.yarn_type || '').toLowerCase().includes(search);
+                const matchBin = !bin || String(roll.bin) === bin;
+                return matchSearch && matchBin;
+            });
+
+            renderGallery(filtered);
+        }
+
+        document.getElementById('gallerySearch').addEventListener('input', applyFilters);
+        document.getElementById('binFilter').addEventListener('change', applyFilters);
 
         window.onload = loadGallery;
     </script>

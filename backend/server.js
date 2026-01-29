@@ -140,8 +140,9 @@ app.post('/api/rolls', async (req, res) => {
     if (!fs.existsSync(qrDir)) fs.mkdirSync(qrDir, { recursive: true });
     if (!fs.existsSync(rootQrDir)) fs.mkdirSync(rootQrDir, { recursive: true });
 
-    // We encode the RAW JSON data directly into the QR code so it doesn't open a browser
-    const qrData = JSON.stringify(rollData);
+    // We encode a subset of data into the QR code as requested (excluding Material/Type/Rack)
+    const { yarn_type: _y, rack_id: _r, ...qrDataObj } = rollData;
+    const qrData = JSON.stringify(qrDataObj);
 
     const qrPath = path.join(qrDir, `${rollId}.png`);
     const rootQrPath = path.join(rootQrDir, `${rollId}.png`);
@@ -434,14 +435,15 @@ app.post('/api/test-rolls', async (req, res) => {
     const qrDir = path.join(frontendPath, 'qrcodes');
     if (!fs.existsSync(qrDir)) fs.mkdirSync(qrDir, { recursive: true });
 
+    const { yarn_type: _y, rack_id: _r, ...qrDataObj } = rollData;
     const qrData = JSON.stringify({
-      ...rollData,
+      ...qrDataObj,
       isTest: true
     });
 
     const qrPath = path.join(qrDir, `${rollId}.png`);
     await QRCode.toFile(qrPath, qrData, {
-      color: { dark: '#f97316', light: '#ffffff' }, // Orange QR for testing
+      color: { dark: '#000000', light: '#ffffff' }, // Black QR for testing
       width: 400
     });
 
