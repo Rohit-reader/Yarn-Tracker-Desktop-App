@@ -114,7 +114,7 @@
       /* Aggressive Sharp QR Rendering */
       .qr-icon, .roll-qr-img, img[src*="qrcodes"], .qr-box img, .roll-qr-box img, canvas { 
         opacity: 1 !important; 
-        filter: none !important; 
+        filter: contrast(115%) !important; 
         image-rendering: -moz-crisp-edges !important;
         image-rendering: -webkit-optimize-contrast !important;
         image-rendering: pixelated !important; 
@@ -122,6 +122,10 @@
         border: 1px solid #e2e8f0 !important;
         padding: 2px !important;
         background: white !important;
+        z-index: 50 !important;
+        mask: none !important;
+        -webkit-mask: none !important;
+        mix-blend-mode: normal !important;
       }
 
       /* UI Polish: White + Icon */
@@ -188,9 +192,7 @@
         if (mainContent) {
           const filterBar = document.createElement('div');
           filterBar.id = 'injected-filters';
-          filterBar.style.cssText = 'display: flex; gap: 1rem; padding: 1rem 2rem; background: #fff; border-bottom: 1px solid
-          #e1e8f0; align - items: center; z - index: 50; position: relative; margin - top: 1rem; box - shadow: 0 4px 6px - 1px
-          rgba(0, 0, 0, 0.05); ';
+          filterBar.style.cssText = 'display: flex; gap: 1rem; padding: 1rem 2rem; background: #fff; border-bottom: 1px solid #e1e8f0; align-items: center; z-index: 50; position: relative; margin-top: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);';
           filterBar.innerHTML = `
   <div style="flex: 1; position: relative;"><input type="text" id="inventory-search"
       placeholder="Search by ID, Lot, Supplier..."
