@@ -7,3 +7,5 @@
 - The search box row and the create QR button row is overriden by the form, they both are merging, fix it
 - The notification is overriden by create QR button row, fix it
 - While creating QR don't insert the data material, type, Rack
+- While hovering to the notification sometimes it is like white color but nothing should happen while hovering
+- Move the notifcation icon in the Admin Approval panel near the refresh icon

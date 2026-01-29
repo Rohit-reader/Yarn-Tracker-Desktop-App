@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "id": "TEST - 1769702521212",
+    "last_state_change": "2026-01-29T16:02:01.212Z",
+    "lot_number": "TEST-LOT",
+    "order_id": "TEST-ORD",
+    "production_date": "2026-01-29T16:02:01.212Z",
+    "quality_grade": "A",
+    "rack_id": "2",
+    "state": "TESTING",
+    "supplier_name": "ABC Textiles",
+    "weight": 25,
+    "yarn_count": "30s",
+    "yarn_type": "Cotton 30s",
+    "bin": "1"
+  }
+]

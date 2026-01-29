@@ -50,6 +50,7 @@
             color: #f87171;
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="stylesheet" href="/navbar.css">
     <script src="/navbar.js"></script>
 </head>
@@ -140,8 +141,10 @@
                                 Code
                             </h3>
                             <div
-                                class="flex justify-center p-4 bg-white border border-slate-200 rounded-xl w-32 mx-auto">
-                                <img id="qrPreview" src="" alt="QR Code" class="w-full">
+                                class="flex justify-center p-4 bg-white border border-slate-200 rounded-xl w-32 h-32 mx-auto relative overflow-hidden">
+                                <img id="qrPreview" src="" alt="QR Code" class="w-full h-full object-contain">
+                                <div id="qrFallback"
+                                    class="absolute inset-0 flex items-center justify-center bg-white hidden"></div>
                             </div>
                         </div>
                     </div>
@@ -193,7 +196,35 @@
             document.getElementById('orderRef').innerText = roll.order_id;
             document.getElementById('prodDate').innerText = new Date(roll.production_date).toLocaleString();
             document.getElementById('lastChange').innerText = new Date(roll.last_state_change).toLocaleString();
-            document.getElementById('qrPreview').src = `/qrcodes/${roll.id}.png`;
+
+            // Image handling with fallback
+            const qrImg = document.getElementById('qrPreview');
+            const qrFallback = document.getElementById('qrFallback');
+
+            // Reset state
+            qrImg.classList.remove('hidden');
+            qrFallback.classList.add('hidden');
+            qrFallback.innerHTML = '';
+
+            qrImg.onerror = function () {
+                console.log('QR Image not found on server, generating client-side fallback...');
+                qrImg.classList.add('hidden');
+                qrFallback.classList.remove('hidden');
+
+                // Exclude fields not needed in QR per server logic
+                const { quality_grade, material, ...qrDataObj } = roll;
+
+                new QRCode(qrFallback, {
+                    text: JSON.stringify(qrDataObj),
+                    width: 100,
+                    height: 100,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            };
+
+            qrImg.src = `/qrcodes/${roll.id}.png`;
 
             // Status Badge
             const badge = document.getElementById('statusBadge');

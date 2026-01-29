@@ -55,10 +55,144 @@
             margin-bottom: 8px;
             display: inline-block;
         }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .modal-close {
+            background: #f1f5f9;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #e2e8f0;
+            transform: rotate(90deg);
+        }
+
+        .data-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .data-item {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 12px;
+            border-left: 4px solid #f97316;
+        }
+
+        .data-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .data-value {
+            font-size: 1rem;
+            color: #1e293b;
+            font-weight: 500;
+        }
+
+        .btn-view-details {
+            width: 100%;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 0.5rem;
+        }
+
+        .btn-view-details:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+        }
     </style>
 </head>
 
 <body class="flex flex-col">
+    <!-- Modal for QR Details -->
+    <div id="qrModal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 class="text-2xl font-bold text-slate-800">QR Code Details</h2>
+                <button class="modal-close" onclick="closeModal()">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <div id="modalBody" class="data-grid">
+                <!-- QR data will be loaded here -->
+            </div>
+        </div>
+    </div>
+
     <main class="main-container mx-auto w-full">
         <div class="flex justify-between items-center mb-10">
             <div>
@@ -138,9 +272,76 @@
                         <p class="text-xs font-bold text-blue-600">Bin: ${roll.bin || 'N/A'}</p>
                     </div>
                     <div class="text-[10px] text-slate-400 font-mono">${new Date(roll.production_date).toLocaleTimeString()}</div>
+                    <button onclick='viewDetails(${JSON.stringify(roll).replace(/'/g, "&#39;")})' class="btn-view-details">
+                        View Details
+                    </button>
                 </div>
             `).join('');
         }
+
+        function viewDetails(rollData) {
+            const modal = document.getElementById('qrModal');
+            const modalBody = document.getElementById('modalBody');
+
+            // Format the data for display
+            const fieldLabels = {
+                id: 'QR Code ID',
+                yarn_type: 'Yarn Type',
+                yarn_count: 'Yarn Count',
+                weight: 'Weight (kg)',
+                lot_number: 'Lot Number',
+                order_id: 'Order ID',
+                supplier_name: 'Supplier Name',
+                quality_grade: 'Quality Grade',
+                state: 'State',
+                rack_id: 'Rack ID',
+                bin: 'Bin',
+                production_date: 'Production Date',
+                last_state_change: 'Last State Change'
+            };
+
+            modalBody.innerHTML = Object.entries(rollData)
+                .filter(([key]) => fieldLabels[key]) // Only show known fields
+                .map(([key, value]) => {
+                    let displayValue = value;
+
+                    // Format dates
+                    if (key === 'production_date' || key === 'last_state_change') {
+                        displayValue = new Date(value).toLocaleString();
+                    }
+
+                    // Format weight
+                    if (key === 'weight') {
+                        displayValue = `${value} kg`;
+                    }
+
+                    return `
+                        <div class="data-item">
+                            <div class="data-label">${fieldLabels[key]}</div>
+                            <div class="data-value">${displayValue}</div>
+                        </div>
+                    `;
+                }).join('');
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(event) {
+            // Only close if clicking overlay or close button
+            if (!event || event.target.id === 'qrModal' || event.currentTarget.classList.contains('modal-close')) {
+                const modal = document.getElementById('qrModal');
+                modal.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
 
         window.onload = loadTestGallery;
     </script>

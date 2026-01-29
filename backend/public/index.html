@@ -9,6 +9,7 @@
   <script type="module" crossorigin src="/assets/index-BdKjuw1s.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-7jtnhnhq.css">
   <link rel="stylesheet" href="/navbar.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="/navbar.js"></script>
   <script>
     // Intercept fetch calls to redirect QR creation to testing endpoint
@@ -25,9 +26,90 @@
     // UI Style Overrides
     const style = document.createElement('style');
     style.innerHTML = `
-      .header { position: relative !important; background: white !important; backdrop-filter: none !important; border-bottom: none !important; padding: 2rem !important; margin-bottom: 0 !important; z-index: 50 !important; }
+      /* ============================================
+         PROFESSIONAL MODAL SYSTEM - Z-INDEX HIERARCHY
+         ============================================ */
+      
+      /* Layer 1: Background UI (z-index: 100 and below) */
+      .header { position: relative !important; background: white !important; backdrop-filter: none !important; border-bottom: none !important; padding: 2rem !important; margin-bottom: 0 !important; z-index: 100 !important; }
       .header-content { justify-content: flex-end !important; gap: 2rem; }
       .header-content .logo { display: none !important; }
+      
+      /* Layer 1: Background UI (very low z-index) */
+      .header { position: relative !important; background: white !important; backdrop-filter: none !important; border-bottom: none !important; padding: 2rem !important; margin-bottom: 0 !important; z-index: 1 !important; }
+      .header-content { justify-content: flex-end !important; gap: 2rem; }
+      .header-content .logo { display: none !important; }
+      
+      #app-navbar, nav { z-index: 1 !important; position: relative !important; }
+      #injected-filters { z-index: 1 !important; position: relative !important; }
+      
+      /* Layer 2: Modal Overlay (MAXIMUM z-index) */
+      .ui-overlay,
+      .modal-overlay {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0, 0, 0, 0.55) !important;
+        z-index: 9999999 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+      
+      /* Layer 3: Modal Container (ABOVE OVERLAY) */
+      .ui-modal,
+      .modal-content {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        z-index: 10000000 !important;
+        background: #ffffff !important;
+        border-radius: 14px !important;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.35) !important;
+        max-height: 85vh !important;
+        overflow-y: auto !important;
+        margin: 0 !important;
+        scrollbar-width: thin;
+        scrollbar-color: var(--accent-blue) transparent;
+        pointer-events: auto !important;
+      }
+      
+      /* Ensure all modal children are interactive */
+      .modal-content *,
+      .ui-modal * {
+        pointer-events: auto !important;
+      }
+      
+      /* Layer 4: Notification Toasts (ABOVE MODAL) */
+      .ui-toast,
+      #toastContainer,
+      .toast-container,
+      .print-preview-toast {
+        position: fixed !important;
+        top: 24px !important;
+        right: 24px !important;
+        z-index: 10000001 !important;
+        pointer-events: auto !important;
+      }
+      
+      /* Modal Open State - Only prevent body scroll */
+      body.modal-open {
+        overflow: hidden !important;
+      }
+      
+      /* Notification Style Fixes */
+      div[class*="toast"], .toast, #toastContainer > div {
+        background: white !important; color: #1e293b !important; border: 2px solid #f97316 !important;
+        box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15) !important; border-radius: 8px !important;
+        padding: 12px 24px !important; display: flex !important; align-items: center !important;
+      }
+      div[class*="toast"]:hover, .toast:hover, #toastContainer > div:hover { background: white !important; border-color: #f97316 !important; }
+      
+      /* ============================================
+         QR RENDERING & GRID STYLES
+         ============================================ */
       
       /* Aggressive Sharp QR Rendering */
       .qr-icon, .roll-qr-img, img[src*="qrcodes"], .qr-box img, .roll-qr-box img, canvas { 
@@ -41,23 +123,6 @@
         padding: 2px !important;
         background: white !important;
       }
-
-      .modal-overlay { z-index: 999999 !important; display: flex !important; align-items: center !important; justify-content: center !important; position: fixed !important; inset: 0 !important; }
-      .modal-content { max-height: 85vh !important; overflow-y: auto !important; margin: 2rem !important; scrollbar-width: thin; scrollbar-color: var(--accent-blue) transparent; z-index: 1000000 !important; position: relative !important; }
-      #toastContainer, .toast-container, .print-preview-toast { top: 20px !important; z-index: 1000001 !important; position: fixed !important; }
-      
-      /* Ensure navbar and filter bar don't block modals */
-      #app-navbar, nav { z-index: 40 !important; }
-      #injected-filters { z-index: 39 !important; }
-      .header { z-index: 38 !important; }
-      
-      /* Notification Style Fixes */
-      div[class*="toast"], .toast, #toastContainer > div {
-        background: white !important; color: #1e293b !important; border: 2px solid #f97316 !important;
-        box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15) !important; border-radius: 8px !important;
-        padding: 12px 24px !important; display: flex !important; align-items: center !important;
-      }
-      div[class*="toast"]:hover, .toast:hover, #toastContainer > div:hover { background: white !important; border-color: #f97316 !important; }
 
       /* UI Polish: White + Icon */
       button svg, .btn svg { color: white !important; }
@@ -79,6 +144,8 @@
       .detail-value, .info-value { color: #334155 !important; font-weight: 600 !important; text-align: right !important; }
     `;
     document.head.appendChild(style);
+
+    // QR script loaded statically
 
     window.rollBinMap = {};
 
@@ -105,7 +172,8 @@
         const bin = window.rollBinMap[idStr] || card.getAttribute('data-bin') || '';
 
         const binMatch = !binF || bin === binF;
-        const searchMatch = !search || idLower.includes(search) || typeStr.toLowerCase().includes(search) || rackStr.includes(search);
+        const searchMatch = !search || idLower.includes(search) || typeStr.toLowerCase().includes(search) ||
+          rackStr.includes(search);
         const typeMatch = !typeF || typeStr.includes(typeF);
         const rackMatch = !rackF || rackStr.includes(rackF);
 
@@ -120,13 +188,38 @@
         if (mainContent) {
           const filterBar = document.createElement('div');
           filterBar.id = 'injected-filters';
-          filterBar.style.cssText = 'display: flex; gap: 1rem; padding: 1rem 2rem; background: #fff; border-bottom: 1px solid #e1e8f0; align-items: center; z-index: 40; position: sticky; top: -1px; margin-top: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);';
+          filterBar.style.cssText = 'display: flex; gap: 1rem; padding: 1rem 2rem; background: #fff; border-bottom: 1px solid
+          #e1e8f0; align - items: center; z - index: 50; position: relative; margin - top: 1rem; box - shadow: 0 4px 6px - 1px
+          rgba(0, 0, 0, 0.05); ';
           filterBar.innerHTML = `
-             <div style="flex: 1; position: relative;"><input type="text" id="inventory-search" placeholder="Search by ID, Lot, Supplier..." style="width: 100%; padding: 0.5rem 1rem 0.5rem 2.5rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white;"><svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1.25rem; height: 1.25rem; color: #94a3b8;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></div>
-             <select id="filter-bin" style="padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white;"><option value="">All Bins</option><option value="1">Bin 1</option><option value="2">Bin 2</option><option value="3">Bin 3</option><option value="4">Bin 4</option><option value="5">Bin 5</option><option value="6">Bin 6</option><option value="7">Bin 7</option><option value="8">Bin 8</option><option value="9">Bin 9</option></select>
-             <select id="filter-type" style="padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white; max-width: 150px;"><option value="">All Types</option></select>
-             <input type="text" id="filter-rack" placeholder="Rack" style="width: 80px; padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white;">
-           `;
+  <div style="flex: 1; position: relative;"><input type="text" id="inventory-search"
+      placeholder="Search by ID, Lot, Supplier..."
+      style="width: 100%; padding: 0.5rem 1rem 0.5rem 2.5rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white;"><svg
+      style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1.25rem; height: 1.25rem; color: #94a3b8;"
+      fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+    </svg></div>
+  <select id="filter-bin"
+    style="padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white;">
+    <option value="">All Bins</option>
+    <option value="1">Bin 1</option>
+    <option value="2">Bin 2</option>
+    <option value="3">Bin 3</option>
+    <option value="4">Bin 4</option>
+    <option value="5">Bin 5</option>
+    <option value="6">Bin 6</option>
+    <option value="7">Bin 7</option>
+    <option value="8">Bin 8</option>
+    <option value="9">Bin 9</option>
+  </select>
+  <select id="filter-type"
+    style="padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white; max-width: 150px;">
+    <option value="">All Types</option>
+  </select>
+  <input type="text" id="filter-rack" placeholder="Rack"
+    style="width: 80px; padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white;">
+  `;
           mainContent.after(filterBar);
           filterBar.querySelectorAll('input, select').forEach(el => el.addEventListener('input', applyDOMFilters));
         }
@@ -141,14 +234,54 @@
 
           // Inject QR Image into header if missing
           const header = card.querySelector('.roll-header');
-          if (header && !card.querySelector('.roll-qr-img')) {
+          if (header && !card.querySelector('.roll-qr-img') && !card.querySelector('.roll-qr-fallback')) {
+            const qrContainer = document.createElement('div');
+            qrContainer.className = 'roll-qr-img';
+            qrContainer.style.width = '64px';
+            qrContainer.style.height = '64px';
+            qrContainer.style.overflow = 'hidden';
+            qrContainer.style.position = 'relative';
+
             const qrImg = document.createElement('img');
-            qrImg.src = `/qrcodes/${idStr}.png`;
-            qrImg.className = 'roll-qr-img';
+            qrImg.src = `/qrcodes/${idStr}.png?v=${Date.now()}`;
+            qrImg.style.width = '100%';
+            qrImg.style.height = '100%';
+            qrImg.style.objectFit = 'contain';
             qrImg.alt = `QR ${idStr}`;
-            // If QR doesn't exist yet, we can hide it or show a placeholder
-            qrImg.onerror = function () { this.style.display = 'none'; };
-            header.appendChild(qrImg);
+
+            // If QR doesn't exist yet, generate it
+            qrImg.onerror = function () {
+              this.style.display = 'none';
+
+              // Create fallback container
+              const fallback = document.createElement('div');
+              fallback.className = 'roll-qr-fallback';
+              fallback.style.width = '100%';
+              fallback.style.height = '100%';
+              fallback.style.backgroundColor = 'white';
+              qrContainer.appendChild(fallback);
+
+              // Construct basic payload
+              let payload = { id: idStr, bin: window.rollBinMap[idStr] || '1' };
+              if (window.allRolls) {
+                const r = window.allRolls.find(x => x.id === idStr);
+                if (r) {
+                  const { quality_grade, material, ...rest } = r;
+                  payload = rest;
+                }
+              }
+
+              new QRCode(fallback, {
+                text: JSON.stringify(payload),
+                width: 64,
+                height: 64,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+              });
+            };
+            qrContainer.appendChild(qrImg);
+            header.appendChild(qrContainer);
           }
 
           const binNum = window.rollBinMap[idStr] || '';
@@ -183,7 +316,8 @@
             if (rackLabel) {
               const binGroup = document.createElement('div');
               binGroup.className = 'form-group'; binGroup.id = 'injected-bin-group';
-              binGroup.innerHTML = `<label>Bin (1-9)</label><input type="number" id="in-bin" min="1" max="9" value="1" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1;">`;
+              binGroup.innerHTML = `<label>Bin (1-9)</label><input type="number" id="in-bin" min="1" max="9" value="1"
+    style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1;">`;
               rackLabel.parentElement.parentElement.appendChild(binGroup);
             }
           }
@@ -202,13 +336,18 @@
         const typeSelect = document.getElementById('filter-type');
         if (typeSelect && typeSelect.options.length === 1) {
           const types = [...new Set(rolls.map(r => r.yarn_type))].sort();
-          types.forEach(t => { const opt = document.createElement('option'); opt.value = t; opt.textContent = t; typeSelect.appendChild(opt); });
+          types.forEach(t => {
+            const opt = document.createElement('option'); opt.value = t; opt.textContent = t;
+            typeSelect.appendChild(opt);
+          });
         }
         // Map ID to Bin globally
+        window.allRolls = rolls;
         rolls.forEach(r => { if (r.id) window.rollBinMap[r.id] = r.bin || '1'; });
         return new Response(JSON.stringify(rolls), { status: response.status, headers: response.headers });
       }
-      if (typeof url === 'string' && (url.endsWith('/api/rolls') || url.endsWith('/api/test-rolls')) && options && options.method === 'POST') {
+      if (typeof url === 'string' && (url.endsWith('/api/rolls') || url.endsWith('/api/test-rolls')) && options &&
+        options.method === 'POST') {
         try {
           const body = JSON.parse(options.body);
           const binInput = document.getElementById('in-bin');
@@ -218,6 +357,81 @@
       }
       return enhancedOriginalFetch.apply(this, arguments);
     };
+
+    // ============================================
+    // PROFESSIONAL MODAL CONTROL SYSTEM
+    // ============================================
+
+    // Modal state management functions
+    window.openModal = function () {
+      document.body.classList.add("modal-open");
+      const overlay = document.querySelector(".ui-overlay, .modal-overlay");
+      const modal = document.querySelector(".ui-modal, .modal-content");
+      if (overlay) overlay.style.display = "flex";
+      if (modal) modal.style.display = "block";
+    };
+
+    window.closeModal = function () {
+      document.body.classList.remove("modal-open");
+      const overlay = document.querySelector(".ui-overlay, .modal-overlay");
+      const modal = document.querySelector(".ui-modal, .modal-content");
+      if (overlay) overlay.style.display = "none";
+      if (modal) modal.style.display = "none";
+    };
+
+    // Auto-detect modal visibility changes and manage body class + force styles
+    const modalObserver = new MutationObserver(() => {
+      const overlay = document.querySelector(".modal-overlay");
+      const modal = document.querySelector(".modal-content");
+
+      // Force extreme z-index via inline styles to override React
+      if (overlay) {
+        overlay.style.zIndex = "9999999";
+        overlay.style.position = "fixed";
+        overlay.style.inset = "0";
+        overlay.style.display = overlay.style.display || "flex";
+        overlay.style.pointerEvents = "auto";
+      }
+
+      if (modal) {
+        modal.style.zIndex = "10000000";
+        modal.style.position = "fixed";
+        modal.style.top = "50%";
+        modal.style.left = "50%";
+        modal.style.transform = "translate(-50%, -50%)";
+        modal.style.pointerEvents = "auto";
+
+        // Ensure all inputs/buttons inside modal are interactive
+        modal.querySelectorAll('input, button, select, textarea, a').forEach(el => {
+          el.style.pointerEvents = "auto";
+        });
+      }
+
+      if (overlay && modal) {
+        const overlayVisible = window.getComputedStyle(overlay).display !== 'none';
+        const modalVisible = window.getComputedStyle(modal).display !== 'none';
+
+        if (overlayVisible || modalVisible) {
+          if (!document.body.classList.contains("modal-open")) {
+            document.body.classList.add("modal-open");
+          }
+        } else {
+          if (document.body.classList.contains("modal-open")) {
+            document.body.classList.remove("modal-open");
+          }
+        }
+      }
+    });
+
+    // Start observing when DOM is ready
+    window.addEventListener('DOMContentLoaded', () => {
+      modalObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style', 'class']
+      });
+    });
   </script>
 </head>
 

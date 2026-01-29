@@ -67,6 +67,35 @@ app.get('/api/rolls', async (req, res) => {
     }));
 
     console.log(`Total rolls: ${rolls.length}`);
+
+    // Self-healing: Background check for missing QR images
+    const qrDir = path.join(frontendPath, 'qrcodes');
+    const rootQrDir = 'e:/QR/QR_CODES';
+    if (!fs.existsSync(qrDir)) fs.mkdirSync(qrDir, { recursive: true });
+
+    rolls.forEach(async (roll) => {
+      try {
+        if (!roll.id) return;
+        const qrPath = path.join(qrDir, `${roll.id}.png`);
+
+        if (!fs.existsSync(qrPath)) {
+          console.log(`[Self-Healing] Generating missing QR for ${roll.id}`);
+          const { quality_grade: _q, material: _m, ...qrDataObj } = roll;
+          await QRCode.toFile(qrPath, JSON.stringify(qrDataObj), {
+            color: { dark: '#000000', light: '#ffffff' },
+            width: 400
+          });
+          // Sync to external QR folder
+          if (fs.existsSync(rootQrDir)) {
+            const rootQrPath = path.join(rootQrDir, `${roll.id}.png`);
+            fs.copyFileSync(qrPath, rootQrPath);
+          }
+        }
+      } catch (err) {
+        console.error(`[Self-Healing] Failed to generate QR for ${roll.id}:`, err.message);
+      }
+    });
+
     res.json(rolls);
   } catch (error) {
     console.error('Error fetching rolls:', error);
@@ -140,8 +169,8 @@ app.post('/api/rolls', async (req, res) => {
     if (!fs.existsSync(qrDir)) fs.mkdirSync(qrDir, { recursive: true });
     if (!fs.existsSync(rootQrDir)) fs.mkdirSync(rootQrDir, { recursive: true });
 
-    // We encode a subset of data into the QR code as requested (excluding Material/Type/Rack/Count/Grade)
-    const { yarn_type: _y, yarn_count: _yc, quality_grade: _q, rack_id: _r, material: _m, ...qrDataObj } = rollData;
+    // We encode a subset of data into the QR code as requested (excluding Material/Grade)
+    const { quality_grade: _q, material: _m, ...qrDataObj } = rollData;
     const qrData = JSON.stringify(qrDataObj);
 
     const qrPath = path.join(qrDir, `${rollId}.png`);
@@ -435,7 +464,7 @@ app.post('/api/test-rolls', async (req, res) => {
     const qrDir = path.join(frontendPath, 'qrcodes');
     if (!fs.existsSync(qrDir)) fs.mkdirSync(qrDir, { recursive: true });
 
-    const { yarn_type: _y, yarn_count: _yc, quality_grade: _q, rack_id: _r, material: _m, ...qrDataObj } = rollData;
+    const { quality_grade: _q, material: _m, ...qrDataObj } = rollData;
     const qrData = JSON.stringify({
       ...qrDataObj,
       isTest: true
@@ -510,6 +539,60 @@ app.delete('/api/test-rolls', async (req, res) => {
   } catch (error) {
     console.error('Error clearing test rolls:', error);
     res.status(500).json({ error: 'Failed to clear test rolls' });
+  }
+});
+
+// Admin Route: Regenerate Missing QR Codes
+app.post('/api/admin/regenerate-qrs', async (req, res) => {
+  try {
+    console.log('\n🔄 POST /api/admin/regenerate-qrs - Starting bulk regeneration');
+
+    // Get all rolls
+    const q = query(rollsCollection);
+    const querySnapshot = await getDocs(q);
+    const rolls = querySnapshot.docs.map(doc => doc.data());
+
+    console.log(`Found ${rolls.length} rolls in database.`);
+
+    const qrDir = path.join(frontendPath, 'qrcodes');
+    const rootQrDir = 'e:/QR/QR_CODES';
+
+    if (!fs.existsSync(qrDir)) fs.mkdirSync(qrDir, { recursive: true });
+    if (!fs.existsSync(rootQrDir)) fs.mkdirSync(rootQrDir, { recursive: true });
+
+    let generatedCount = 0;
+
+    for (const roll of rolls) {
+      if (!roll.id) continue;
+
+      const qrPath = path.join(qrDir, `${roll.id}.png`);
+      const rootQrPath = path.join(rootQrDir, `${roll.id}.png`);
+
+      // Check if file exists (checking both locations to be safe, but primarily the web dir)
+      if (!fs.existsSync(qrPath)) {
+        console.log(`   Generating missing QR for: ${roll.id}`);
+
+        // Exclude specific fields
+        const { quality_grade: _q, material: _m, ...qrDataObj } = roll;
+        const qrData = JSON.stringify(qrDataObj);
+
+        await QRCode.toFile(qrPath, qrData, {
+          color: { dark: '#000000', light: '#ffffff' },
+          width: 400
+        });
+
+        // Also copy to root dir
+        fs.copyFileSync(qrPath, rootQrPath);
+        generatedCount++;
+      }
+    }
+
+    console.log(`\n✅ Regeneration complete. Generated ${generatedCount} new QR images.`);
+    res.json({ success: true, totalScanned: rolls.length, generated: generatedCount });
+
+  } catch (error) {
+    console.error('Error regenerating QRs:', error);
+    res.status(500).json({ error: 'Failed to regenerate QRs' });
   }
 });
 
