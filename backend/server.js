@@ -140,8 +140,8 @@ app.post('/api/rolls', async (req, res) => {
     if (!fs.existsSync(qrDir)) fs.mkdirSync(qrDir, { recursive: true });
     if (!fs.existsSync(rootQrDir)) fs.mkdirSync(rootQrDir, { recursive: true });
 
-    // We encode a subset of data into the QR code as requested (excluding Material/Type/Rack)
-    const { yarn_type: _y, rack_id: _r, ...qrDataObj } = rollData;
+    // We encode a subset of data into the QR code as requested (excluding Material/Type/Rack/Count/Grade)
+    const { yarn_type: _y, yarn_count: _yc, quality_grade: _q, rack_id: _r, material: _m, ...qrDataObj } = rollData;
     const qrData = JSON.stringify(qrDataObj);
 
     const qrPath = path.join(qrDir, `${rollId}.png`);
@@ -435,7 +435,7 @@ app.post('/api/test-rolls', async (req, res) => {
     const qrDir = path.join(frontendPath, 'qrcodes');
     if (!fs.existsSync(qrDir)) fs.mkdirSync(qrDir, { recursive: true });
 
-    const { yarn_type: _y, rack_id: _r, ...qrDataObj } = rollData;
+    const { yarn_type: _y, yarn_count: _yc, quality_grade: _q, rack_id: _r, material: _m, ...qrDataObj } = rollData;
     const qrData = JSON.stringify({
       ...qrDataObj,
       isTest: true
