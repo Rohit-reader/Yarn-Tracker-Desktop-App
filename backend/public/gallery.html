@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Gallery | Yarn Roll Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/navbar.css">
+    <script src="/navbar.js"></script>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-color);
+            color: var(--text-primary);
+        }
+
+        .main-container {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .qr-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .qr-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-5px);
+        }
+
+        .qr-img {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+
+<body class="flex flex-col">
+    <main class="main-container mx-auto w-full">
+        <div class="flex justify-between items-center mb-10">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-800">QR Identification Gallery</h1>
+                <p class="text-slate-500">View and print QR codes for all yarn rolls</p>
+            </div>
+            <button onclick="window.print()"
+                class="bg-orange-600 hover:bg-orange-500 text-white px-6 py-2 rounded-lg font-bold flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                    </path>
+                </svg>
+                Print All
+            </button>
+        </div>
+
+        <div id="galleryGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- QR Cards will be loaded here -->
+            <div class="col-span-full text-center py-20 opacity-50">
+                <div
+                    class="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4">
+                </div>
+                Loading generated QR codes...
+            </div>
+        </div>
+    </main>
+
+    <script>
+        async function loadGallery() {
+            try {
+                const response = await fetch('/api/rolls');
+                const rolls = await response.json();
+                renderGallery(rolls);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function renderGallery(rolls) {
+            const container = document.getElementById('galleryGrid');
+            if (rolls.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center py-20 text-gray-500">No rolls found in inventory.</div>';
+                return;
+            }
+
+            container.innerHTML = rolls.map(roll => `
+                <div class="qr-card">
+                    <img src="/qrcodes/${roll.id}.png" alt="QR ${roll.id}" class="qr-img" onerror="this.src='https://via.placeholder.com/400?text=No+QR+Generated'">
+                    <h3 class="font-bold text-slate-800 mb-1">${roll.id}</h3>
+                    <p class="text-xs text-slate-500 mb-3">${roll.yarn_type}</p>
+                    <a href="/details.html?id=${roll.id}" class="text-orange-600 text-xs hover:underline font-semibold uppercase tracking-wider">View Details</a>
+                </div>
+            `).join('');
+        }
+
+        window.onload = loadGallery;
+    </script>
+</body>
+
+</html>

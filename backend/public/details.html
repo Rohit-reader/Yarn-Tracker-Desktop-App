@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roll Details | Yarn Roll Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .status-in-stock {
+            background: rgba(74, 222, 128, 0.1);
+            color: #4ade80;
+        }
+
+        .status-reserved {
+            background: rgba(251, 191, 36, 0.1);
+            color: #fbbf24;
+        }
+
+        .status-picked {
+            background: rgba(96, 165, 250, 0.1);
+            color: #60a5fa;
+        }
+
+        .status-dispatched {
+            background: rgba(248, 113, 113, 0.1);
+            color: #f87171;
+        }
+    </style>
+    <link rel="stylesheet" href="/navbar.css">
+    <script src="/navbar.js"></script>
+</head>
+
+<body class="flex flex-col">
+    <main class="flex-1 flex items-center justify-center p-6">
+        <div id="detailsContainer" class="max-w-2xl w-full">
+            <!-- Loading State -->
+            <div id="loading" class="text-center py-20">
+                <div
+                    class="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4">
+                </div>
+                <p class="text-slate-500">Fetching roll information...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="error" class="hidden glass-card p-10 text-center">
+                <div class="text-red-500 text-5xl mb-4">⚠️</div>
+                <h2 class="text-2xl font-bold mb-2">Roll Not Found</h2>
+                <p class="text-slate-500 mb-6">The roll ID provided could not be found in our database.</p>
+                <a href="/index.html"
+                    class="inline-block bg-orange-600 hover:bg-orange-500 text-white px-8 py-3 rounded-xl font-bold">Back
+                    to
+                    Inventory</a>
+            </div>
+
+            <!-- Content State -->
+            <div id="content" class="hidden">
+                <div class="glass-card overflow-hidden shadow-2xl">
+                    <!-- Header -->
+                    <div class="bg-gradient-to-r from-orange-500/10 to-amber-500/10 p-8 border-b border-orange-100">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span id="rollId"
+                                    class="text-xs font-mono bg-orange-500/10 text-orange-600 px-3 py-1 rounded-md mb-2 inline-block">ID:
+                                    LOADING</span>
+                                <h1 id="yarnType" class="text-3xl font-bold text-slate-800">Loading Yarn...</h1>
+                                <p id="lot" class="text-slate-500 mt-1">Lot: ---</p>
+                            </div>
+                            <div id="statusBadge" class="status-badge status-in-stock">
+                                IN STOCK
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grid Info -->
+                    <div class="p-8 grid grid-cols-2 md:grid-cols-3 gap-8">
+                        <div>
+                            <p class="text-xs text-secondary uppercase tracking-widest mb-1 font-semibold">Weight</p>
+                            <p id="weight" class="text-lg font-bold text-slate-800">-- kg</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-secondary uppercase tracking-widest mb-1 font-semibold">Count</p>
+                            <p id="count" class="text-lg font-bold text-slate-800">--</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-secondary uppercase tracking-widest mb-1 font-semibold">Rack No</p>
+                            <p id="rack" class="text-lg font-bold text-orange-600">--</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-secondary uppercase tracking-widest mb-1 font-semibold">Supplier</p>
+                            <p id="supplier" class="text-slate-700">--</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-secondary uppercase tracking-widest mb-1 font-semibold">Grade</p>
+                            <p id="grade" class="text-slate-700">--</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-secondary uppercase tracking-widest mb-1 font-semibold">Order ID</p>
+                            <p id="orderRef" class="text-amber-400 font-mono">--</p>
+                        </div>
+                    </div>
+
+                    <!-- Dates & Timeline -->
+                    <div class="p-8 bg-slate-50 border-t border-orange-100">
+                        <div class="flex flex-col space-y-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-500">Production Date:</span>
+                                <span id="prodDate" class="text-slate-800 font-semibold">--</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-slate-500">Last Synced:</span>
+                                <span id="lastChange" class="text-slate-800 font-semibold">--</span>
+                            </div>
+                        </div>
+                        <div class="mt-8">
+                            <h3 class="text-sm font-bold text-slate-800 mb-4 uppercase tracking-tighter">QR Tracking
+                                Code
+                            </h3>
+                            <div
+                                class="flex justify-center p-4 bg-white border border-slate-200 rounded-xl w-32 mx-auto">
+                                <img id="qrPreview" src="" alt="QR Code" class="w-full">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        async function fetchRollDetails() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const rollId = urlParams.get('id');
+
+            if (!rollId) {
+                showError();
+                return;
+            }
+
+            try {
+                // We use the existing /api/rolls but filter it in memory 
+                // Alternatively, let's assume we have /api/rolls/:id
+                const response = await fetch(`/api/rolls`);
+                const rolls = await response.json();
+                const roll = rolls.find(r => r.id === rollId);
+
+                if (roll) {
+                    displayRoll(roll);
+                } else {
+                    showError();
+                }
+            } catch (err) {
+                console.error(err);
+                showError();
+            }
+        }
+
+        function displayRoll(roll) {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('content').classList.remove('hidden');
+
+            document.getElementById('rollId').innerText = `ID: ${roll.id}`;
+            document.getElementById('yarnType').innerText = roll.yarn_type;
+            document.getElementById('lot').innerText = `Lot: ${roll.lot_number}`;
+            document.getElementById('weight').innerText = `${roll.weight} kg`;
+            document.getElementById('count').innerText = roll.yarn_count;
+            document.getElementById('rack').innerText = roll.rack_id;
+            document.getElementById('supplier').innerText = roll.supplier_name;
+            document.getElementById('grade').innerText = `Grade ${roll.quality_grade}`;
+            document.getElementById('orderRef').innerText = roll.order_id;
+            document.getElementById('prodDate').innerText = new Date(roll.production_date).toLocaleString();
+            document.getElementById('lastChange').innerText = new Date(roll.last_state_change).toLocaleString();
+            document.getElementById('qrPreview').src = `/qrcodes/${roll.id}.png`;
+
+            // Status Badge
+            const badge = document.getElementById('statusBadge');
+            badge.innerText = roll.state;
+            badge.className = `status-badge status-${roll.state.toLowerCase().replace(' ', '-')}`;
+        }
+
+        function showError() {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('error').classList.remove('hidden');
+        }
+
+        window.onload = fetchRollDetails;
+    </script>
+</body>
+
+</html>

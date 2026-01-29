@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>frontend</title>
+  <script type="module" crossorigin src="/assets/index-BdKjuw1s.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-7jtnhnhq.css">
+  <link rel="stylesheet" href="/navbar.css">
+  <script src="/navbar.js"></script>
+  <script>
+    // Intercept fetch calls to redirect QR creation to testing endpoint
+    const originalFetch = window.fetch;
+    window.fetch = function () {
+      if (arguments[0] === '/api/rolls' && arguments[1] && arguments[1].method === 'POST') {
+        console.log('🧪 Intercepting QR creation - redirecting to testing endpoint');
+        arguments[0] = '/api/test-rolls';
+      }
+      return originalFetch.apply(this, arguments);
+    };
+  </script>
+</head>
+
+<body class="flex flex-col min-h-screen">
+  <div id="root" class="flex-1"></div>
+</body>
+
+</html>

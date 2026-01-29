@@ -1,0 +1,12 @@
+# Build outputs
+build/
+dist/
+*.exe
+*.pkg
+*.msi
+*.dmg
+*.app
+
+# OS junk
+.DS_Store
+Thumbs.db
