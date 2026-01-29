@@ -75,6 +75,39 @@
             background: var(--surface-color);
             border-radius: 10px;
         }
+
+        .toast {
+            animation: slideIn 0.3s ease-out forwards;
+            pointer-events: auto;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.fade-out {
+            animation: fadeOut 0.5s ease-in forwards;
+        }
+
+        @keyframes fadeOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
     </style>
     <link rel="stylesheet" href="/navbar.css">
     <script src="/navbar.js"></script>
@@ -163,7 +196,12 @@
         </div>
     </div>
 
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed top-[90px] right-4 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+
     <script>
+        let lastNotifId = localStorage.getItem('lastSeenNotifId');
+
         function toggleNotifications() {
             const dropdown = document.getElementById('notifDropdown');
             dropdown.classList.toggle('hidden');
@@ -173,8 +211,40 @@
             try {
                 const response = await fetch('/api/notifications');
                 const notifs = await response.json();
+
+                // Trigger popup for new notifications
+                if (notifs.length > 0) {
+                    const latest = notifs[0];
+                    if (latest.id !== lastNotifId) {
+                        showToast(latest.title, latest.message);
+                        lastNotifId = latest.id;
+                        localStorage.setItem('lastSeenNotifId', lastNotifId);
+                    }
+                }
+
                 renderNotifications(notifs);
             } catch (err) { console.error(err); }
+        }
+
+        function showToast(title, message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast glass-card bg-orange-500 text-white p-4 shadow-2xl min-w-[300px] border-l-4 border-white';
+            toast.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="font-bold mb-1">🔔 ${title}</p>
+                        <p class="text-sm opacity-90">${message}</p>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 opacity-70 hover:opacity-100">✕</button>
+                </div>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('fade-out');
+                setTimeout(() => toast.remove(), 500);
+            }, 6000);
         }
 
         function renderNotifications(notifs) {
@@ -184,10 +254,10 @@
             if (notifs.length > 0) {
                 badge.classList.remove('hidden');
                 container.innerHTML = notifs.map(n => `
-                    <div class="p-4 border-b border-white/5 hover:bg-white/5 transition cursor-pointer">
-                        <p class="text-xs text-blue-400 mb-1">${new Date(n.createdAt).toLocaleTimeString()}</p>
-                        <p class="text-sm font-semibold text-white">${n.title}</p>
-                        <p class="text-xs text-gray-400 mt-1">${n.message}</p>
+                    <div class="p-4 border-b border-slate-200 hover:bg-slate-50 transition cursor-pointer">
+                        <p class="text-xs text-orange-500 mb-1">${new Date(n.createdAt).toLocaleTimeString()}</p>
+                        <p class="text-sm font-semibold text-slate-800">${n.title}</p>
+                        <p class="text-xs text-slate-500 mt-1">${n.message}</p>
                     </div>
                 `).join('');
             } else {
@@ -197,21 +267,26 @@
 
         async function fetchData() {
             await fetchNotifications();
+            await fetchStats();
             try {
                 const response = await fetch('/api/orders');
                 const orders = await response.json();
                 renderQueue(orders);
-                updateStats(orders);
             } catch (err) {
                 console.error(err);
             }
         }
 
-        function updateStats(orders) {
-            const pending = orders.filter(o => o.status === 'PENDING').length;
-            const approved = orders.filter(o => o.status === 'APPROVED').length;
-            document.getElementById('pendingCount').innerText = pending;
-            document.getElementById('approvedCount').innerText = approved;
+        async function fetchStats() {
+            try {
+                const response = await fetch('/api/dashboard-stats');
+                const stats = await response.json();
+                document.getElementById('pendingCount').innerText = stats.pendingCount;
+                document.getElementById('approvedCount').innerText = stats.approvedTodayCount;
+                document.getElementById('reservedCount').innerText = stats.reservedCount;
+            } catch (err) {
+                console.error('Error fetching stats:', err);
+            }
         }
 
         function renderQueue(orders) {
@@ -220,7 +295,7 @@
 
             if (pendingOrders.length === 0) {
                 container.innerHTML = `
-                    <div class="glass-card p-12 text-center text-gray-500 border-dashed">
+                    <div class="glass-card p-12 text-center text-gray-500 border-dashed border-2">
                         <svg class="w-12 h-12 mx-auto mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
                         All Caught Up! No pending orders.
                     </div>
@@ -232,8 +307,8 @@
                 <div class="glass-card p-6 flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
                     <div>
                         <div class="flex items-center space-x-3 mb-2">
-                            <span class="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded-md font-mono">${order.id}</span>
-                            <span class="text-xs bg-amber-500/20 text-amber-400 px-2 py-1 rounded-md font-semibold">NEW ORDER</span>
+                            <span class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-md font-mono">${order.id}</span>
+                            <span class="text-xs bg-amber-100 text-amber-600 px-2 py-1 rounded-md font-semibold">NEW ORDER</span>
                         </div>
                         <h4 class="text-xl font-bold text-slate-800 mb-1">${order.customer_name}</h4>
                         <div class="flex space-x-6 text-sm text-slate-500">
@@ -254,6 +329,7 @@
         async function approveOrder(id) {
             try {
                 const btn = event.target;
+                const originalText = btn.innerText;
                 btn.innerText = 'Reserving...';
                 btn.disabled = true;
 
@@ -284,7 +360,7 @@
         }
 
         fetchData();
-        setInterval(fetchData, 30000); // Auto refresh every 30s
+        setInterval(fetchData, 5000); // Auto refresh every 5s for real-time feel
     </script>
 </body>
 

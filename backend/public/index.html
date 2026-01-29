@@ -14,11 +14,137 @@
     // Intercept fetch calls to redirect QR creation to testing endpoint
     const originalFetch = window.fetch;
     window.fetch = function () {
-      if (arguments[0] === '/api/rolls' && arguments[1] && arguments[1].method === 'POST') {
+      const url = arguments[0];
+      const options = arguments[1];
+      // Only intercept POST /api/rolls (not /api/rolls/update-state)
+      if (typeof url === 'string' && url.endsWith('/api/rolls') && options && options.method === 'POST') {
         console.log('🧪 Intercepting QR creation - redirecting to testing endpoint');
-        arguments[0] = '/api/test-rolls';
+        arguments[0] = url.replace('/api/rolls', '/api/test-rolls');
       }
       return originalFetch.apply(this, arguments);
+    };
+
+    // UI Style Overrides
+    const style = document.createElement('style');
+    style.innerHTML = `
+      /* Redesign Sub-header */
+      .header {
+        position: relative !important;
+        background: transparent !important;
+        backdrop-filter: none !important;
+        border-bottom: none !important;
+        box-shadow: none !important;
+        padding: 2rem !important; /* Proper side margins */
+        margin-bottom: 0 !important;
+      }
+      
+      .header-content {
+        justify-content: flex-end !important; /* Align items to right */
+        gap: 2rem;
+      }
+
+      .header-content .logo {
+        display: none !important; /* Remove text below navbar */
+      }
+
+      /* Fix Blurred QR */
+      .qr-icon {
+        opacity: 1 !important;
+        filter: none !important;
+        image-rendering: -webkit-optimize-contrast;
+      }
+
+      /* Modal Improvements */
+      .modal-overlay {
+        z-index: 2000 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+
+      .modal-content {
+        max-height: 85vh !important;
+        overflow-y: auto !important;
+        margin: 2rem !important;
+        scrollbar-width: thin;
+        scrollbar-color: var(--accent-blue) transparent;
+      }
+
+      /* Notification Position Fix */
+      #toastContainer, .toast-container, .print-preview-toast {
+        top: 90px !important; /* Slightly below 70px navbar */
+      }
+
+      .modal-content::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .modal-content::-webkit-scrollbar-thumb {
+        background: var(--accent-blue);
+        border-radius: 10px;
+      }
+    `;
+    document.head.appendChild(style);
+
+    // DOM enhancements and observers
+    window.addEventListener('DOMContentLoaded', () => {
+      // 1. Hide test rolls from the main inventory grid and inject Bin field
+      const observer = new MutationObserver((mutations) => {
+        document.querySelectorAll('.roll-number').forEach(el => {
+          if (el.textContent.startsWith('TEST')) {
+            const card = el.closest('.roll-card');
+            if (card) card.style.display = 'none';
+          }
+        });
+
+        // 2. Inject Bin Field and Clear Rack Default
+        const modal = document.querySelector('.modal-content');
+        if (modal && (modal.textContent.includes('Register New Roll') || modal.textContent.includes('Add New Roll'))) {
+          // Clear Rack Default
+          const rackInput = modal.querySelector('input[placeholder*="RACK"]');
+          if (rackInput && rackInput.value === 'STAGING') {
+            rackInput.value = '';
+          }
+
+          // Inject Bin field if not present
+          if (!document.getElementById('injected-bin-group')) {
+            const labels = Array.from(modal.querySelectorAll('label'));
+            const rackLabel = labels.find(l => l.textContent.includes('Rack')) || labels[labels.length - 1];
+
+            if (rackLabel) {
+              const rackGroup = rackLabel.parentElement;
+              const binGroup = document.createElement('div');
+              binGroup.className = 'form-group';
+              binGroup.id = 'injected-bin-group';
+              binGroup.innerHTML = `
+                <label>Bin</label>
+                <input type="text" id="in-bin" placeholder="e.g. B1" style="text-transform: uppercase;">
+              `;
+              rackGroup.parentElement.appendChild(binGroup);
+            }
+          }
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    });
+
+    // Enhanced fetch to include injected bin field
+    const enhancedOriginalFetch = window.fetch;
+    window.fetch = function () {
+      const url = arguments[0];
+      const options = arguments[1];
+
+      if (typeof url === 'string' && (url.endsWith('/api/rolls') || url.endsWith('/api/test-rolls')) && options && options.method === 'POST') {
+        try {
+          const body = JSON.parse(options.body);
+          const binInput = document.getElementById('in-bin');
+          if (binInput) {
+            body.bin = binInput.value || 'B1';
+          }
+          options.body = JSON.stringify(body);
+        } catch (e) { console.error('Error injecting bin into body', e); }
+      }
+      return enhancedOriginalFetch.apply(this, arguments);
     };
   </script>
 </head>

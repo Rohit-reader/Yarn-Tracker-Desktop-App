@@ -101,7 +101,7 @@ function generateRollNumber() {
 // Create new roll
 app.post('/api/rolls', async (req, res) => {
   try {
-    const { yarn_type, weight, rack_id, lot_number, order_id, yarn_count, supplier_name, quality_grade } = req.body;
+    const { yarn_type, weight, rack_id, bin, lot_number, order_id, yarn_count, supplier_name, quality_grade } = req.body;
 
     console.log('\n➕ POST /api/rolls - Creating new roll with multi-collection sync');
 
@@ -110,17 +110,18 @@ app.post('/api/rolls', async (req, res) => {
 
     const rollData = {
       id: rollId,
-      yarn_type: yarn_type || 'Cotton 30s',
-      yarn_count: yarn_count || '30s',
-      weight: parseFloat(weight) || 25,
-      rack_id: rack_id || 'STAGING',
+      last_state_change: now,
       lot_number: lot_number || `LOT-GEN-${new Date().getTime().toString().slice(-4)}`,
       order_id: order_id || 'ORD-NONE',
-      supplier_name: supplier_name || 'ABC Textiles',
-      quality_grade: quality_grade || 'A',
-      state: 'IN STOCK',
       production_date: now,
-      last_state_change: now
+      quality_grade: quality_grade || 'A',
+      rack_id: rack_id || '',
+      state: 'IN STOCK',
+      supplier_name: supplier_name || 'ABC Textiles',
+      weight: parseFloat(weight) || 25,
+      yarn_count: yarn_count || '30s',
+      yarn_type: yarn_type || 'Cotton 30s',
+      bin: bin || 'B1'
     };
 
     // 1. Master Record
@@ -140,14 +141,7 @@ app.post('/api/rolls', async (req, res) => {
     if (!fs.existsSync(rootQrDir)) fs.mkdirSync(rootQrDir, { recursive: true });
 
     // We encode the RAW JSON data directly into the QR code so it doesn't open a browser
-    const qrData = JSON.stringify({
-      id: rollData.id,
-      type: rollData.yarn_type,
-      lot: rollData.lot_number,
-      weight: rollData.weight,
-      rack: rollData.rack_id,
-      state: rollData.state
-    });
+    const qrData = JSON.stringify(rollData);
 
     const qrPath = path.join(qrDir, `${rollId}.png`);
     const rootQrPath = path.join(rootQrDir, `${rollId}.png`);
@@ -351,7 +345,42 @@ app.post('/api/orders/:id/approve', async (req, res) => {
   }
 });
 
-// 4. Get notifications
+// 4. Get Dashboard Stats (Real-time)
+app.get('/api/dashboard-stats', async (req, res) => {
+  try {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+
+    // 1. Pending Orders
+    const pendingQuery = query(ordersCollection, where('status', '==', 'PENDING'));
+    const pendingSnap = await getDocs(pendingQuery);
+    const pendingCount = pendingSnap.size;
+
+    // 2. Approved Today (Filter in memory to avoid Firestore Index requirement)
+    const approvedQuery = query(ordersCollection, where('status', '==', 'APPROVED'));
+    const approvedSnap = await getDocs(approvedQuery);
+    const approvedTodayCount = approvedSnap.docs.filter(doc => {
+      const data = doc.data();
+      return data.approvedAt && data.approvedAt >= startOfDay;
+    }).length;
+
+    // 3. Reserved Rolls (Exact count of yarns with state = 'RESERVED')
+    const reservedQuery = query(rollsCollection, where('state', '==', 'RESERVED'));
+    const reservedSnap = await getDocs(reservedQuery);
+    const reservedCount = reservedSnap.size;
+
+    res.json({
+      pendingCount,
+      approvedTodayCount,
+      reservedCount
+    });
+  } catch (error) {
+    console.error('❌ Error fetching dashboard stats:', error);
+    res.status(500).json({ error: 'Failed to fetch dashboard stats', detail: error.message });
+  }
+});
+
+// 5. Get notifications
 app.get('/api/notifications', async (req, res) => {
   try {
     const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(10));
@@ -374,25 +403,26 @@ if (!fs.existsSync(TEST_QR_FILE)) {
 
 app.post('/api/test-rolls', async (req, res) => {
   try {
-    const { yarn_type, weight, rack_id, lot_number, order_id, yarn_count, supplier_name, quality_grade } = req.body;
+    const { yarn_type, weight, rack_id, bin, lot_number, order_id, yarn_count, supplier_name, quality_grade } = req.body;
     console.log('\n🧪 POST /api/test-rolls - Generating TESTING QR (Local Only)');
 
-    const rollId = `TEST-${Date.now()}`;
+    const rollId = `TEST - ${Date.now()}`;
     const now = new Date().toISOString();
 
     const rollData = {
       id: rollId,
-      yarn_type: yarn_type || 'Test Yarn',
-      yarn_count: yarn_count || '30s',
-      weight: parseFloat(weight) || 0,
-      rack_id: rack_id || 'TEST_RACK',
+      last_state_change: now,
       lot_number: lot_number || 'TEST-LOT',
       order_id: order_id || 'TEST-ORD',
-      supplier_name: supplier_name || 'Test Supplier',
-      quality_grade: quality_grade || 'T',
-      state: 'TESTING',
       production_date: now,
-      last_state_change: now
+      quality_grade: quality_grade || 'T',
+      rack_id: rack_id || '',
+      state: 'TESTING',
+      supplier_name: supplier_name || 'Test Supplier',
+      weight: parseFloat(weight) || 0,
+      yarn_count: yarn_count || '30s',
+      yarn_type: yarn_type || 'Test Yarn',
+      bin: bin || 'T1'
     };
 
     // Save to local JSON file
@@ -405,12 +435,7 @@ app.post('/api/test-rolls', async (req, res) => {
     if (!fs.existsSync(qrDir)) fs.mkdirSync(qrDir, { recursive: true });
 
     const qrData = JSON.stringify({
-      id: rollData.id,
-      type: rollData.yarn_type,
-      lot: rollData.lot_number,
-      weight: rollData.weight,
-      rack: rollData.rack_id,
-      state: rollData.state,
+      ...rollData,
       isTest: true
     });
 
@@ -434,6 +459,55 @@ app.get('/api/test-rolls', async (req, res) => {
   } catch (error) {
     console.error('Error fetching testing rolls:', error);
     res.status(500).json({ error: 'Failed to fetch testing rolls' });
+  }
+});
+
+// Delete specific test roll
+app.delete('/api/test-rolls/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    console.log(`\n🗑️ DELETE /api/test-rolls/${id} - Removing testing QR`);
+
+    // 1. Remove from local JSON
+    if (fs.existsSync(TEST_QR_FILE)) {
+      const testData = JSON.parse(fs.readFileSync(TEST_QR_FILE, 'utf8'));
+      const filtered = testData.filter(r => r.id !== id);
+      fs.writeFileSync(TEST_QR_FILE, JSON.stringify(filtered, null, 2));
+    }
+
+    // 2. Remove QR image
+    const qrPath = path.join(frontendPath, 'qrcodes', `${id}.png`);
+    if (fs.existsSync(qrPath)) fs.unlinkSync(qrPath);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting test roll:', error);
+    res.status(500).json({ error: 'Failed to delete test roll' });
+  }
+});
+
+// Delete all test rolls
+app.delete('/api/test-rolls', async (req, res) => {
+  try {
+    console.log('\n🗑️ DELETE /api/test-rolls - Clearing ALL testing QRs');
+
+    if (fs.existsSync(TEST_QR_FILE)) {
+      const testData = JSON.parse(fs.readFileSync(TEST_QR_FILE, 'utf8'));
+
+      // Remove all associated images
+      testData.forEach(roll => {
+        const qrPath = path.join(frontendPath, 'qrcodes', `${roll.id}.png`);
+        if (fs.existsSync(qrPath)) fs.unlinkSync(qrPath);
+      });
+
+      // Clear the file
+      fs.writeFileSync(TEST_QR_FILE, JSON.stringify([]));
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error clearing test rolls:', error);
+    res.status(500).json({ error: 'Failed to clear test rolls' });
   }
 });
 
