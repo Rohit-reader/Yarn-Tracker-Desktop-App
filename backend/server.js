@@ -307,40 +307,55 @@ app.get('/api/orders', async (req, res) => {
 app.post('/api/orders/:id/approve', async (req, res) => {
   try {
     const orderId = req.params.id;
+    console.log(`\n✅ POST /api/orders/${orderId}/approve - Starting approval`);
+
     const orderDocRef = doc(db, 'Order_collection', orderId);
     const orderSnap = await getDoc(orderDocRef);
 
     if (!orderSnap.exists()) {
+      console.log(`   ✗ Order ${orderId} not found`);
       return res.status(404).json({ error: 'Order not found' });
     }
 
     const orderData = orderSnap.data();
+    console.log(`   Order Info: ${orderData.quantity} rolls of ${orderData.yarn_type} for ${orderData.customer_name}`);
+
     if (orderData.status !== 'PENDING') {
-      return res.status(400).json({ error: 'Order is already processed' });
+      console.log(`   ✗ Order ${orderId} already in status: ${orderData.status}`);
+      return res.status(400).json({ error: `Order is already ${orderData.status.toLowerCase()}` });
     }
 
     // Find "IN STOCK" rolls matching the yarn_type
+    console.log(`   Searching for ${orderData.quantity} rolls of Type: "${orderData.yarn_type}"`);
     const rollsQuery = query(
       collection(db, 'inventory'),
       where('state', '==', 'IN STOCK'),
-      where('yarn_type', '==', orderData.yarn_type),
-      limit(orderData.quantity)
+      where('yarn_type', '==', orderData.yarn_type)
+      // Limit is removed here to get the full count for the error message if needed
     );
 
     const rollsSnap = await getDocs(rollsQuery);
     const matchingRolls = rollsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
+    console.log(`   Found ${matchingRolls.length} available rolls`);
+
     if (matchingRolls.length < orderData.quantity) {
+      const msg = `There is only ${matchingRolls.length} rolls in ${orderData.yarn_type} and customer asks ${orderData.quantity} rolls`;
+      console.log(`   ✗ Insufficient stock: ${msg}`);
       return res.status(400).json({
-        error: 'Insufficient stock',
+        error: msg,
         available: matchingRolls.length,
         required: orderData.quantity
       });
     }
 
+    // Take only what's needed
+    const rollsToReserve = matchingRolls.slice(0, orderData.quantity);
+    console.log(`   Reserving ${rollsToReserve.length} rolls...`);
+
     // Reserve those rolls
     const now = new Date().toISOString();
-    await Promise.all(matchingRolls.map(async (roll) => {
+    await Promise.all(rollsToReserve.map(async (roll) => {
       const rollDocRef = doc(db, 'yarnRolls', roll.id);
       const inventoryDocRef = doc(db, 'inventory', roll.id);
 
@@ -358,20 +373,26 @@ app.post('/api/orders/:id/approve', async (req, res) => {
     }));
 
     // Mark order as approved
+    console.log(`   Updating order status to APPROVED`);
     await updateDoc(orderDocRef, {
       status: 'APPROVED',
       approvedAt: now,
-      assignedRolls: matchingRolls.map(r => r.id)
+      assignedRolls: rollsToReserve.map(r => r.id)
     });
 
+    console.log(`   ✅ Order ${orderId} approved successfully`);
     res.json({
       success: true,
-      message: `Order approved and ${matchingRolls.length} rolls reserved`,
-      reservedRolls: matchingRolls.map(r => r.id)
+      message: `Order approved and ${rollsToReserve.length} rolls reserved`,
+      reservedRolls: rollsToReserve.map(r => r.id)
     });
   } catch (error) {
-    console.error('Error approving order:', error);
-    res.status(500).json({ error: 'Failed to approve order' });
+    console.error(`\n❌ Error approving order ${req.params.id}:`, error);
+    res.status(500).json({
+      error: 'Failed to approve order',
+      detail: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
@@ -593,6 +614,150 @@ app.post('/api/admin/regenerate-qrs', async (req, res) => {
   } catch (error) {
     console.error('Error regenerating QRs:', error);
     res.status(500).json({ error: 'Failed to regenerate QRs' });
+  }
+});
+
+// 5. Delete specific order
+app.delete('/api/orders/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    console.log(`\n🗑️ DELETE /api/orders/${id} - Removing order`);
+    await deleteDoc(doc(db, 'Order_collection', id));
+    res.json({ success: true, message: `Order ${id} deleted` });
+  } catch (error) {
+    console.error('Error deleting order:', error);
+    res.status(500).json({ error: 'Failed to delete order' });
+  }
+});
+
+// 6. Clear all orders
+app.delete('/api/orders', async (req, res) => {
+  try {
+    console.log(`\n🗑️ DELETE /api/orders - Clearing ALL orders`);
+    const q = query(ordersCollection);
+    const snap = await getDocs(q);
+
+    await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+
+    res.json({ success: true, message: `Cleared ${snap.size} orders` });
+  } catch (error) {
+    console.error('Error clearing orders:', error);
+    res.status(500).json({ error: 'Failed to clear orders' });
+  }
+});
+
+// 7. Settings Management
+app.get('/api/settings', async (req, res) => {
+  try {
+    const settingsDoc = await getDoc(doc(db, 'config', 'general'));
+    if (settingsDoc.exists()) {
+      res.json(settingsDoc.data());
+    } else {
+      // Default settings
+      res.json({ max_bin_capacity: 30, bins_per_rack: 10 });
+    }
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+    res.status(500).json({ error: 'Failed to fetch settings' });
+  }
+});
+
+app.post('/api/settings', async (req, res) => {
+  try {
+    const { max_bin_capacity, bins_per_rack } = req.body;
+    await setDoc(doc(db, 'config', 'general'), {
+      max_bin_capacity: parseInt(max_bin_capacity) || 30,
+      bins_per_rack: parseInt(bins_per_rack) || 10,
+      updatedAt: new Date().toISOString()
+    });
+    res.json({ success: true, message: 'Settings updated' });
+  } catch (error) {
+    console.error('Error saving settings:', error);
+    res.status(500).json({ error: 'Failed to save settings' });
+  }
+});
+
+// 8. Bulk Roll Creation with Auto-Allocation
+app.post('/api/rolls/bulk', async (req, res) => {
+  try {
+    const {
+      yarn_type, weight, rack_id, start_bin_num, roll_count,
+      lot_number, order_id, yarn_count, supplier_name, quality_grade
+    } = req.body;
+
+    console.log(`\n📦 Bulk creating ${roll_count} rolls...`);
+
+    // Fetch max capacity from settings
+    const settingsDoc = await getDoc(doc(db, 'config', 'general'));
+    const maxCapacity = settingsDoc.exists() ? settingsDoc.data().max_bin_capacity : 30;
+
+    let currentBinNum = parseInt(start_bin_num) || 1;
+    let rollsCreatedInCurrentBin = 0;
+    const now = new Date().toISOString();
+    const createdRolls = [];
+
+    // In a real production apps, you'd use a batch, but for simplicity and QR generation, 
+    // we'll loop. If roll_count is very high (>100), consider batching.
+    for (let i = 0; i < roll_count; i++) {
+      // Logic for bin overflow
+      if (rollsCreatedInCurrentBin >= maxCapacity) {
+        currentBinNum++;
+        rollsCreatedInCurrentBin = 0;
+        console.log(`   Bin filled. Moving to Bin ${currentBinNum}`);
+      }
+
+      const rollId = generateRollNumber();
+      const binLabel = `B${currentBinNum}`;
+
+      const rollData = {
+        id: rollId,
+        last_state_change: now,
+        lot_number: lot_number || `LOT-GEN-${new Date().getTime().toString().slice(-4)}`,
+        order_id: order_id || 'ORD-NONE',
+        production_date: now,
+        quality_grade: quality_grade || 'A',
+        rack_id: rack_id || '',
+        state: 'IN STOCK',
+        supplier_name: supplier_name || 'ABC Textiles',
+        weight: parseFloat(weight) || 25,
+        yarn_count: yarn_count || '30s',
+        yarn_type: yarn_type || 'Cotton 30s',
+        bin: binLabel,
+        createdAt: now
+      };
+
+      // Firestore writes
+      await setDoc(doc(db, 'yarnRolls', rollId), rollData);
+      await setDoc(doc(db, 'inventory', rollId), rollData);
+      await logScan(rollId, 'BULK_CREATION', `Roll created via bulk intake in ${binLabel}`);
+
+      // QR Generation
+      const qrDir = path.join(frontendPath, 'qrcodes');
+      const rootQrDir = 'e:/QR/QR_CODES';
+      if (!fs.existsSync(qrDir)) fs.mkdirSync(qrDir, { recursive: true });
+      if (!fs.existsSync(rootQrDir)) fs.mkdirSync(rootQrDir, { recursive: true });
+
+      const { quality_grade: _q, material: _m, ...qrDataObj } = rollData;
+      const qrData = JSON.stringify(qrDataObj);
+      const qrPath = path.join(qrDir, `${rollId}.png`);
+      const rootQrPath = path.join(rootQrDir, `${rollId}.png`);
+
+      await QRCode.toFile(qrPath, qrData, { width: 400 });
+      fs.copyFileSync(qrPath, rootQrPath);
+
+      rollsCreatedInCurrentBin++;
+      createdRolls.push(rollId);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: `Successfully created ${roll_count} rolls across bins starting from ${start_bin_num}`,
+      rollIds: createdRolls
+    });
+
+  } catch (error) {
+    console.error('Error in bulk creation:', error);
+    res.status(500).json({ error: 'Failed to process bulk intake' });
   }
 });
 

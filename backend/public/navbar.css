@@ -108,3 +108,155 @@ body {
         display: none;
     }
 }
+
+/* =========================================
+   GLOBAL DROPDOWN STYLES (White & Orange)
+   ========================================= */
+select {
+    background-color: white !important;
+    color: #334155 !important;
+    /* Slate-700 */
+    border-color: #cbd5e1 !important;
+    /* Slate-300 */
+    accent-color: var(--accent) !important;
+    cursor: pointer;
+    color-scheme: light;
+    /* Force light mode to avoid dark system defaults */
+}
+
+select:focus {
+    border-color: var(--accent) !important;
+    outline: 2px solid rgba(249, 115, 22, 0.2) !important;
+}
+
+option {
+    background-color: white !important;
+    color: #334155 !important;
+    padding: 10px;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* Override Text Selection Color globally to avoid blue */
+::selection {
+    background: var(--accent) !important;
+    color: white !important;
+}
+
+/* Active/Checked Option - Orange */
+option:checked,
+option:hover,
+option:focus,
+option:active {
+    background-color: var(--accent) !important;
+    color: white !important;
+    -webkit-text-fill-color: white !important;
+    box-shadow: 0 0 100px var(--accent) inset !important;
+}
+
+/* =========================================
+   GLOBAL SIDEBAR (DRAWER) STYLES
+   ========================================= */
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    z-index: 99999998;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+#side-drawer {
+    position: fixed;
+    top: 0;
+    left: -320px;
+    width: 320px;
+    height: 100vh;
+    background: white;
+    z-index: 99999999;
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.1);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+#side-drawer.active {
+    transform: translateX(320px);
+}
+
+.drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 3rem;
+}
+
+.drawer-close {
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: color 0.2s;
+}
+
+.drawer-close:hover {
+    color: var(--accent);
+}
+
+.drawer-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.drawer-link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-weight: 600;
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+
+.drawer-link:hover {
+    background: #fff7ed;
+    color: var(--accent);
+    transform: translateX(5px);
+}
+
+.drawer-link svg {
+    color: var(--text-secondary);
+    transition: color 0.2s;
+}
+
+.drawer-link:hover svg {
+    color: var(--accent);
+}
+
+/* Menu Toggle Button Style */
+.menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    cursor: pointer;
+    color: var(--text-primary);
+    border-radius: 8px;
+    transition: background 0.2s;
+    margin-right: 1rem;
+}
+
+.menu-toggle:hover {
+    background: rgba(0, 0, 0, 0.05);
+}

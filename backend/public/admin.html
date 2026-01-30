@@ -34,7 +34,6 @@
         }
 
         .glass-card:hover {
-            border-color: var(--accent);
             background: var(--glass-bg);
         }
 
@@ -146,8 +145,9 @@
                         </div>
                     </div>
                 </div>
-                <button onclick="fetchData()" class="p-3 glass-card hover:bg-white/10 transition">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button id="refresh-btn" onclick="fetchData()"
+                    class="p-3 glass-card hover:bg-white/10 transition active:scale-95" title="Refresh Data">
+                    <svg id="refresh-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
                             d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
                         </path>
@@ -170,6 +170,44 @@
                 <p class="text-slate-500 text-sm mb-1 uppercase tracking-wider">Reserved Rolls</p>
                 <h3 id="reservedCount" class="text-3xl font-bold text-slate-800">0</h3>
             </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="glass-card p-4 mb-6 flex flex-wrap items-center gap-3">
+            <div class="relative" style="flex: 1; min-width: 250px;">
+                <input type="text" id="adminSearch" placeholder="Search Customer or Order ID..."
+                    style="height: 42px; padding: 0 1rem 0 2.5rem;"
+                    class="w-full border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none box-sizing: border-box; background: white;">
+                <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+
+            <select id="typeFilter" style="height: 42px; min-width: 150px; max-width: 200px;"
+                class="px-3 border rounded-xl outline-none focus:ring-2 focus:ring-orange-500 box-sizing: border-box; background: white;">
+                <option value="">All Types</option>
+            </select>
+
+            <button onclick="applyFilters()" style="height: 42px;"
+                class="bg-orange-600 hover:bg-orange-500 text-white px-6 rounded-xl font-bold transition-all active:scale-95 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                SEARCH
+            </button>
+
+            <button onclick="clearAllOrders()" style="height: 42px;"
+                class="bg-rose-100 hover:bg-rose-200 text-rose-600 px-6 rounded-xl font-bold transition-all active:scale-95 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                    </path>
+                </svg>
+                CLEAR ALL
+            </button>
         </div>
 
         <!-- Orders Queue -->
@@ -198,11 +236,37 @@
         </div>
     </div>
 
+    <!-- Custom Confirmation Modal -->
+    <div id="confirmModal"
+        class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div class="glass-card bg-white max-w-md w-full p-8 text-center shadow-2xl scale-95 transition-all duration-300"
+            id="confirmCard">
+            <div id="confirmIcon" class="mb-4 text-rose-500 mx-auto">
+                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                    </path>
+                </svg>
+            </div>
+            <h3 id="confirmTitle" class="text-2xl font-bold mb-2">Confirm Action</h3>
+            <p id="confirmMessage" class="text-slate-500 mb-8 leading-relaxed">Are you sure you want to proceed?</p>
+            <div class="flex gap-3">
+                <button onclick="hideConfirm()"
+                    class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold transition">CANCEL</button>
+                <button id="confirmBtn"
+                    class="flex-1 py-3 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-bold shadow-lg shadow-rose-600/20 transition">PROCEED</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div id="toastContainer" class="fixed top-[90px] right-4 z-[100] flex flex-col gap-3 pointer-events-none"></div>
 
     <script>
+        let allOrders = [];
+        let filteredOrders = [];
         let lastNotifId = localStorage.getItem('lastSeenNotifId');
+        let isFetching = false;
 
         function toggleNotifications() {
             const dropdown = document.getElementById('notifDropdown');
@@ -214,7 +278,6 @@
                 const response = await fetch('/api/notifications');
                 const notifs = await response.json();
 
-                // Trigger popup for new notifications
                 if (notifs.length > 0) {
                     const latest = notifs[0];
                     if (latest.id !== lastNotifId) {
@@ -223,7 +286,6 @@
                         localStorage.setItem('lastSeenNotifId', lastNotifId);
                     }
                 }
-
                 renderNotifications(notifs);
             } catch (err) { console.error(err); }
         }
@@ -231,7 +293,6 @@
         function showToast(title, message) {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            // Styled as white bg, orange border, no hover effect
             toast.className = 'toast bg-white border-2 border-orange-500 text-slate-800 p-4 shadow-2xl min-w-[300px] rounded-xl pointer-events-auto';
             toast.style.pointerEvents = 'auto';
             toast.innerHTML = `
@@ -243,8 +304,6 @@
                     <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-slate-400 hover:text-slate-600 transition">✕</button>
                 </div>
             `;
-            // Add a style to specific toast instance to disable hover if needed, 
-            // but since we removed glass-card, it won't have the default hover color.
             container.appendChild(toast);
 
             setTimeout(() => {
@@ -272,15 +331,47 @@
         }
 
         async function fetchData() {
-            await fetchNotifications();
-            await fetchStats();
+            if (isFetching) return;
+            isFetching = true;
+
+            const icon = document.getElementById('refresh-icon');
+            if (icon) icon.classList.add('animate-spin');
+
             try {
+                await fetchNotifications();
+                await fetchStats();
                 const response = await fetch('/api/orders');
-                const orders = await response.json();
-                renderQueue(orders);
+                const newOrders = await response.json();
+
+                // Compare with previous orders to avoid unnecessary re-renders
+                if (JSON.stringify(newOrders) !== JSON.stringify(allOrders)) {
+                    allOrders = newOrders;
+                    updateTypeDropdown();
+                    applyFilters(); // Re-apply current filters to new data
+                }
             } catch (err) {
                 console.error(err);
+            } finally {
+                isFetching = false;
+                if (icon) setTimeout(() => icon.classList.remove('animate-spin'), 500);
             }
+        }
+
+        function updateTypeDropdown() {
+            const typeSelect = document.getElementById('typeFilter');
+            if (!typeSelect) return;
+
+            const currentVal = typeSelect.value;
+            const types = [...new Set(allOrders.map(o => o.yarn_type).filter(t => t))];
+
+            typeSelect.innerHTML = '<option value="">All Types</option>';
+            types.sort().forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t;
+                opt.textContent = t;
+                typeSelect.appendChild(opt);
+            });
+            typeSelect.value = currentVal;
         }
 
         async function fetchStats() {
@@ -295,22 +386,49 @@
             }
         }
 
-        function renderQueue(orders) {
-            const container = document.getElementById('orderQueue');
-            const pendingOrders = orders.filter(o => o.status === 'PENDING');
+        function applyFilters() {
+            const search = document.getElementById('adminSearch').value.toLowerCase();
+            const type = document.getElementById('typeFilter').value.toLowerCase();
 
-            if (pendingOrders.length === 0) {
+            filteredOrders = allOrders.filter(order => {
+                if (order.status !== 'PENDING') return false; // Default: Only show pending
+
+                const matchSearch = !search ||
+                    order.id.toLowerCase().includes(search) ||
+                    order.customer_name.toLowerCase().includes(search);
+                const matchType = !type || (order.yarn_type || '').toLowerCase() === type;
+
+                return matchSearch && matchType;
+            });
+
+            renderQueue();
+        }
+
+        function renderQueue() {
+            const container = document.getElementById('orderQueue');
+
+            if (filteredOrders.length === 0) {
                 container.innerHTML = `
                     <div class="glass-card p-12 text-center text-gray-500 border-dashed border-2">
                         <svg class="w-12 h-12 mx-auto mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
-                        All Caught Up! No pending orders.
+                        No matching pending orders.
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = pendingOrders.map(order => `
-                <div class="glass-card p-6 flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
+            container.innerHTML = filteredOrders.map(order => `
+                <div class="glass-card p-6 pr-12 flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0 relative group">
+                    <!-- Individual Delete Icon -->
+                    <button onclick="deleteOrder('${order.id}')" 
+                        class="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors md:opacity-0 group-hover:opacity-100"
+                        title="Delete Order">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                            </path>
+                        </svg>
+                    </button>
                     <div>
                         <div class="flex items-center space-x-3 mb-2">
                             <span class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-md font-mono">${order.id}</span>
@@ -345,28 +463,118 @@
                 const modal = document.getElementById('statusModal');
                 const title = document.getElementById('modalTitle');
                 const msg = document.getElementById('modalMessage');
+                const icon = document.getElementById('modalIcon');
 
                 if (response.ok) {
                     title.innerText = 'Approval Successful';
                     msg.innerText = `Order ${id} processed. ${result.reservedRolls.length} rolls moved to Reserved Collection.`;
+                    icon.className = 'mb-4 text-emerald-500 mx-auto';
+                    icon.innerHTML = '<svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
                     modal.classList.remove('hidden');
                 } else {
                     title.innerText = 'Stock Error';
-                    msg.innerText = result.error || 'Failed to reserve stock.';
+                    // Use descriptive error from backend, fallback to generic
+                    msg.innerText = result.error || 'Failed to approve order.';
+                    if (result.detail) {
+                        msg.innerHTML += `<br><span class="text-xs text-red-400 mt-2 block font-mono">${result.detail}</span>`;
+                    }
+                    icon.className = 'mb-4 text-rose-500 mx-auto';
+                    icon.innerHTML = '<svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
                     modal.classList.remove('hidden');
                 }
+
+                // Fetch explicitly to update UI
                 fetchData();
             } catch (err) {
                 console.error(err);
             }
         }
 
+        let onConfirmAction = null;
+
+        function showConfirm(title, message, callback, dangerMode = true) {
+            const modal = document.getElementById('confirmModal');
+            const card = document.getElementById('confirmCard');
+            const btn = document.getElementById('confirmBtn');
+            const icon = document.getElementById('confirmIcon');
+
+            document.getElementById('confirmTitle').innerText = title;
+            document.getElementById('confirmMessage').innerText = message;
+
+            if (dangerMode) {
+                btn.className = 'flex-1 py-3 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-bold shadow-lg shadow-rose-600/20 transition';
+                icon.className = 'mb-4 text-rose-500 mx-auto';
+            } else {
+                btn.className = 'flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20 transition';
+                icon.className = 'mb-4 text-blue-500 mx-auto';
+            }
+
+            onConfirmAction = () => {
+                hideConfirm();
+                callback();
+            };
+
+            btn.onclick = onConfirmAction;
+            modal.classList.remove('hidden');
+            setTimeout(() => card.classList.remove('scale-95'), 10);
+        }
+
+        function hideConfirm() {
+            const modal = document.getElementById('confirmModal');
+            const card = document.getElementById('confirmCard');
+            card.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        }
+
+        async function deleteOrder(id) {
+            showConfirm(
+                'Delete Order',
+                `Are you sure you want to permanently delete order ${id}?`,
+                async () => {
+                    try {
+                        const response = await fetch(`/api/orders/${id}`, { method: 'DELETE' });
+                        if (response.ok) {
+                            fetchData();
+                            showToast('Deleted', `Order ${id} removed successfully.`);
+                        } else {
+                            const err = await response.json();
+                            alert(err.error || 'Failed to delete order');
+                        }
+                    } catch (err) { console.error(err); }
+                }
+            );
+        }
+
+        async function clearAllOrders() {
+            showConfirm(
+                'Clear All Orders',
+                '⚠️ This will permanently delete ALL orders. This action cannot be undone. Are you sure?',
+                async () => {
+                    try {
+                        const response = await fetch('/api/orders', { method: 'DELETE' });
+                        if (response.ok) {
+                            fetchData();
+                            showToast('Queue Cleared', 'All orders have been removed.');
+                        } else {
+                            const err = await response.json();
+                            alert(err.error || 'Failed to clear orders');
+                        }
+                    } catch (err) { console.error(err); }
+                }
+            );
+        }
+
         function closeModal() {
             document.getElementById('statusModal').classList.add('hidden');
         }
 
+        // Event listeners for instant feedback (optional, but requested search button exists)
+        document.getElementById('adminSearch').addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') applyFilters();
+        });
+
         fetchData();
-        setInterval(fetchData, 5000); // Auto refresh every 5s for real-time feel
+        setInterval(fetchData, 5000); 
     </script>
 </body>
 

@@ -153,36 +153,95 @@
 
     window.rollBinMap = {};
 
+    // Robust Data Extraction Helper
+    const extractCardData = (card) => {
+      const getText = (selector) => card.querySelector(selector)?.textContent.trim() || '';
+
+      // extraction by label for robustness
+      const getByLabel = (label) => {
+        const rows = card.querySelectorAll('.detail-row, .info-row');
+        for (let row of rows) {
+          if (row.textContent.includes(label)) {
+            return row.querySelector('.detail-value, .info-value')?.textContent.trim() || '';
+          }
+        }
+        return '';
+      };
+
+      const id = getText('.roll-number');
+      // Try class first, then label fallback
+      let type = getText('.roll-type') || getText('.yarn-type') || getByLabel('Type') || getByLabel('Material');
+      const rack = getText('.roll-rack') || getText('.rack-id') || getByLabel('Rack') || getByLabel('Location');
+      const bin = window.rollBinMap[id] || card.getAttribute('data-bin') || getByLabel('Bin') || '1';
+      const lot = getByLabel('Lot');
+
+      // Robustness: Use authoritative data if available
+      if (window.allRolls) {
+        const rollObj = window.allRolls.find(r => r.id === id);
+        if (rollObj) {
+          if (rollObj.yarn_type) type = rollObj.yarn_type;
+        }
+      }
+
+      return { id, type, rack, bin, lot, raw: card.textContent.toLowerCase() };
+    };
+
     // Filter Application Logic
     const applyDOMFilters = () => {
       const search = document.getElementById('inventory-search')?.value.toLowerCase() || '';
-      const binF = document.getElementById('filter-bin')?.value || '';
+      const binF = document.getElementById('filter-bin')?.value.toLowerCase() || '';
       const typeF = document.getElementById('filter-type')?.value || '';
       const rackF = document.getElementById('filter-rack')?.value.toLowerCase() || '';
 
+      let visibleCount = 0;
+      const allTypes = new Set();
+
       document.querySelectorAll('.roll-card').forEach(card => {
-        const idEL = card.querySelector('.roll-number');
-        const idStr = idEL?.textContent.trim() || '';
-        const idLower = idStr.toLowerCase();
+        const data = extractCardData(card);
 
-        const typeEL = card.querySelector('.roll-type') || card.querySelector('.yarn-type');
-        const typeStr = typeEL?.textContent || card.textContent || '';
-        const rackEL = card.querySelector('.roll-rack') || card.querySelector('.rack-id');
-        const rackStr = rackEL?.textContent.toLowerCase() || card.textContent.toLowerCase();
+        // Collect types for dynamic dropdown population
+        if (data.type) allTypes.add(data.type);
 
-        if (idLower.includes('test')) { card.style.display = 'none'; return; }
+        if (data.id.toLowerCase().includes('test')) {
+          card.style.display = 'none';
+          return;
+        }
 
-        // Get bin from global map
-        const bin = window.rollBinMap[idStr] || card.getAttribute('data-bin') || '';
+        const binMatch = !binF || data.bin.toLowerCase().includes(binF);
+        // Case-insensitive robust matching
+        const typeMatch = !typeF || data.type.toLowerCase().trim() === typeF.toLowerCase().trim();
+        const rackMatch = !rackF || data.rack.toLowerCase().includes(rackF);
 
-        const binMatch = !binF || bin === binF;
-        const searchMatch = !search || idLower.includes(search) || typeStr.toLowerCase().includes(search) ||
-          rackStr.includes(search);
-        const typeMatch = !typeF || typeStr.includes(typeF);
-        const rackMatch = !rackF || rackStr.includes(rackF);
+        // robust search: check specific fields first, then whole card
+        const searchTerms = search.split(' ').filter(t => t);
+        const searchMatch = searchTerms.every(term =>
+          data.id.toLowerCase().includes(term) ||
+          data.type.toLowerCase().includes(term) ||
+          data.rack.toLowerCase().includes(term) ||
+          data.lot.toLowerCase().includes(term) ||
+          data.raw.includes(term)
+        );
 
-        card.style.display = (binMatch && searchMatch && typeMatch && rackMatch) ? 'flex' : 'none';
+        const isVisible = binMatch && searchMatch && typeMatch && rackMatch;
+        // MUST use !important to override the global CSS rule that enforces display: flex !important
+        card.style.setProperty('display', isVisible ? 'flex' : 'none', 'important');
+        if (isVisible) visibleCount++;
       });
+
+      // Update Type Dropdown if empty (fallback)
+      const typeSelect = document.getElementById('filter-type');
+      if (typeSelect && typeSelect.options.length <= 1 && allTypes.size > 0) {
+        // preserve current selection if any
+        const currentVal = typeSelect.value;
+        typeSelect.innerHTML = '<option value="">All Types</option>';
+        Array.from(allTypes).sort().forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t;
+          opt.textContent = t;
+          typeSelect.appendChild(opt);
+        });
+        typeSelect.value = currentVal;
+      }
     };
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -192,43 +251,52 @@
         if (mainContent) {
           const filterBar = document.createElement('div');
           filterBar.id = 'injected-filters';
-          filterBar.style.cssText = 'display: flex; gap: 1rem; padding: 1rem 2rem; background: #fff; border-bottom: 1px solid #e1e8f0; align-items: center; z-index: 50; position: relative; margin-top: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);';
+          filterBar.style.cssText = 'display: flex; gap: 1rem; padding: 1rem 2rem; background: #fff; border-bottom: 1px solid #e1e8f0; align-items: center; z-index: 50; position: relative; margin-top: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); flex-wrap: wrap; transition: opacity 0.3s ease-out; opacity: 0;';
+          setTimeout(() => filterBar.style.opacity = '1', 50);
           filterBar.innerHTML = `
-  <div style="flex: 1; position: relative;"><input type="text" id="inventory-search"
-      placeholder="Search by ID, Lot, Supplier..."
-      style="width: 100%; padding: 0.5rem 1rem 0.5rem 2.5rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white;"><svg
-      style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1.25rem; height: 1.25rem; color: #94a3b8;"
-      fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-    </svg></div>
-  <select id="filter-bin"
-    style="padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white;">
-    <option value="">All Bins</option>
-    <option value="1">Bin 1</option>
-    <option value="2">Bin 2</option>
-    <option value="3">Bin 3</option>
-    <option value="4">Bin 4</option>
-    <option value="5">Bin 5</option>
-    <option value="6">Bin 6</option>
-    <option value="7">Bin 7</option>
-    <option value="8">Bin 8</option>
-    <option value="9">Bin 9</option>
-  </select>
-  <select id="filter-type"
-    style="padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white; max-width: 150px;">
-    <option value="">All Types</option>
-  </select>
+  <div style="flex: 1; position: relative; min-width: 200px;">
+    <input type="text" id="inventory-search" placeholder="Search ID, Type, Lot, Rack..."
+      style="width: 100%; height: 42px; padding: 0 1rem 0 2.5rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white; box-sizing: border-box;">
+    <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1.25rem; height: 1.25rem; color: #94a3b8;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+    </svg>
+  </div>
+  <input type="text" id="filter-bin" placeholder="Bin"
+    style="width: 80px; height: 42px; padding: 0 1rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white; box-sizing: border-box;">
   <input type="text" id="filter-rack" placeholder="Rack"
-    style="width: 80px; padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white;">
+    style="width: 80px; height: 42px; padding: 0 1rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white; box-sizing: border-box;">
+  <button onclick="location.reload()" title="Refresh Application" 
+    style="height: 42px; width: 42px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; cursor: pointer; color: #475569; display: flex; align-items: center; justify-content: center; padding: 0; box-sizing: border-box;">
+    <svg style="width: 1.25rem; height: 1.25rem; color: #475569 !important;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+  </button>
   `;
           mainContent.after(filterBar);
-          filterBar.querySelectorAll('input, select').forEach(el => el.addEventListener('input', applyDOMFilters));
+
+          // Add listeners
+          const ids = ['inventory-search', 'filter-bin', 'filter-type', 'filter-rack'];
+          ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+              el.addEventListener('input', applyDOMFilters);
+              el.addEventListener('change', applyDOMFilters);
+              el.addEventListener('keyup', applyDOMFilters);
+            }
+          });
+
+          // Initial run
+          setTimeout(applyDOMFilters, 500);
         }
       };
 
       const observer = new MutationObserver(() => {
         injectFilters();
+        // Re-run filters periodically or when nodes are added to ensure consistency
+        if (document.querySelector('.roll-card')) {
+          // Debounce the filter application slightly to avoid thrashing
+          if (window._filterTimeout) clearTimeout(window._filterTimeout);
+          window._filterTimeout = setTimeout(applyDOMFilters, 100);
+        }
+
         document.querySelectorAll('.roll-card').forEach(card => {
           const idEL = card.querySelector('.roll-number');
           const idStr = idEL?.textContent.trim() || '';
@@ -435,6 +503,21 @@
       });
     });
   </script>
+  <style>
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.3s ease-out forwards;
+    }
+  </style>
 </head>
 
 <body class="flex flex-col min-h-screen">

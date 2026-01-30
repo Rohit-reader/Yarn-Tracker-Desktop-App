@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Dashboard | S.A. Textiles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/navbar.css">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            border-color: #cbd5e1;
+        }
+
+        .stat-card.active {
+            border-color: #f97316;
+            background: #fff7ed;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            height: 350px;
+            position: relative;
+        }
+
+        .roll-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .roll-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .roll-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-instock {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .status-reserved {
+            background: #ffedd5;
+            color: #ea580c;
+        }
+
+        .status-dispatched {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen pb-10">
+    <!-- Navbar will be injected here -->
+    <script src="/navbar.js"></script>
+
+    <main class="max-w-[1600px] mx-auto px-6 py-8 mt-20">
+        <header class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-800">Inventory Dashboard</h1>
+                <p class="text-slate-500 mt-1">Real-time overview of yarn stock and distribution</p>
+            </div>
+            <button id="refresh-btn" onclick="fetchData()"
+                class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm hover:bg-slate-50 flex items-center gap-2 transition-all active:scale-95">
+                <svg id="refresh-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                    </path>
+                </svg>
+                <span id="refresh-text">Refresh Data</span>
+            </button>
+        </header>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="stat-card" onclick="applyFilter('all')">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Total Yarns</p>
+                        <h3 class="text-3xl font-bold text-slate-800 mt-1" id="total-yarns">-</h3>
+                    </div>
+                    <div class="p-2 bg-blue-50 rounded-lg text-blue-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-4">All registered rolls</p>
+            </div>
+
+            <div class="stat-card" onclick="applyFilter('reserved')">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Reserved</p>
+                        <h3 class="text-3xl font-bold text-orange-600 mt-1" id="reserved-yarns">-</h3>
+                    </div>
+                    <div class="p-2 bg-orange-50 rounded-lg text-orange-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-4">Awaiting dispatch</p>
+            </div>
+
+            <div class="stat-card" onclick="applyFilter('dispatched')">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Dispatched</p>
+                        <h3 class="text-3xl font-bold text-green-600 mt-1" id="dispatched-yarns">-</h3>
+                    </div>
+                    <div class="p-2 bg-green-50 rounded-lg text-green-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-4">Completed orders</p>
+            </div>
+
+            <div class="stat-card pointer-events-none">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Bins in Use</p>
+                        <h3 class="text-3xl font-bold text-slate-800 mt-1" id="active-bins">-</h3>
+                    </div>
+                    <div class="p-2 bg-purple-50 rounded-lg text-purple-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-4">Across active racks</p>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="chart-container flex flex-col">
+                <h3 class="text-lg font-bold text-slate-700 mb-4">Stock by Rack</h3>
+                <div class="flex-1 w-full flex justify-center overflow-hidden">
+                    <div id="rackChartWrapper" class="h-full w-full">
+                        <canvas id="rackChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container flex flex-col">
+                <h3 class="text-lg font-bold text-slate-700 mb-4">Stock by Yarn Type</h3>
+                <div class="flex-1 w-full flex justify-center overflow-hidden">
+                    <div id="typeChartWrapper" class="h-full w-full">
+                        <canvas id="typeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Details Grid -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <span id="grid-title">All Yarn Rolls</span>
+                    <span class="text-sm font-normal text-slate-400 bg-slate-100 px-2 py-1 rounded-full"
+                        id="grid-count">0</span>
+                </h2>
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="relative" style="flex: 1; min-width: 200px;">
+                        <input type="text" id="filter-search" placeholder="Search ID, Type, Lot..."
+                            style="height: 42px; padding: 0 1rem 0 2.5rem;"
+                            class="w-full border rounded-lg text-sm outline-none focus:border-orange-500 box-sizing: border-box;">
+                        <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <input type="text" id="filter-bin" placeholder="Bin" style="width: 80px; height: 42px;"
+                        class="px-3 border rounded-lg text-sm outline-none focus:border-orange-500 box-sizing: border-box;">
+                    <input type="text" id="filter-rack" placeholder="Rack" style="width: 80px; height: 42px;"
+                        class="px-3 border rounded-lg text-sm outline-none focus:border-orange-500 box-sizing: border-box;">
+                    <select id="filter-type" style="height: 42px; min-width: 150px; max-width: 200px;"
+                        class="px-3 border rounded-lg text-sm outline-none focus:border-orange-500 box-sizing: border-box;">
+                        <option value="">All Types</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="rolls-grid" class="roll-grid">
+                <!-- Rolls injected here -->
+            </div>
+
+            <div id="empty-state" class="hidden text-center py-12">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-slate-50 rounded-full mb-4">
+                    <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
+                        </path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-slate-700">No yarns found</h3>
+                <p class="text-slate-500">Try adjusting your filters or search terms.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let allRolls = [];
+        let currentFilter = 'all'; // all, reserved, dispatched, or specific ID types
+        let rackChartInstance = null;
+        let typeChartInstance = null;
+
+        async function fetchData() {
+            const btn = document.getElementById('refresh-btn');
+            const icon = document.getElementById('refresh-icon');
+            const text = document.getElementById('refresh-text');
+
+            if (btn) {
+                btn.disabled = true;
+                icon.classList.add('animate-spin');
+                text.textContent = 'Refreshing...';
+            }
+
+            try {
+                const response = await fetch('/api/rolls');
+                allRolls = await response.json();
+
+                // Filter out test rolls
+                allRolls = allRolls.filter(r => !r.id.toLowerCase().includes('test'));
+
+                // Dynamic Type Dropdown Population
+                const typeSelect = document.getElementById('filter-type');
+                if (typeSelect && typeSelect.options.length <= 1) {
+                    const types = [...new Set(allRolls.map(r => r.yarn_type).filter(t => t))];
+                    types.sort().forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t;
+                        opt.textContent = t;
+                        typeSelect.appendChild(opt);
+                    });
+                }
+
+                updateStats();
+                updateCharts();
+                applyFilter(currentFilter);
+            } catch (error) {
+                console.error('Failed to fetch data', error);
+            } finally {
+                if (btn) {
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        icon.classList.remove('animate-spin');
+                        text.textContent = 'Refresh Data';
+                    }, 500);
+                }
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('total-yarns').textContent = allRolls.length;
+            document.getElementById('reserved-yarns').textContent = allRolls.filter(r => r.state === 'RESERVED').length;
+            document.getElementById('dispatched-yarns').textContent = allRolls.filter(r => r.state === 'DISPATCHED').length;
+
+            let uniqueBinLocations = new Set(allRolls.map(r => `${r.rack_id || '?'}-${r.bin || '?'}`));
+            document.getElementById('active-bins').textContent = uniqueBinLocations.size;
+        }
+
+        function updateCharts() {
+            const setDynamicWidth = (wrapperId, count) => {
+                const wrapper = document.getElementById(wrapperId);
+                const width = Math.max(300, count * 80);
+                wrapper.style.width = width + 'px';
+                wrapper.style.maxWidth = '100%';
+            };
+
+            const rollsByRack = {};
+            allRolls.forEach(r => {
+                const rack = r.rack_id || 'Unassigned';
+                rollsByRack[rack] = (rollsByRack[rack] || 0) + 1;
+            });
+            setDynamicWidth('rackChartWrapper', Object.keys(rollsByRack).length);
+
+            const rollsByType = {};
+            allRolls.forEach(r => {
+                const type = r.yarn_type || 'Unknown';
+                rollsByType[type] = (rollsByType[type] || 0) + 1;
+            });
+            setDynamicWidth('typeChartWrapper', Object.keys(rollsByType).length);
+
+            const chartConfig = {
+                type: 'bar',
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            };
+
+            const rackCtx = document.getElementById('rackChart').getContext('2d');
+            if (rackChartInstance) rackChartInstance.destroy();
+            rackChartInstance = new Chart(rackCtx, {
+                ...chartConfig,
+                data: {
+                    labels: Object.keys(rollsByRack),
+                    datasets: [{
+                        label: 'Rolls',
+                        data: Object.values(rollsByRack),
+                        backgroundColor: '#f97316',
+                        borderRadius: 6,
+                        maxBarThickness: 40,
+                        barPercentage: 0.9,
+                        categoryPercentage: 0.9
+                    }]
+                }
+            });
+
+            const typeCtx = document.getElementById('typeChart').getContext('2d');
+            if (typeChartInstance) typeChartInstance.destroy();
+            typeChartInstance = new Chart(typeCtx, {
+                ...chartConfig,
+                data: {
+                    labels: Object.keys(rollsByType),
+                    datasets: [{
+                        label: 'Rolls',
+                        data: Object.values(rollsByType),
+                        backgroundColor: '#0ea5e9',
+                        borderRadius: 6,
+                        maxBarThickness: 40,
+                        barPercentage: 0.9,
+                        categoryPercentage: 0.9
+                    }]
+                }
+            });
+        }
+
+        function renderGrid(rolls) {
+            const grid = document.getElementById('rolls-grid');
+            const empty = document.getElementById('empty-state');
+            const count = document.getElementById('grid-count');
+
+            grid.innerHTML = '';
+            count.textContent = rolls.length;
+
+            if (rolls.length === 0) {
+                grid.classList.add('hidden');
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            grid.classList.remove('hidden');
+            empty.classList.add('hidden');
+
+            rolls.forEach(roll => {
+                const statusClass = roll.state === 'IN STOCK' ? 'status-instock' :
+                    roll.state === 'RESERVED' ? 'status-reserved' :
+                        roll.state === 'DISPATCHED' ? 'status-dispatched' : 'bg-slate-100 text-slate-600';
+
+                const card = document.createElement('div');
+                card.className = 'roll-card';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="font-bold text-lg text-slate-800">#${roll.id}</span>
+                        <span class="status-badge ${statusClass}">${roll.state}</span>
+                    </div>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Type</span>
+                            <span class="font-medium text-slate-700">${roll.yarn_type || '-'}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Lot No</span>
+                            <span class="font-medium text-slate-700">${roll.lot_number || '-'}</span>
+                        </div>
+                        <div class="flex justify-between border-t border-slate-100 pt-2 mt-2">
+                             <span class="text-slate-500">Location</span>
+                             <span class="font-medium text-slate-700">Rack ${roll.rack_id || '?'} / Bin ${roll.bin || '?'}</span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        window.applyFilter = function (filterType) {
+            currentFilter = filterType;
+            let filtered = [];
+
+            document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
+
+            if (filterType === 'all') {
+                filtered = allRolls;
+                document.getElementById('grid-title').textContent = 'All Yarn Rolls';
+            } else if (filterType === 'reserved') {
+                filtered = allRolls.filter(r => r.state === 'RESERVED');
+                document.getElementById('grid-title').textContent = 'Reserved Yarns';
+            } else if (filterType === 'dispatched') {
+                filtered = allRolls.filter(r => r.state === 'DISPATCHED');
+                document.getElementById('grid-title').textContent = 'Dispatched Yarns';
+            }
+
+            // EXTENDED FILTERS
+            const search = document.getElementById('filter-search').value.toLowerCase();
+            const bin = document.getElementById('filter-bin').value.toLowerCase();
+            const rack = document.getElementById('filter-rack').value.toLowerCase();
+            const type = document.getElementById('filter-type').value.toLowerCase();
+
+            filtered = filtered.filter(r => {
+                const matchSearch = !search ||
+                    r.id.toLowerCase().includes(search) ||
+                    (r.yarn_type && r.yarn_type.toLowerCase().includes(search)) ||
+                    (r.lot_number && r.lot_number.toLowerCase().includes(search));
+
+                const matchBin = !bin || String(r.bin || '').toLowerCase().includes(bin);
+                const matchRack = !rack || String(r.rack_id || '').toLowerCase().includes(rack);
+                const matchType = !type || (r.yarn_type || '').toLowerCase() === type;
+
+                return matchSearch && matchBin && matchRack && matchType;
+            });
+
+            renderGrid(filtered);
+        };
+
+        // Initialize Listeners
+        ['filter-search', 'filter-bin', 'filter-rack'].forEach(id => {
+            document.getElementById(id).addEventListener('input', () => applyFilter(currentFilter));
+        });
+        document.getElementById('filter-type').addEventListener('change', () => applyFilter(currentFilter));
+
+        fetchData();
+        setInterval(fetchData, 30000);
+    </script>
+</body>
+
+</html>

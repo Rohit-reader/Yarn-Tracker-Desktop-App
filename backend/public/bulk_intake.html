@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Intake | Yarn Roll Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 16px;
+        }
+
+        .success-toast {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="/navbar.css">
+    <script src="/navbar.js"></script>
+</head>
+
+<body class="flex flex-col min-h-screen">
+    <!-- Navbar injected here by navbar.js -->
+
+    <main class="flex-1 mt-20 p-8 max-w-5xl mx-auto w-full">
+        <header class="mb-10 text-center">
+            <h2 class="text-4xl font-extrabold text-slate-800 tracking-tight text-blue-600">Bulk Intake</h2>
+            <p class="text-slate-500 mt-2 text-lg">Batch register yarn rolls with auto-allocation</p>
+        </header>
+
+        <div class="glass-card p-10 shadow-sm">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                <div>
+                    <label class="block text-sm font-bold mb-3 text-slate-600 uppercase tracking-wide">Yarn Type</label>
+                    <select id="bulk-type"
+                        class="w-full p-4 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-white font-medium">
+                        <option value="Cotton 30s">Cotton 30s</option>
+                        <option value="Polyester">Polyester</option>
+                        <option value="Wool Blend">Wool Blend</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-3 text-slate-600 uppercase tracking-wide">Total Roll
+                        Count</label>
+                    <input type="number" id="bulk-count" value="50" min="1"
+                        class="w-full p-4 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-3 text-slate-600 uppercase tracking-wide">Starting Rack
+                        ID</label>
+                    <input type="text" id="bulk-rack" value="R1"
+                        class="w-full p-4 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+                        placeholder="e.g. R1">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-3 text-slate-600 uppercase tracking-wide">Starting Bin
+                        Number</label>
+                    <input type="number" id="bulk-start-bin" value="1" min="1"
+                        class="w-full p-4 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold">
+                </div>
+            </div>
+
+            <div class="p-5 bg-blue-50 border-l-4 border-blue-500 text-blue-800 rounded-r-xl mb-10 flex gap-4">
+                <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="font-medium text-sm">System will auto-allocate bins based on <b>Configured Limits</b>. If the
+                    current bin fills, it will move to the next sequentially.</p>
+            </div>
+
+            <div class="flex justify-end pt-6 border-t border-slate-100">
+                <button id="bulkSubmitBtn" onclick="submitBulkIntake()"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-2xl font-bold shadow-xl shadow-blue-600/20 transition transform active:scale-95 uppercase tracking-widest">
+                    Run Bulk Intake Process
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <div id="toastContainer" class="fixed bottom-8 right-8 z-[100]"></div>
+
+    <script>
+        async function submitBulkIntake() {
+            const btn = document.getElementById('bulkSubmitBtn');
+            const data = {
+                yarn_type: document.getElementById('bulk-type').value,
+                roll_count: parseInt(document.getElementById('bulk-count').value),
+                start_bin_num: parseInt(document.getElementById('bulk-start-bin').value),
+                rack_id: document.getElementById('bulk-rack').value,
+                weight: 25,
+                yarn_count: '30s',
+                supplier_name: 'ABC Textiles',
+                quality_grade: 'A'
+            };
+
+            if (!data.yarn_type || !data.roll_count) {
+                showToast('Validation Error', 'Missing yarn type or count.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = 'PROCESSING...';
+
+            try {
+                const response = await fetch('/api/rolls/bulk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showToast('Bulk Intake Success', `Successfully registered ${data.roll_count} rolls!`);
+                } else {
+                    const err = await response.json();
+                    showToast('Error', err.error || 'Intake failed.', 'error');
+                }
+            } catch (err) {
+                showToast('System Error', 'Server unreachable.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Run Bulk Intake Process';
+            }
+        }
+
+        function showToast(title, message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-slate-900' : 'bg-rose-600';
+
+            toast.className = `success-toast shadow-2xl p-6 rounded-2xl max-w-sm mb-4 ${bgClass} text-white`;
+            toast.innerHTML = `
+                <p class="font-black uppercase tracking-widest text-xs opacity-70 mb-1">${title}</p>
+                <p class="text-sm font-bold">${message}</p>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(20px)';
+                toast.style.transition = 'all 0.5s ease-out';
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+    </script>
+</body>
+
+</html>

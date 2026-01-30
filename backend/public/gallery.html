@@ -33,7 +33,6 @@
         }
 
         .qr-card:hover {
-            border-color: var(--accent);
             transform: translateY(-5px);
         }
 
@@ -56,32 +55,43 @@
                 <p class="text-slate-500">View and print QR codes for all yarn rolls</p>
             </div>
             <div class="flex flex-wrap items-center gap-3">
-                <div class="relative">
-                    <input type="text" id="gallerySearch" placeholder="Search ID..."
-                        class="pl-10 pr-4 py-2 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none w-48">
-                    <svg class="w-5 h-5 absolute left-3 top-2.5 text-slate-400" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
+                <div class="relative" style="flex: 1; min-width: 200px;">
+                    <input type="text" id="gallerySearch" placeholder="Search ID, Type..."
+                        style="height: 42px; padding: 0 1rem 0 2.5rem;"
+                        class="w-full border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none box-sizing: border-box;">
+                    <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                 </div>
-                <select id="binFilter"
-                    class="px-4 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-orange-500">
-                    <option value="">All Bins</option>
-                    <option value="1">Bin 1</option>
-                    <option value="2">Bin 2</option>
-                    <option value="3">Bin 3</option>
-                    <option value="4">Bin 4</option>
-                    <option value="5">Bin 5</option>
-                    <option value="6">Bin 6</option>
-                    <option value="7">Bin 7</option>
-                    <option value="8">Bin 8</option>
-                    <option value="9">Bin 9</option>
+                <!-- Bin Input -->
+                <input type="text" id="binFilter" placeholder="Bin" style="width: 80px; height: 42px;"
+                    class="px-3 border rounded-xl outline-none focus:ring-2 focus:ring-orange-500 box-sizing: border-box;">
+
+                <!-- Rack Input -->
+                <input type="text" id="rackFilter" placeholder="Rack" style="width: 80px; height: 42px;"
+                    class="px-3 border rounded-xl outline-none focus:ring-2 focus:ring-orange-500 box-sizing: border-box;">
+
+                <!-- Type Select -->
+                <select id="typeFilter" style="height: 42px; min-width: 150px; max-width: 200px;"
+                    class="px-3 border rounded-xl outline-none focus:ring-2 focus:ring-orange-500 box-sizing: border-box;">
+                    <option value="">All Types</option>
                 </select>
-                <button onclick="window.print()"
-                    class="bg-orange-600 hover:bg-orange-500 text-white px-6 py-2 rounded-xl font-bold flex items-center transition-colors">
+
+                <button onclick="loadGallery()" style="height: 42px; width: 42px;"
+                    class="bg-white border text-slate-600 hover:bg-slate-50 rounded-xl transition-colors flex items-center justify-center p-0"
+                    title="Refresh Data">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                        </path>
+                    </svg>
+                </button>
+                <button onclick="window.print()" style="height: 42px;"
+                    class="bg-orange-600 hover:bg-orange-500 text-white px-6 rounded-xl font-bold flex items-center transition-colors">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
                         </path>
                     </svg>
@@ -116,6 +126,19 @@
 
         function renderGallery(rolls) {
             const container = document.getElementById('galleryGrid');
+
+            // Dynamic Type Dropdown Population
+            const typeSelect = document.getElementById('typeFilter');
+            if (typeSelect && typeSelect.options.length <= 1) {
+                const types = [...new Set(allRolls.map(r => r.yarn_type).filter(t => t))];
+                types.sort().forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t;
+                    opt.textContent = t;
+                    typeSelect.appendChild(opt);
+                });
+            }
+
             if (rolls.length === 0) {
                 container.innerHTML = '<div class="col-span-full text-center py-20 text-gray-500">No matching rolls found.</div>';
                 return;
@@ -130,7 +153,7 @@
                     </div>
                     <h3 class="font-bold text-slate-800 mb-1">${roll.id}</h3>
                     <div class="space-y-0.5 mb-2">
-                        <p class="text-xs text-slate-500">${roll.yarn_type}</p>
+                        <p class="text-xs text-slate-500">${roll.yarn_type || 'N/A'}</p>
                         <p class="text-[10px] font-bold text-orange-600">BIN: ${roll.bin || '1'} | RACK: ${roll.rack_id || 'N/A'}</p>
                     </div>
                     <a href="/details.html?id=${roll.id}" class="text-orange-600 text-[10px] hover:underline font-bold uppercase tracking-wider">View Details</a>
@@ -161,20 +184,27 @@
 
         function applyFilters() {
             const search = document.getElementById('gallerySearch').value.toLowerCase();
-            const bin = document.getElementById('binFilter').value;
+            const bin = document.getElementById('binFilter').value.toLowerCase();
+            const rack = document.getElementById('rackFilter').value.toLowerCase();
+            const type = document.getElementById('typeFilter').value.toLowerCase();
 
             const filtered = allRolls.filter(roll => {
                 const matchSearch = roll.id.toLowerCase().includes(search) ||
                     (roll.yarn_type || '').toLowerCase().includes(search);
-                const matchBin = !bin || String(roll.bin) === bin;
-                return matchSearch && matchBin;
+                const matchBin = !bin || String(roll.bin || '').toLowerCase().includes(bin);
+                const matchRack = !rack || String(roll.rack_id || '').toLowerCase().includes(rack);
+                const matchType = !type || (roll.yarn_type || '').toLowerCase() === type;
+
+                return matchSearch && matchBin && matchRack && matchType;
             });
 
             renderGallery(filtered);
         }
 
         document.getElementById('gallerySearch').addEventListener('input', applyFilters);
-        document.getElementById('binFilter').addEventListener('change', applyFilters);
+        document.getElementById('binFilter').addEventListener('input', applyFilters);
+        document.getElementById('rackFilter').addEventListener('input', applyFilters);
+        document.getElementById('typeFilter').addEventListener('change', applyFilters);
 
         window.onload = loadGallery;
     </script>
