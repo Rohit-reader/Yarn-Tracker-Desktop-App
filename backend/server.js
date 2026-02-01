@@ -19,7 +19,8 @@ import {
   setDoc,
   deleteDoc,
   where,
-  limit
+  limit,
+  collectionGroup
 } from 'firebase/firestore';
 
 const app = express();
@@ -32,9 +33,6 @@ app.use(express.json());
 // Serve static files from the internal public folder
 const frontendPath = path.join(__dirname, 'public');
 app.use(express.static(frontendPath));
-
-// Main Collection reference
-const rollsCollection = collection(db, 'yarnRolls');
 
 // Helper to log actions to scanHistory
 async function logScan(rollId, action, details) {
@@ -57,13 +55,14 @@ app.get('/api/health', (req, res) => {
 // Get all rolls
 app.get('/api/rolls', async (req, res) => {
   try {
-    console.log('\n📦 GET /api/rolls - Fetching all rolls from Firestore');
-    const q = query(rollsCollection, orderBy('production_date', 'desc'));
+    console.log('\n📦 GET /api/rolls - Fetching all rolls from inventory');
+    const q = query(collection(db, 'inventory'), orderBy('production_date', 'desc'));
     const querySnapshot = await getDocs(q);
 
     const rolls = querySnapshot.docs.map(doc => ({
       ...doc.data(),
-      firebaseId: doc.id
+      firebaseId: doc.id,
+      documentPath: doc.ref.path
     }));
 
     console.log(`Total rolls: ${rolls.length}`);
@@ -107,13 +106,26 @@ app.get('/api/rolls', async (req, res) => {
 app.get('/api/rolls/:id', async (req, res) => {
   try {
     const rollId = req.params.id;
-    const rollDoc = await getDoc(doc(db, 'yarnRolls', rollId));
+    // Check inventory first for fast lookup
+    const invSnap = await getDoc(doc(db, 'inventory', rollId));
 
-    if (!rollDoc.exists()) {
-      return res.status(404).json({ error: 'Roll not found' });
+    if (invSnap.exists()) {
+      return res.json(invSnap.data());
     }
 
-    res.json(rollDoc.data());
+    // Fallback: search hierarchy (useful for newly created hierarchical data not yet in inventory)
+    try {
+      const q = query(collectionGroup(db, 'rolls'), where('id', '==', rollId), limit(1));
+      const snap = await getDocs(q);
+
+      if (!snap.empty) {
+        return res.json(snap.docs[0].data());
+      }
+    } catch (e) {
+      console.log('   ℹ️ Hierarchical fallback skipped (index missing or legacy data)');
+    }
+
+    res.status(404).json({ error: 'Roll not found' });
   } catch (error) {
     console.error('Error fetching roll:', error);
     res.status(500).json({ error: 'Failed to fetch roll data' });
@@ -153,14 +165,18 @@ app.post('/api/rolls', async (req, res) => {
       bin: bin || 'B1'
     };
 
-    // 1. Master Record
-    await setDoc(doc(db, 'yarnRolls', rollId), rollData);
+    // 1. Hierarchical Storage: racks/{rack}/bins/{bin}/rolls/{id}
+    const rackLabel = rack_id || 'R1';
+    const binLabel = bin || 'B1';
 
-    // 2. Active Inventory
+    const rollDocRef = doc(db, 'racks', rackLabel, 'bins', binLabel, 'rolls', rollId);
+    await setDoc(rollDocRef, rollData);
+
+    // 2. Legacy/Active Inventory Sync (Optional, but keeping for compatibility if parts of app rely on it)
     await setDoc(doc(db, 'inventory', rollId), rollData);
 
     // 4. History log
-    await logScan(rollId, 'CREATION', 'Registered and added to inventory');
+    await logScan(rollId, 'CREATION', `Registered in ${rackLabel} / ${binLabel}`);
 
     // 5. Generate QR Code image
     const qrDir = path.join(frontendPath, 'qrcodes');
@@ -194,45 +210,51 @@ app.post('/api/rolls', async (req, res) => {
 // Update roll states (bulk operation)
 app.post('/api/rolls/update-state', async (req, res) => {
   try {
-    const { rollIds, newState } = req.body;
-    const capitalizedState = newState.toUpperCase();
+    const { rollIds, state } = req.body;
+    const capitalizedState = state.toUpperCase();
     const now = new Date().toISOString();
 
     await Promise.all(rollIds.map(async (id) => {
       try {
-        const rollDocRef = doc(db, 'yarnRolls', id);
-        const rollSnap = await getDoc(rollDocRef);
+        // Find the roll in inventory first (authoritative mirror for fast lookup)
+        const invDoc = await getDoc(doc(db, 'inventory', id));
+        if (invDoc.exists()) {
+          const rollData = invDoc.data();
+          const masterPath = `racks/${rollData.rack_id || 'R1'}/bins/${rollData.bin || 'B1'}/rolls/${id}`;
+          const masterRef = doc(db, masterPath);
 
-        if (rollSnap.exists()) {
-          const rollData = { ...rollSnap.data(), state: capitalizedState, last_state_change: now };
+          const updatedData = { ...rollData, state: capitalizedState, last_state_change: now };
 
-          // 1. Update Master
-          await updateDoc(rollDocRef, { state: capitalizedState, last_state_change: now });
+          // 1. Update Hierarchical Master Record (if it exists)
+          try {
+            await updateDoc(masterRef, { state: capitalizedState, last_state_change: now });
+          } catch (e) {
+            console.log(`   ℹ️ No master doc at ${masterPath}, skipping nested update.`);
+          }
 
           // 2. Collection specific sync
           if (capitalizedState === 'DISPATCHED') {
             await deleteDoc(doc(db, 'inventory', id));
             await deleteDoc(doc(db, 'reserved_collection', id));
             await deleteDoc(doc(db, 'picking_collection', id));
-            await setDoc(doc(db, 'deliveries', id), { ...rollData, delivered_at: now });
+            await setDoc(doc(db, 'deliveries', id), { ...updatedData, delivered_at: now });
             await logScan(id, 'DELIVERY', 'Moved to deliveries');
           } else if (capitalizedState === 'RESERVED') {
-            await setDoc(doc(db, 'reserved_collection', id), rollData);
-            await deleteDoc(doc(db, 'picking_collection', id)); // Cleanup picking if moving back
-            await setDoc(doc(db, 'inventory', id), rollData);
+            await setDoc(doc(db, 'reserved_collection', id), updatedData);
+            await deleteDoc(doc(db, 'picking_collection', id));
+            await setDoc(doc(db, 'inventory', id), updatedData);
             await logScan(id, 'RESERVE', 'Roll reserved for order');
           } else if (capitalizedState === 'PICKED') {
-            await setDoc(doc(db, 'picking_collection', id), rollData);
-            await deleteDoc(doc(db, 'reserved_collection', id)); // Move from reserved to picking
-            await setDoc(doc(db, 'inventory', id), rollData);
+            await setDoc(doc(db, 'picking_collection', id), updatedData);
+            await deleteDoc(doc(db, 'reserved_collection', id));
+            await setDoc(doc(db, 'inventory', id), updatedData);
             await logScan(id, 'PICK', 'Roll picked for dispatch');
           } else {
-            // If moved back to IN STOCK or other states, cleanup specific collections
             if (capitalizedState === 'IN STOCK') {
               await deleteDoc(doc(db, 'reserved_collection', id));
               await deleteDoc(doc(db, 'picking_collection', id));
             }
-            await setDoc(doc(db, 'inventory', id), rollData);
+            await setDoc(doc(db, 'inventory', id), updatedData);
             await logScan(id, 'STATE_CHANGE', `State changed to ${capitalizedState}`);
           }
         }
@@ -356,13 +378,21 @@ app.post('/api/orders/:id/approve', async (req, res) => {
     // Reserve those rolls
     const now = new Date().toISOString();
     await Promise.all(rollsToReserve.map(async (roll) => {
-      const rollDocRef = doc(db, 'yarnRolls', roll.id);
-      const inventoryDocRef = doc(db, 'inventory', roll.id);
+      // Find master document in hierarchy using direct path reconstruction
+      const masterPath = `racks/${roll.rack_id || 'R1'}/bins/${roll.bin || 'B1'}/rolls/${roll.id}`;
+      const masterRef = doc(db, masterPath);
 
+      const inventoryDocRef = doc(db, 'inventory', roll.id);
       const updatedRollData = { ...roll, state: 'RESERVED', order_id: orderId, last_state_change: now };
 
-      // Update both collections
-      await updateDoc(rollDocRef, { state: 'RESERVED', order_id: orderId, last_state_change: now });
+      // Update Hierarchical Master (if it exists)
+      try {
+        await updateDoc(masterRef, { state: 'RESERVED', order_id: orderId, last_state_change: now });
+      } catch (e) {
+        console.log(`   ℹ️ No master doc at ${masterPath}, skipping nested update.`);
+      }
+
+      // Update Inventory Sync
       await updateDoc(inventoryDocRef, { state: 'RESERVED', order_id: orderId, last_state_change: now });
 
       // Move to reserved_collection
@@ -415,8 +445,8 @@ app.get('/api/dashboard-stats', async (req, res) => {
       return data.approvedAt && data.approvedAt >= startOfDay;
     }).length;
 
-    // 3. Reserved Rolls (Exact count of yarns with state = 'RESERVED')
-    const reservedQuery = query(rollsCollection, where('state', '==', 'RESERVED'));
+    // 3. Reserved Rolls (Using inventory mirror for speed/reliability)
+    const reservedQuery = query(collection(db, 'inventory'), where('state', '==', 'RESERVED'));
     const reservedSnap = await getDocs(reservedQuery);
     const reservedCount = reservedSnap.size;
 
@@ -568,8 +598,8 @@ app.post('/api/admin/regenerate-qrs', async (req, res) => {
   try {
     console.log('\n🔄 POST /api/admin/regenerate-qrs - Starting bulk regeneration');
 
-    // Get all rolls
-    const q = query(rollsCollection);
+    // Generate QRs by scanning all rolls in inventory mirror
+    const q = query(collection(db, 'inventory'));
     const querySnapshot = await getDocs(q);
     const rolls = querySnapshot.docs.map(doc => doc.data());
 
@@ -676,8 +706,39 @@ app.post('/api/settings', async (req, res) => {
     res.status(500).json({ error: 'Failed to save settings' });
   }
 });
+app.delete('/api/rolls/clear-all', async (req, res) => {
+  try {
+    console.log('\n🗑️ DELETE /api/rolls/clear-all - Clearing SYSTEM inventory');
 
-// 8. Bulk Roll Creation with Auto-Allocation
+    // 1. Fetch from flat inventory mirror
+    const inventorySnap = await getDocs(collection(db, 'inventory'));
+    const racksSnap = await getDocs(collection(db, 'racks'));
+
+    const deletePromises = [
+      ...inventorySnap.docs.map(d => deleteDoc(d.ref))
+    ];
+
+    // 2. Hierarchy cleanup (wrapped in try-catch to ignore index errors)
+    try {
+      const rollsSnap = await getDocs(collectionGroup(db, 'rolls'));
+      rollsSnap.docs.forEach(d => deletePromises.push(deleteDoc(d.ref)));
+      console.log(`   Hierarchy: Found ${rollsSnap.size} rolls to clear`);
+    } catch (e) {
+      console.log('   ℹ️ Hierarchical cleanup skipped (index missing or already clean)');
+    }
+
+    // 3. Wipe rack containers
+    racksSnap.docs.forEach(d => deletePromises.push(deleteDoc(d.ref)));
+
+    await Promise.all(deletePromises);
+    console.log(`[Backend] System Reset complete. Cleared ${inventorySnap.size} rolls.`);
+    res.json({ success: true, message: `System Reset: Cleared ${inventorySnap.size} rolls` });
+  } catch (error) {
+    console.error('Error clearing system inventory:', error);
+    res.status(500).json({ error: 'Failed to clear inventory' });
+  }
+});
+
 app.post('/api/rolls/bulk', async (req, res) => {
   try {
     const {
@@ -708,6 +769,7 @@ app.post('/api/rolls/bulk', async (req, res) => {
 
       const rollId = generateRollNumber();
       const binLabel = `B${currentBinNum}`;
+      const rackLabel = rack_id || 'R1';
 
       const rollData = {
         id: rollId,
@@ -716,7 +778,7 @@ app.post('/api/rolls/bulk', async (req, res) => {
         order_id: order_id || 'ORD-NONE',
         production_date: now,
         quality_grade: quality_grade || 'A',
-        rack_id: rack_id || '',
+        rack_id: rackLabel,
         state: 'IN STOCK',
         supplier_name: supplier_name || 'ABC Textiles',
         weight: parseFloat(weight) || 25,
@@ -726,10 +788,13 @@ app.post('/api/rolls/bulk', async (req, res) => {
         createdAt: now
       };
 
-      // Firestore writes
-      await setDoc(doc(db, 'yarnRolls', rollId), rollData);
+      // Hierarchical Firestore write
+      const nestedRef = doc(db, 'racks', rackLabel, 'bins', binLabel, 'rolls', rollId);
+      await setDoc(nestedRef, rollData);
+
+      // Inventory keep-sync
       await setDoc(doc(db, 'inventory', rollId), rollData);
-      await logScan(rollId, 'BULK_CREATION', `Roll created via bulk intake in ${binLabel}`);
+      await logScan(rollId, 'BULK_CREATION', `Roll created in ${rackLabel} / ${binLabel}`);
 
       // QR Generation
       const qrDir = path.join(frontendPath, 'qrcodes');

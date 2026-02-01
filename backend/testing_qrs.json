@@ -13,5 +13,20 @@
     "yarn_count": "60s",
     "yarn_type": "Cotton 30s",
     "bin": "1"
+  },
+  {
+    "id": "TEST - 1769765412141",
+    "last_state_change": "2026-01-30T09:30:12.141Z",
+    "lot_number": "TEST-LOT",
+    "order_id": "TEST-ORD",
+    "production_date": "2026-01-30T09:30:12.141Z",
+    "quality_grade": "A",
+    "rack_id": "STAGING",
+    "state": "TESTING",
+    "supplier_name": "ABC Textiles",
+    "weight": 25,
+    "yarn_count": "30s",
+    "yarn_type": "Cotton 30s",
+    "bin": "1"
   }
 ]

@@ -379,7 +379,10 @@
         const modal = document.querySelector('.modal-content');
         if (modal && (modal.textContent.includes('Register New Roll') || modal.textContent.includes('Add New Roll'))) {
           const rackInput = modal.querySelector('input[placeholder*="RACK"]');
-          if (rackInput) { if (rackInput.value === 'STAGING') rackInput.value = ''; rackInput.placeholder = 'e.g. 1 or 2'; }
+          if (rackInput) {
+            if (rackInput.value.toUpperCase() === 'STAGING') rackInput.value = '';
+            rackInput.placeholder = 'Search Rack / Enter Location...';
+          }
           if (!document.getElementById('injected-bin-group')) {
             const labels = Array.from(modal.querySelectorAll('label'));
             const rackLabel = labels.find(l => l.textContent.includes('Rack')) || labels[labels.length - 1];

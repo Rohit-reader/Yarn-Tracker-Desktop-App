@@ -39,6 +39,12 @@ body {
     font-family: 'Outfit', sans-serif;
 }
 
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .nav-logo {
     display: flex;
     align-items: center;
@@ -158,11 +164,14 @@ option:active {
    GLOBAL SIDEBAR (DRAWER) STYLES
    ========================================= */
 .sidebar-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
-    z-index: 99999998;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    backdrop-filter: blur(4px) !important;
+    z-index: 2000000000 !important;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
@@ -174,13 +183,13 @@ option:active {
 }
 
 #side-drawer {
-    position: fixed;
-    top: 0;
-    left: -320px;
-    width: 320px;
-    height: 100vh;
-    background: white;
-    z-index: 99999999;
+    position: fixed !important;
+    top: 0 !important;
+    left: -320px !important;
+    width: 320px !important;
+    height: 100vh !important;
+    background: white !important;
+    z-index: 2000000001 !important;
     box-shadow: 20px 0 50px rgba(0, 0, 0, 0.1);
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     padding: 2rem;
@@ -254,7 +263,6 @@ option:active {
     color: var(--text-primary);
     border-radius: 8px;
     transition: background 0.2s;
-    margin-right: 1rem;
 }
 
 .menu-toggle:hover {

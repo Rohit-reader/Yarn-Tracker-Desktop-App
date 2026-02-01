@@ -89,17 +89,83 @@
             </div>
         </div>
 
-        <div class="flex justify-center">
+        <div class="flex justify-center mb-12">
             <button onclick="saveSettings()" id="saveBtn"
                 class="bg-slate-900 hover:bg-black text-white px-12 py-5 rounded-2xl font-bold shadow-2xl transition transform active:scale-95 uppercase tracking-widest text-sm">
                 Apply System Changes
             </button>
         </div>
+
+        <hr class="border-slate-200 mb-12">
+
+        <!-- Danger Zone -->
+        <section class="max-w-2xl mx-auto">
+            <h3 class="text-xs font-bold text-rose-500 uppercase tracking-widest mb-6 px-4">Danger Zone</h3>
+            <div class="glass-card p-8 border-rose-100 bg-rose-50/30">
+                <div class="flex items-start gap-6">
+                    <div
+                        class="w-12 h-12 bg-rose-100 rounded-xl flex items-center justify-center text-rose-600 flex-shrink-0">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                            </path>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="text-xl font-bold text-slate-800 mb-1">Wipe All Inventory</h4>
+                        <p class="text-slate-500 text-sm mb-6 leading-relaxed">Permanently delete all yarn records from
+                            the system. This action is irreversible and will reset the warehouse counts to zero.</p>
+                        <button onclick="confirmClearInventory()" id="clearBtn"
+                            class="bg-white hover:bg-rose-600 text-rose-600 hover:text-white border-2 border-rose-600 px-8 py-3 rounded-xl font-bold transition-all transform active:scale-95 text-xs uppercase tracking-widest">
+                            Clear System Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <div id="toastContainer" class="fixed bottom-8 right-8 z-[100]"></div>
 
     <script>
+        async function confirmClearInventory() {
+            const btn = document.getElementById('clearBtn');
+            const originalText = btn.innerText;
+
+            if (btn.dataset.confirming !== "true") {
+                btn.innerText = "ARE YOU SURE? (CLICK AGAIN)";
+                btn.classList.add('bg-rose-600', 'text-white');
+                btn.dataset.confirming = "true";
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.classList.remove('bg-rose-600', 'text-white');
+                    btn.dataset.confirming = "false";
+                }, 5000);
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = 'WIPING...';
+
+            try {
+                const response = await fetch('/api/rolls/clear-all', { method: 'DELETE' });
+                const result = await response.json();
+
+                if (response.ok) {
+                    showToast('System Reset', 'All inventory records have been deleted.');
+                    // If dashboard or other tabs are open, they will refresh on next visit
+                } else {
+                    showToast('Error', result.error || 'Failed to clear inventory.', 'error');
+                }
+            } catch (err) {
+                showToast('Error', 'Server unreachable.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+                btn.dataset.confirming = "false";
+                btn.classList.remove('bg-rose-600', 'text-white');
+            }
+        }
         async function fetchSettings() {
             try {
                 const response = await fetch('/api/settings');
