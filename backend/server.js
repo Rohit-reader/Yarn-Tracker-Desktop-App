@@ -79,7 +79,13 @@ app.get('/api/rolls', async (req, res) => {
 
         if (!fs.existsSync(qrPath)) {
           console.log(`[Self-Healing] Generating missing QR for ${roll.id}`);
-          const { quality_grade: _q, material: _m, ...qrDataObj } = roll;
+
+          // Prune data for QR encoding
+          const {
+            quality_grade: _q, material: _m, rawQr: _r, firebaseId: _f, documentPath: _d, createdAt: _c,
+            ...qrDataObj
+          } = roll;
+
           await QRCode.toFile(qrPath, JSON.stringify(qrDataObj), {
             color: { dark: '#000000', light: '#ffffff' },
             width: 400
@@ -185,8 +191,11 @@ app.post('/api/rolls', async (req, res) => {
     if (!fs.existsSync(qrDir)) fs.mkdirSync(qrDir, { recursive: true });
     if (!fs.existsSync(rootQrDir)) fs.mkdirSync(rootQrDir, { recursive: true });
 
-    // We encode a subset of data into the QR code as requested (excluding Material/Grade)
-    const { quality_grade: _q, material: _m, ...qrDataObj } = rollData;
+    // We encode a subset of data into the QR code as requested
+    const {
+      quality_grade: _q, material: _m, rawQr: _r, firebaseId: _f, documentPath: _d, createdAt: _c,
+      ...qrDataObj
+    } = rollData;
     const qrData = JSON.stringify(qrDataObj);
 
     const qrPath = path.join(qrDir, `${rollId}.png`);
@@ -450,10 +459,40 @@ app.get('/api/dashboard-stats', async (req, res) => {
     const reservedSnap = await getDocs(reservedQuery);
     const reservedCount = reservedSnap.size;
 
+    // 4. Warehouse Breakdown (Racks/Bins)
+    const inventorySnap = await getDocs(collection(db, 'inventory'));
+    const racksBreakdown = {};
+
+    inventorySnap.docs.forEach(doc => {
+      const roll = doc.data();
+      if (!roll.id || roll.id.toLowerCase().includes('test')) return;
+
+      const rackId = roll.rack_id || 'R1';
+      const binId = roll.bin || 'B1';
+
+      if (!racksBreakdown[rackId]) {
+        racksBreakdown[rackId] = {
+          rack_id: rackId,
+          bins: {},
+          totalYarns: 0,
+          uniqueBinsCount: 0
+        };
+      }
+
+      if (!racksBreakdown[rackId].bins[binId]) {
+        racksBreakdown[rackId].bins[binId] = 0;
+        racksBreakdown[rackId].uniqueBinsCount++;
+      }
+
+      racksBreakdown[rackId].bins[binId]++;
+      racksBreakdown[rackId].totalYarns++;
+    });
+
     res.json({
       pendingCount,
       approvedTodayCount,
-      reservedCount
+      reservedCount,
+      racksBreakdown: Object.values(racksBreakdown)
     });
   } catch (error) {
     console.error('❌ Error fetching dashboard stats:', error);
@@ -515,7 +554,10 @@ app.post('/api/test-rolls', async (req, res) => {
     const qrDir = path.join(frontendPath, 'qrcodes');
     if (!fs.existsSync(qrDir)) fs.mkdirSync(qrDir, { recursive: true });
 
-    const { quality_grade: _q, material: _m, ...qrDataObj } = rollData;
+    const {
+      quality_grade: _q, material: _m, rawQr: _r, firebaseId: _f, documentPath: _d, createdAt: _c,
+      ...qrDataObj
+    } = rollData;
     const qrData = JSON.stringify({
       ...qrDataObj,
       isTest: true
@@ -623,8 +665,11 @@ app.post('/api/admin/regenerate-qrs', async (req, res) => {
       if (!fs.existsSync(qrPath)) {
         console.log(`   Generating missing QR for: ${roll.id}`);
 
-        // Exclude specific fields
-        const { quality_grade: _q, material: _m, ...qrDataObj } = roll;
+        // Exclude specific fields for compactness
+        const {
+          quality_grade: _q, material: _m, rawQr: _r, firebaseId: _f, documentPath: _d, createdAt: _c,
+          ...qrDataObj
+        } = roll;
         const qrData = JSON.stringify(qrDataObj);
 
         await QRCode.toFile(qrPath, qrData, {

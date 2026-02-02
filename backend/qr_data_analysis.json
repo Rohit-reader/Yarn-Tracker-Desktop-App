@@ -1,0 +1,1877 @@
+[
+  {
+    "id": "YR-00003",
+    "length": 400,
+    "data": {
+      "state": "RESERVED",
+      "bin": "1",
+      "last_state_change": "2026-02-01T15:57:03.594Z",
+      "production_date": "2026-01-30T09:30:12.141Z",
+      "order_id": "ORD-1769961367668",
+      "supplier_name": "ABC Textiles",
+      "rack_id": "STAGING",
+      "createdAt": {
+        "type": "firestore/timestamp/1.0",
+        "seconds": 1769769620,
+        "nanoseconds": 553000000
+      },
+      "lot_number": "LOT-20260130-769",
+      "id": "YR-00003",
+      "weight": 25,
+      "yarn_count": "30s",
+      "yarn_type": "Cotton 30s"
+    }
+  },
+  {
+    "id": "YR-628261",
+    "length": 396,
+    "data": {
+      "bin": "9",
+      "supplier_name": "Athik Textiles",
+      "state": "TESTING",
+      "id": "YR-628261",
+      "rack_id": "2",
+      "createdAt": {
+        "type": "firestore/timestamp/1.0",
+        "seconds": 1769939628,
+        "nanoseconds": 800000000
+      },
+      "lot_number": "TEST-LOT",
+      "yarn_type": "Polyester 40s",
+      "order_id": "TEST-ORD",
+      "isTest": true,
+      "weight": 25,
+      "production_date": "2026-02-01T09:48:37.447Z",
+      "yarn_count": "10s",
+      "last_state_change": "2026-02-01T09:48:37.447Z"
+    }
+  },
+  {
+    "id": "YR-628262",
+    "length": 391,
+    "data": {
+      "yarn_type": "Polyester 40s",
+      "id": "YR-628262",
+      "order_id": "ORD-NONE",
+      "bin": "9",
+      "state": "IN STOCK",
+      "supplier_name": "Athik Textiles",
+      "yarn_count": "10s",
+      "last_state_change": "2026-02-01T09:48:37.447Z",
+      "production_date": "2026-02-01T09:48:37.447Z",
+      "rack_id": "2",
+      "weight": 25,
+      "createdAt": {
+        "type": "firestore/timestamp/1.0",
+        "seconds": 1769940001,
+        "nanoseconds": 416000000
+      },
+      "lot_number": "LOT-20260201-634"
+    }
+  },
+  {
+    "id": "YR-2026-110",
+    "length": 341,
+    "data": {
+      "yarn_count": "30s",
+      "id": "YR-2026-110",
+      "lot_number": "LOT-GEN-1161",
+      "weight": 25,
+      "rack_id": "2",
+      "yarn_type": "Cotton 30s",
+      "supplier_name": "ABC Textiles",
+      "bin": "B1",
+      "state": "RESERVED",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "last_state_change": "2026-02-01T08:07:17.353Z",
+      "order_id": "ORD-1769767532570",
+      "production_date": "2026-01-30T09:34:12.669Z"
+    }
+  },
+  {
+    "id": "YR-2026-147",
+    "length": 341,
+    "data": {
+      "yarn_count": "30s",
+      "state": "RESERVED",
+      "supplier_name": "ABC Textiles",
+      "yarn_type": "Cotton 30s",
+      "rack_id": "2",
+      "last_state_change": "2026-02-01T08:07:17.353Z",
+      "bin": "B2",
+      "id": "YR-2026-147",
+      "order_id": "ORD-1769767532570",
+      "lot_number": "LOT-GEN-1654",
+      "weight": 25,
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "createdAt": "2026-01-30T09:34:12.669Z"
+    }
+  },
+  {
+    "id": "YR-2026-150",
+    "length": 341,
+    "data": {
+      "state": "RESERVED",
+      "bin": "B1",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "lot_number": "LOT-GEN-1222",
+      "yarn_count": "30s",
+      "weight": 25,
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "yarn_type": "Cotton 30s",
+      "supplier_name": "ABC Textiles",
+      "order_id": "ORD-1769767532570",
+      "rack_id": "2",
+      "last_state_change": "2026-02-01T08:07:17.353Z",
+      "id": "YR-2026-150"
+    }
+  },
+  {
+    "id": "YR-2026-161",
+    "length": 341,
+    "data": {
+      "rack_id": "2",
+      "bin": "B2",
+      "weight": 25,
+      "last_state_change": "2026-02-01T08:07:17.353Z",
+      "state": "RESERVED",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "order_id": "ORD-1769767532570",
+      "id": "YR-2026-161",
+      "yarn_type": "Cotton 30s",
+      "lot_number": "LOT-GEN-9664",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "supplier_name": "ABC Textiles",
+      "yarn_count": "30s"
+    }
+  },
+  {
+    "id": "YR-2026-183",
+    "length": 341,
+    "data": {
+      "supplier_name": "ABC Textiles",
+      "id": "YR-2026-183",
+      "lot_number": "LOT-GEN-5544",
+      "weight": 25,
+      "order_id": "ORD-1769767532570",
+      "bin": "B2",
+      "last_state_change": "2026-02-01T08:07:17.353Z",
+      "yarn_type": "Cotton 30s",
+      "rack_id": "2",
+      "yarn_count": "30s",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "state": "RESERVED",
+      "createdAt": "2026-01-30T09:34:12.669Z"
+    }
+  },
+  {
+    "id": "YR-2026-215",
+    "length": 341,
+    "data": {
+      "last_state_change": "2026-02-01T08:07:17.353Z",
+      "rack_id": "2",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "supplier_name": "ABC Textiles",
+      "yarn_count": "30s",
+      "id": "YR-2026-215",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "bin": "B2",
+      "lot_number": "LOT-GEN-1647",
+      "yarn_type": "Cotton 30s",
+      "weight": 25,
+      "order_id": "ORD-1769767532570",
+      "state": "RESERVED"
+    }
+  },
+  {
+    "id": "YR-2026-217",
+    "length": 341,
+    "data": {
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "id": "YR-2026-217",
+      "last_state_change": "2026-02-01T08:07:17.353Z",
+      "bin": "B1",
+      "supplier_name": "ABC Textiles",
+      "order_id": "ORD-1769767532570",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "lot_number": "LOT-GEN-1913",
+      "state": "RESERVED",
+      "rack_id": "2",
+      "yarn_count": "30s",
+      "yarn_type": "Cotton 30s",
+      "weight": 25
+    }
+  },
+  {
+    "id": "YR-2026-270",
+    "length": 341,
+    "data": {
+      "yarn_type": "Cotton 30s",
+      "yarn_count": "30s",
+      "supplier_name": "ABC Textiles",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "last_state_change": "2026-02-01T08:07:17.353Z",
+      "state": "RESERVED",
+      "bin": "B1",
+      "lot_number": "LOT-GEN-5116",
+      "id": "YR-2026-270",
+      "order_id": "ORD-1769767532570",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "weight": 25,
+      "rack_id": "2"
+    }
+  },
+  {
+    "id": "YR-2026-287",
+    "length": 341,
+    "data": {
+      "yarn_count": "30s",
+      "supplier_name": "ABC Textiles",
+      "id": "YR-2026-287",
+      "weight": 25,
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "lot_number": "LOT-GEN-7633",
+      "bin": "B2",
+      "rack_id": "2",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "order_id": "ORD-1769767532570",
+      "state": "RESERVED",
+      "yarn_type": "Cotton 30s",
+      "last_state_change": "2026-02-01T08:07:17.353Z"
+    }
+  },
+  {
+    "id": "YR-2026-289",
+    "length": 341,
+    "data": {
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "lot_number": "LOT-GEN-8155",
+      "order_id": "ORD-1769767532570",
+      "id": "YR-2026-289",
+      "rack_id": "2",
+      "yarn_type": "Cotton 30s",
+      "yarn_count": "30s",
+      "last_state_change": "2026-02-01T08:07:17.353Z",
+      "supplier_name": "ABC Textiles",
+      "state": "RESERVED",
+      "weight": 25,
+      "bin": "B1"
+    }
+  },
+  {
+    "id": "YR-2026-299",
+    "length": 332,
+    "data": {
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "order_id": "ORD-NONE",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "yarn_count": "30s",
+      "id": "YR-2026-299",
+      "lot_number": "LOT-GEN-0314",
+      "state": "IN STOCK",
+      "yarn_type": "Cotton 30s",
+      "bin": "B1",
+      "supplier_name": "ABC Textiles",
+      "weight": 25,
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "rack_id": "2"
+    }
+  },
+  {
+    "id": "YR-2026-301",
+    "length": 332,
+    "data": {
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "lot_number": "LOT-GEN-3116",
+      "rack_id": "2",
+      "weight": 25,
+      "supplier_name": "ABC Textiles",
+      "state": "IN STOCK",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "yarn_type": "Cotton 30s",
+      "id": "YR-2026-301",
+      "order_id": "ORD-NONE",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "bin": "B1",
+      "yarn_count": "30s"
+    }
+  },
+  {
+    "id": "YR-2026-307",
+    "length": 332,
+    "data": {
+      "lot_number": "LOT-GEN-1035",
+      "rack_id": "2",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "order_id": "ORD-NONE",
+      "state": "IN STOCK",
+      "supplier_name": "ABC Textiles",
+      "bin": "B2",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "weight": 25,
+      "id": "YR-2026-307",
+      "yarn_count": "30s",
+      "yarn_type": "Cotton 30s"
+    }
+  },
+  {
+    "id": "YR-2026-309",
+    "length": 332,
+    "data": {
+      "lot_number": "LOT-GEN-5977",
+      "supplier_name": "ABC Textiles",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "yarn_count": "30s",
+      "yarn_type": "Cotton 30s",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "state": "IN STOCK",
+      "id": "YR-2026-309",
+      "bin": "B1",
+      "rack_id": "2",
+      "order_id": "ORD-NONE",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "weight": 25
+    }
+  },
+  {
+    "id": "YR-2026-324",
+    "length": 332,
+    "data": {
+      "lot_number": "LOT-GEN-3689",
+      "rack_id": "2",
+      "order_id": "ORD-NONE",
+      "yarn_type": "Cotton 30s",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "bin": "B2",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "weight": 25,
+      "id": "YR-2026-324",
+      "yarn_count": "30s",
+      "supplier_name": "ABC Textiles",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "state": "IN STOCK"
+    }
+  },
+  {
+    "id": "YR-2026-328",
+    "length": 332,
+    "data": {
+      "order_id": "ORD-NONE",
+      "bin": "B1",
+      "id": "YR-2026-328",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "lot_number": "LOT-GEN-8242",
+      "state": "IN STOCK",
+      "rack_id": "2",
+      "supplier_name": "ABC Textiles",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "yarn_count": "30s",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "weight": 25,
+      "yarn_type": "Cotton 30s"
+    }
+  },
+  {
+    "id": "YR-2026-340",
+    "length": 332,
+    "data": {
+      "yarn_count": "30s",
+      "state": "IN STOCK",
+      "supplier_name": "ABC Textiles",
+      "yarn_type": "Cotton 30s",
+      "rack_id": "2",
+      "bin": "B2",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "id": "YR-2026-340",
+      "lot_number": "LOT-GEN-5105",
+      "order_id": "ORD-NONE",
+      "weight": 25,
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "createdAt": "2026-01-30T10:06:37.839Z"
+    }
+  },
+  {
+    "id": "YR-2026-342",
+    "length": 332,
+    "data": {
+      "rack_id": "2",
+      "lot_number": "LOT-GEN-5812",
+      "supplier_name": "ABC Textiles",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "yarn_type": "Cotton 30s",
+      "order_id": "ORD-NONE",
+      "weight": 25,
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "id": "YR-2026-342",
+      "yarn_count": "30s",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "bin": "B1",
+      "state": "IN STOCK"
+    }
+  },
+  {
+    "id": "YR-2026-352",
+    "length": 332,
+    "data": {
+      "supplier_name": "ABC Textiles",
+      "state": "IN STOCK",
+      "lot_number": "LOT-GEN-8529",
+      "order_id": "ORD-NONE",
+      "yarn_type": "Cotton 30s",
+      "rack_id": "2",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "id": "YR-2026-352",
+      "weight": 25,
+      "bin": "B1",
+      "yarn_count": "30s",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "production_date": "2026-01-30T10:06:37.839Z"
+    }
+  },
+  {
+    "id": "YR-2026-355",
+    "length": 332,
+    "data": {
+      "id": "YR-2026-355",
+      "yarn_count": "30s",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "supplier_name": "ABC Textiles",
+      "lot_number": "LOT-GEN-7753",
+      "bin": "B1",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "yarn_type": "Cotton 30s",
+      "weight": 25,
+      "rack_id": "2",
+      "state": "IN STOCK",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "order_id": "ORD-NONE"
+    }
+  },
+  {
+    "id": "YR-2026-363",
+    "length": 332,
+    "data": {
+      "weight": 25,
+      "rack_id": "2",
+      "yarn_type": "Cotton 30s",
+      "yarn_count": "30s",
+      "lot_number": "LOT-GEN-7680",
+      "order_id": "ORD-NONE",
+      "id": "YR-2026-363",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "supplier_name": "ABC Textiles",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "bin": "B2",
+      "state": "IN STOCK",
+      "last_state_change": "2026-01-30T09:34:12.669Z"
+    }
+  },
+  {
+    "id": "YR-2026-368",
+    "length": 332,
+    "data": {
+      "yarn_type": "Cotton 30s",
+      "id": "YR-2026-368",
+      "lot_number": "LOT-GEN-6008",
+      "weight": 25,
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "order_id": "ORD-NONE",
+      "bin": "B2",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "yarn_count": "30s",
+      "rack_id": "2",
+      "state": "IN STOCK",
+      "supplier_name": "ABC Textiles",
+      "last_state_change": "2026-01-30T10:06:37.839Z"
+    }
+  },
+  {
+    "id": "YR-2026-386",
+    "length": 332,
+    "data": {
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "supplier_name": "ABC Textiles",
+      "order_id": "ORD-NONE",
+      "lot_number": "LOT-GEN-7987",
+      "state": "IN STOCK",
+      "yarn_count": "30s",
+      "id": "YR-2026-386",
+      "bin": "B1",
+      "yarn_type": "Cotton 30s",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "weight": 25,
+      "rack_id": "2"
+    }
+  },
+  {
+    "id": "YR-2026-408",
+    "length": 332,
+    "data": {
+      "supplier_name": "ABC Textiles",
+      "order_id": "ORD-NONE",
+      "state": "IN STOCK",
+      "rack_id": "2",
+      "lot_number": "LOT-GEN-4557",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "weight": 25,
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "yarn_count": "30s",
+      "id": "YR-2026-408",
+      "bin": "B1",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "yarn_type": "Cotton 30s"
+    }
+  },
+  {
+    "id": "YR-2026-419",
+    "length": 332,
+    "data": {
+      "id": "YR-2026-419",
+      "bin": "B1",
+      "yarn_type": "Cotton 30s",
+      "weight": 25,
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "yarn_count": "30s",
+      "rack_id": "2",
+      "supplier_name": "ABC Textiles",
+      "state": "IN STOCK",
+      "lot_number": "LOT-GEN-6065",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "order_id": "ORD-NONE"
+    }
+  },
+  {
+    "id": "YR-2026-427",
+    "length": 332,
+    "data": {
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "id": "YR-2026-427",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "bin": "B1",
+      "supplier_name": "ABC Textiles",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "order_id": "ORD-NONE",
+      "lot_number": "LOT-GEN-9997",
+      "state": "IN STOCK",
+      "rack_id": "2",
+      "yarn_count": "30s",
+      "weight": 25,
+      "yarn_type": "Cotton 30s"
+    }
+  },
+  {
+    "id": "YR-2026-431",
+    "length": 332,
+    "data": {
+      "yarn_count": "30s",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "bin": "B2",
+      "state": "IN STOCK",
+      "yarn_type": "Cotton 30s",
+      "lot_number": "LOT-GEN-5902",
+      "order_id": "ORD-NONE",
+      "id": "YR-2026-431",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "weight": 25,
+      "rack_id": "2",
+      "supplier_name": "ABC Textiles"
+    }
+  },
+  {
+    "id": "YR-2026-456",
+    "length": 332,
+    "data": {
+      "rack_id": "2",
+      "order_id": "ORD-NONE",
+      "weight": 25,
+      "supplier_name": "ABC Textiles",
+      "id": "YR-2026-456",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "lot_number": "LOT-GEN-4511",
+      "bin": "B1",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "state": "IN STOCK",
+      "yarn_count": "30s",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "yarn_type": "Cotton 30s"
+    }
+  },
+  {
+    "id": "YR-2026-458",
+    "length": 332,
+    "data": {
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "order_id": "ORD-NONE",
+      "state": "IN STOCK",
+      "rack_id": "2",
+      "yarn_type": "Cotton 30s",
+      "supplier_name": "ABC Textiles",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "id": "YR-2026-458",
+      "weight": 25,
+      "lot_number": "LOT-GEN-1707",
+      "yarn_count": "30s",
+      "bin": "B2"
+    }
+  },
+  {
+    "id": "YR-2026-481",
+    "length": 332,
+    "data": {
+      "lot_number": "LOT-GEN-3552",
+      "weight": 25,
+      "yarn_type": "Cotton 30s",
+      "id": "YR-2026-481",
+      "rack_id": "2",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "yarn_count": "30s",
+      "order_id": "ORD-NONE",
+      "bin": "B1",
+      "supplier_name": "ABC Textiles",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "state": "IN STOCK",
+      "production_date": "2026-01-30T10:06:37.839Z"
+    }
+  },
+  {
+    "id": "YR-2026-484",
+    "length": 332,
+    "data": {
+      "supplier_name": "ABC Textiles",
+      "weight": 25,
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "state": "IN STOCK",
+      "id": "YR-2026-484",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "yarn_type": "Cotton 30s",
+      "bin": "B1",
+      "lot_number": "LOT-GEN-0370",
+      "yarn_count": "30s",
+      "order_id": "ORD-NONE",
+      "rack_id": "2",
+      "createdAt": "2026-01-30T10:06:37.839Z"
+    }
+  },
+  {
+    "id": "YR-2026-496",
+    "length": 332,
+    "data": {
+      "lot_number": "LOT-GEN-2009",
+      "id": "YR-2026-496",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "yarn_count": "30s",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "yarn_type": "Cotton 30s",
+      "supplier_name": "ABC Textiles",
+      "order_id": "ORD-NONE",
+      "state": "IN STOCK",
+      "bin": "B1",
+      "rack_id": "2",
+      "weight": 25
+    }
+  },
+  {
+    "id": "YR-2026-501",
+    "length": 332,
+    "data": {
+      "id": "YR-2026-501",
+      "yarn_type": "Cotton 30s",
+      "bin": "B1",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "order_id": "ORD-NONE",
+      "rack_id": "2",
+      "lot_number": "LOT-GEN-1116",
+      "state": "IN STOCK",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "yarn_count": "30s",
+      "supplier_name": "ABC Textiles",
+      "weight": 25,
+      "createdAt": "2026-01-30T09:34:12.669Z"
+    }
+  },
+  {
+    "id": "YR-2026-512",
+    "length": 332,
+    "data": {
+      "order_id": "ORD-NONE",
+      "yarn_type": "Cotton 30s",
+      "id": "YR-2026-512",
+      "bin": "B2",
+      "supplier_name": "ABC Textiles",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "lot_number": "LOT-GEN-0522",
+      "rack_id": "2",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "state": "IN STOCK",
+      "weight": 25,
+      "yarn_count": "30s"
+    }
+  },
+  {
+    "id": "YR-2026-515",
+    "length": 332,
+    "data": {
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "order_id": "ORD-NONE",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "supplier_name": "ABC Textiles",
+      "bin": "B2",
+      "weight": 25,
+      "rack_id": "2",
+      "id": "YR-2026-515",
+      "yarn_count": "30s",
+      "lot_number": "LOT-GEN-0866",
+      "state": "IN STOCK",
+      "yarn_type": "Cotton 30s"
+    }
+  },
+  {
+    "id": "YR-2026-531",
+    "length": 332,
+    "data": {
+      "supplier_name": "ABC Textiles",
+      "order_id": "ORD-NONE",
+      "state": "IN STOCK",
+      "yarn_count": "30s",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "bin": "B2",
+      "weight": 25,
+      "lot_number": "LOT-GEN-2684",
+      "yarn_type": "Cotton 30s",
+      "rack_id": "2",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "id": "YR-2026-531",
+      "production_date": "2026-01-30T09:34:12.669Z"
+    }
+  },
+  {
+    "id": "YR-2026-539",
+    "length": 332,
+    "data": {
+      "weight": 25,
+      "order_id": "ORD-NONE",
+      "lot_number": "LOT-GEN-4728",
+      "supplier_name": "ABC Textiles",
+      "bin": "B1",
+      "id": "YR-2026-539",
+      "yarn_count": "30s",
+      "rack_id": "2",
+      "state": "IN STOCK",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "yarn_type": "Cotton 30s",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "production_date": "2026-01-30T10:06:37.839Z"
+    }
+  },
+  {
+    "id": "YR-2026-540",
+    "length": 332,
+    "data": {
+      "order_id": "ORD-NONE",
+      "yarn_count": "30s",
+      "supplier_name": "ABC Textiles",
+      "state": "IN STOCK",
+      "id": "YR-2026-540",
+      "rack_id": "2",
+      "bin": "B1",
+      "weight": 25,
+      "lot_number": "LOT-GEN-7128",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "yarn_type": "Cotton 30s"
+    }
+  },
+  {
+    "id": "YR-2026-551",
+    "length": 332,
+    "data": {
+      "lot_number": "LOT-GEN-7058",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "bin": "B1",
+      "yarn_type": "Cotton 30s",
+      "yarn_count": "30s",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "weight": 25,
+      "supplier_name": "ABC Textiles",
+      "order_id": "ORD-NONE",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "id": "YR-2026-551",
+      "state": "IN STOCK",
+      "rack_id": "2"
+    }
+  },
+  {
+    "id": "YR-2026-554",
+    "length": 332,
+    "data": {
+      "state": "IN STOCK",
+      "yarn_type": "Cotton 30s",
+      "yarn_count": "30s",
+      "id": "YR-2026-554",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "rack_id": "2",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "supplier_name": "ABC Textiles",
+      "order_id": "ORD-NONE",
+      "bin": "B2",
+      "weight": 25,
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "lot_number": "LOT-GEN-2683"
+    }
+  },
+  {
+    "id": "YR-2026-565",
+    "length": 332,
+    "data": {
+      "yarn_count": "30s",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "order_id": "ORD-NONE",
+      "state": "IN STOCK",
+      "lot_number": "LOT-GEN-2896",
+      "bin": "B1",
+      "rack_id": "2",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "supplier_name": "ABC Textiles",
+      "id": "YR-2026-565",
+      "yarn_type": "Cotton 30s",
+      "weight": 25,
+      "production_date": "2026-01-30T09:34:12.669Z"
+    }
+  },
+  {
+    "id": "YR-2026-566",
+    "length": 332,
+    "data": {
+      "supplier_name": "ABC Textiles",
+      "order_id": "ORD-NONE",
+      "state": "IN STOCK",
+      "yarn_count": "30s",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "bin": "B1",
+      "weight": 25,
+      "lot_number": "LOT-GEN-3245",
+      "rack_id": "2",
+      "yarn_type": "Cotton 30s",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "id": "YR-2026-566",
+      "production_date": "2026-01-30T09:34:12.669Z"
+    }
+  },
+  {
+    "id": "YR-2026-571",
+    "length": 332,
+    "data": {
+      "lot_number": "LOT-GEN-2081",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "bin": "B2",
+      "yarn_type": "Cotton 30s",
+      "yarn_count": "30s",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "weight": 25,
+      "supplier_name": "ABC Textiles",
+      "order_id": "ORD-NONE",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "id": "YR-2026-571",
+      "state": "IN STOCK",
+      "rack_id": "2"
+    }
+  },
+  {
+    "id": "YR-2026-576",
+    "length": 332,
+    "data": {
+      "supplier_name": "ABC Textiles",
+      "order_id": "ORD-NONE",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "id": "YR-2026-576",
+      "state": "IN STOCK",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "rack_id": "2",
+      "lot_number": "LOT-GEN-2448",
+      "yarn_count": "30s",
+      "bin": "B1",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "yarn_type": "Cotton 30s",
+      "weight": 25
+    }
+  },
+  {
+    "id": "YR-2026-577",
+    "length": 332,
+    "data": {
+      "lot_number": "LOT-GEN-2035",
+      "yarn_type": "Cotton 30s",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "bin": "B1",
+      "weight": 25,
+      "id": "YR-2026-577",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "yarn_count": "30s",
+      "state": "IN STOCK",
+      "order_id": "ORD-NONE",
+      "rack_id": "2",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "supplier_name": "ABC Textiles"
+    }
+  },
+  {
+    "id": "YR-2026-579",
+    "length": 332,
+    "data": {
+      "rack_id": "2",
+      "yarn_type": "Cotton 30s",
+      "supplier_name": "ABC Textiles",
+      "id": "YR-2026-579",
+      "state": "IN STOCK",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "yarn_count": "30s",
+      "weight": 25,
+      "bin": "B1",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "lot_number": "LOT-GEN-0059",
+      "order_id": "ORD-NONE"
+    }
+  },
+  {
+    "id": "YR-2026-580",
+    "length": 332,
+    "data": {
+      "rack_id": "2",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "order_id": "ORD-NONE",
+      "weight": 25,
+      "lot_number": "LOT-GEN-0818",
+      "bin": "B2",
+      "supplier_name": "ABC Textiles",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "state": "IN STOCK",
+      "yarn_type": "Cotton 30s",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "id": "YR-2026-580",
+      "yarn_count": "30s"
+    }
+  },
+  {
+    "id": "YR-2026-581",
+    "length": 332,
+    "data": {
+      "state": "IN STOCK",
+      "bin": "B1",
+      "weight": 25,
+      "supplier_name": "ABC Textiles",
+      "lot_number": "LOT-GEN-7356",
+      "id": "YR-2026-581",
+      "rack_id": "2",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "yarn_count": "30s",
+      "yarn_type": "Cotton 30s",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "order_id": "ORD-NONE"
+    }
+  },
+  {
+    "id": "YR-2026-594",
+    "length": 332,
+    "data": {
+      "supplier_name": "ABC Textiles",
+      "order_id": "ORD-NONE",
+      "state": "IN STOCK",
+      "yarn_count": "30s",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "bin": "B2",
+      "weight": 25,
+      "lot_number": "LOT-GEN-6179",
+      "yarn_type": "Cotton 30s",
+      "rack_id": "2",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "id": "YR-2026-594",
+      "production_date": "2026-01-30T09:34:12.669Z"
+    }
+  },
+  {
+    "id": "YR-2026-600",
+    "length": 332,
+    "data": {
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "state": "IN STOCK",
+      "order_id": "ORD-NONE",
+      "rack_id": "2",
+      "yarn_type": "Cotton 30s",
+      "lot_number": "LOT-GEN-3287",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "supplier_name": "ABC Textiles",
+      "weight": 25,
+      "yarn_count": "30s",
+      "id": "YR-2026-600",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "bin": "B1"
+    }
+  },
+  {
+    "id": "YR-2026-619",
+    "length": 332,
+    "data": {
+      "rack_id": "2",
+      "bin": "B1",
+      "yarn_count": "30s",
+      "lot_number": "LOT-GEN-7222",
+      "id": "YR-2026-619",
+      "supplier_name": "ABC Textiles",
+      "yarn_type": "Cotton 30s",
+      "state": "IN STOCK",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "order_id": "ORD-NONE",
+      "weight": 25,
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "last_state_change": "2026-01-30T10:06:37.839Z"
+    }
+  },
+  {
+    "id": "YR-2026-629",
+    "length": 332,
+    "data": {
+      "weight": 25,
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "state": "IN STOCK",
+      "yarn_count": "30s",
+      "rack_id": "2",
+      "id": "YR-2026-629",
+      "bin": "B1",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "yarn_type": "Cotton 30s",
+      "supplier_name": "ABC Textiles",
+      "lot_number": "LOT-GEN-7502",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "order_id": "ORD-NONE"
+    }
+  },
+  {
+    "id": "YR-2026-636",
+    "length": 332,
+    "data": {
+      "bin": "B1",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "supplier_name": "ABC Textiles",
+      "lot_number": "LOT-GEN-0318",
+      "weight": 25,
+      "yarn_type": "Cotton 30s",
+      "rack_id": "2",
+      "order_id": "ORD-NONE",
+      "id": "YR-2026-636",
+      "yarn_count": "30s",
+      "state": "IN STOCK",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "createdAt": "2026-01-30T09:34:12.669Z"
+    }
+  },
+  {
+    "id": "YR-2026-637",
+    "length": 332,
+    "data": {
+      "order_id": "ORD-NONE",
+      "bin": "B1",
+      "supplier_name": "ABC Textiles",
+      "lot_number": "LOT-GEN-8498",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "weight": 25,
+      "yarn_type": "Cotton 30s",
+      "state": "IN STOCK",
+      "rack_id": "2",
+      "yarn_count": "30s",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "id": "YR-2026-637"
+    }
+  },
+  {
+    "id": "YR-2026-640",
+    "length": 332,
+    "data": {
+      "rack_id": "2",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "id": "YR-2026-640",
+      "weight": 25,
+      "supplier_name": "ABC Textiles",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "bin": "B2",
+      "lot_number": "LOT-GEN-5384",
+      "order_id": "ORD-NONE",
+      "yarn_count": "30s",
+      "yarn_type": "Cotton 30s",
+      "state": "IN STOCK"
+    }
+  },
+  {
+    "id": "YR-2026-647",
+    "length": 332,
+    "data": {
+      "order_id": "ORD-NONE",
+      "yarn_count": "30s",
+      "yarn_type": "Cotton 30s",
+      "weight": 25,
+      "lot_number": "LOT-GEN-2920",
+      "supplier_name": "ABC Textiles",
+      "rack_id": "2",
+      "state": "IN STOCK",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "id": "YR-2026-647",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "bin": "B2"
+    }
+  },
+  {
+    "id": "YR-2026-662",
+    "length": 332,
+    "data": {
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "rack_id": "2",
+      "yarn_type": "Cotton 30s",
+      "lot_number": "LOT-GEN-7394",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "id": "YR-2026-662",
+      "yarn_count": "30s",
+      "weight": 25,
+      "supplier_name": "ABC Textiles",
+      "bin": "B2",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "state": "IN STOCK",
+      "order_id": "ORD-NONE"
+    }
+  },
+  {
+    "id": "YR-2026-665",
+    "length": 332,
+    "data": {
+      "lot_number": "LOT-GEN-6316",
+      "rack_id": "2",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "state": "IN STOCK",
+      "bin": "B2",
+      "yarn_count": "30s",
+      "id": "YR-2026-665",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "weight": 25,
+      "order_id": "ORD-NONE",
+      "yarn_type": "Cotton 30s",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "supplier_name": "ABC Textiles"
+    }
+  },
+  {
+    "id": "YR-2026-668",
+    "length": 332,
+    "data": {
+      "yarn_type": "Cotton 30s",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "bin": "B1",
+      "yarn_count": "30s",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "id": "YR-2026-668",
+      "rack_id": "2",
+      "lot_number": "LOT-GEN-9653",
+      "order_id": "ORD-NONE",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "state": "IN STOCK",
+      "weight": 25,
+      "supplier_name": "ABC Textiles"
+    }
+  },
+  {
+    "id": "YR-2026-688",
+    "length": 332,
+    "data": {
+      "state": "IN STOCK",
+      "bin": "B2",
+      "yarn_count": "30s",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "weight": 25,
+      "rack_id": "2",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "yarn_type": "Cotton 30s",
+      "id": "YR-2026-688",
+      "lot_number": "LOT-GEN-7358",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "supplier_name": "ABC Textiles",
+      "order_id": "ORD-NONE"
+    }
+  },
+  {
+    "id": "YR-2026-690",
+    "length": 332,
+    "data": {
+      "rack_id": "2",
+      "supplier_name": "ABC Textiles",
+      "bin": "B1",
+      "order_id": "ORD-NONE",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "lot_number": "LOT-GEN-8843",
+      "yarn_type": "Cotton 30s",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "id": "YR-2026-690",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "state": "IN STOCK",
+      "yarn_count": "30s",
+      "weight": 25
+    }
+  },
+  {
+    "id": "YR-2026-696",
+    "length": 332,
+    "data": {
+      "order_id": "ORD-NONE",
+      "lot_number": "LOT-GEN-7063",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "bin": "B2",
+      "id": "YR-2026-696",
+      "yarn_type": "Cotton 30s",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "rack_id": "2",
+      "state": "IN STOCK",
+      "supplier_name": "ABC Textiles",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "yarn_count": "30s",
+      "weight": 25
+    }
+  },
+  {
+    "id": "YR-2026-704",
+    "length": 332,
+    "data": {
+      "supplier_name": "ABC Textiles",
+      "state": "IN STOCK",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "rack_id": "2",
+      "yarn_type": "Cotton 30s",
+      "bin": "B2",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "weight": 25,
+      "yarn_count": "30s",
+      "id": "YR-2026-704",
+      "lot_number": "LOT-GEN-9713",
+      "order_id": "ORD-NONE"
+    }
+  },
+  {
+    "id": "YR-2026-708",
+    "length": 332,
+    "data": {
+      "lot_number": "LOT-GEN-9186",
+      "yarn_count": "30s",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "id": "YR-2026-708",
+      "state": "IN STOCK",
+      "rack_id": "2",
+      "order_id": "ORD-NONE",
+      "yarn_type": "Cotton 30s",
+      "supplier_name": "ABC Textiles",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "weight": 25,
+      "bin": "B2",
+      "createdAt": "2026-01-30T10:06:37.839Z"
+    }
+  },
+  {
+    "id": "YR-2026-717",
+    "length": 332,
+    "data": {
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "id": "YR-2026-717",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "lot_number": "LOT-GEN-4500",
+      "rack_id": "2",
+      "yarn_count": "30s",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "order_id": "ORD-NONE",
+      "yarn_type": "Cotton 30s",
+      "bin": "B1",
+      "supplier_name": "ABC Textiles",
+      "weight": 25,
+      "state": "IN STOCK"
+    }
+  },
+  {
+    "id": "YR-2026-718",
+    "length": 332,
+    "data": {
+      "state": "IN STOCK",
+      "weight": 25,
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "lot_number": "LOT-GEN-3017",
+      "bin": "B2",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "yarn_count": "30s",
+      "rack_id": "2",
+      "order_id": "ORD-NONE",
+      "yarn_type": "Cotton 30s",
+      "id": "YR-2026-718",
+      "supplier_name": "ABC Textiles",
+      "last_state_change": "2026-01-30T09:34:12.669Z"
+    }
+  },
+  {
+    "id": "YR-2026-727",
+    "length": 332,
+    "data": {
+      "id": "YR-2026-727",
+      "bin": "B1",
+      "rack_id": "2",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "state": "IN STOCK",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "lot_number": "LOT-GEN-5934",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "yarn_count": "30s",
+      "weight": 25,
+      "supplier_name": "ABC Textiles",
+      "order_id": "ORD-NONE",
+      "yarn_type": "Cotton 30s"
+    }
+  },
+  {
+    "id": "YR-2026-729",
+    "length": 332,
+    "data": {
+      "yarn_count": "30s",
+      "order_id": "ORD-NONE",
+      "state": "IN STOCK",
+      "supplier_name": "ABC Textiles",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "lot_number": "LOT-GEN-9160",
+      "weight": 25,
+      "rack_id": "2",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "yarn_type": "Cotton 30s",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "bin": "B2",
+      "id": "YR-2026-729"
+    }
+  },
+  {
+    "id": "YR-2026-757",
+    "length": 332,
+    "data": {
+      "order_id": "ORD-NONE",
+      "weight": 25,
+      "state": "IN STOCK",
+      "rack_id": "2",
+      "bin": "B2",
+      "lot_number": "LOT-GEN-0221",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "supplier_name": "ABC Textiles",
+      "yarn_count": "30s",
+      "yarn_type": "Cotton 30s",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "id": "YR-2026-757"
+    }
+  },
+  {
+    "id": "YR-2026-776",
+    "length": 332,
+    "data": {
+      "supplier_name": "ABC Textiles",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "weight": 25,
+      "state": "IN STOCK",
+      "rack_id": "2",
+      "bin": "B1",
+      "yarn_count": "30s",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "id": "YR-2026-776",
+      "order_id": "ORD-NONE",
+      "yarn_type": "Cotton 30s",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "lot_number": "LOT-GEN-3708"
+    }
+  },
+  {
+    "id": "YR-2026-781",
+    "length": 332,
+    "data": {
+      "state": "IN STOCK",
+      "bin": "B2",
+      "weight": 25,
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "rack_id": "2",
+      "id": "YR-2026-781",
+      "yarn_type": "Cotton 30s",
+      "yarn_count": "30s",
+      "order_id": "ORD-NONE",
+      "supplier_name": "ABC Textiles",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "lot_number": "LOT-GEN-2363"
+    }
+  },
+  {
+    "id": "YR-2026-789",
+    "length": 332,
+    "data": {
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "bin": "B1",
+      "order_id": "ORD-NONE",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "yarn_type": "Cotton 30s",
+      "lot_number": "LOT-GEN-9401",
+      "id": "YR-2026-789",
+      "state": "IN STOCK",
+      "yarn_count": "30s",
+      "rack_id": "2",
+      "weight": 25,
+      "supplier_name": "ABC Textiles"
+    }
+  },
+  {
+    "id": "YR-2026-792",
+    "length": 332,
+    "data": {
+      "lot_number": "LOT-GEN-5008",
+      "yarn_type": "Cotton 30s",
+      "id": "YR-2026-792",
+      "weight": 25,
+      "order_id": "ORD-NONE",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "bin": "B1",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "yarn_count": "30s",
+      "rack_id": "2",
+      "state": "IN STOCK",
+      "supplier_name": "ABC Textiles",
+      "last_state_change": "2026-01-30T10:06:37.839Z"
+    }
+  },
+  {
+    "id": "YR-2026-798",
+    "length": 332,
+    "data": {
+      "lot_number": "LOT-GEN-0006",
+      "yarn_count": "30s",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "weight": 25,
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "supplier_name": "ABC Textiles",
+      "state": "IN STOCK",
+      "rack_id": "2",
+      "yarn_type": "Cotton 30s",
+      "id": "YR-2026-798",
+      "order_id": "ORD-NONE",
+      "bin": "B2",
+      "createdAt": "2026-01-30T10:06:37.839Z"
+    }
+  },
+  {
+    "id": "YR-2026-810",
+    "length": 332,
+    "data": {
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "rack_id": "2",
+      "supplier_name": "ABC Textiles",
+      "weight": 25,
+      "yarn_type": "Cotton 30s",
+      "id": "YR-2026-810",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "state": "IN STOCK",
+      "bin": "B2",
+      "lot_number": "LOT-GEN-4505",
+      "order_id": "ORD-NONE",
+      "yarn_count": "30s",
+      "production_date": "2026-01-30T09:34:12.669Z"
+    }
+  },
+  {
+    "id": "YR-2026-829",
+    "length": 332,
+    "data": {
+      "rack_id": "2",
+      "supplier_name": "ABC Textiles",
+      "weight": 25,
+      "state": "IN STOCK",
+      "bin": "B2",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "lot_number": "LOT-GEN-3789",
+      "order_id": "ORD-NONE",
+      "id": "YR-2026-829",
+      "yarn_type": "Cotton 30s",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "yarn_count": "30s",
+      "createdAt": "2026-01-30T10:06:37.839Z"
+    }
+  },
+  {
+    "id": "YR-2026-850",
+    "length": 332,
+    "data": {
+      "yarn_type": "Cotton 30s",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "order_id": "ORD-NONE",
+      "yarn_count": "30s",
+      "bin": "B1",
+      "lot_number": "LOT-GEN-6076",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "id": "YR-2026-850",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "weight": 25,
+      "state": "IN STOCK",
+      "rack_id": "2",
+      "supplier_name": "ABC Textiles"
+    }
+  },
+  {
+    "id": "YR-2026-862",
+    "length": 332,
+    "data": {
+      "weight": 25,
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "yarn_type": "Cotton 30s",
+      "supplier_name": "ABC Textiles",
+      "id": "YR-2026-862",
+      "bin": "B2",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "state": "IN STOCK",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "rack_id": "2",
+      "order_id": "ORD-NONE",
+      "lot_number": "LOT-GEN-3887",
+      "yarn_count": "30s"
+    }
+  },
+  {
+    "id": "YR-2026-878",
+    "length": 332,
+    "data": {
+      "id": "YR-2026-878",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "bin": "B1",
+      "state": "IN STOCK",
+      "order_id": "ORD-NONE",
+      "yarn_type": "Cotton 30s",
+      "supplier_name": "ABC Textiles",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "weight": 25,
+      "rack_id": "2",
+      "lot_number": "LOT-GEN-9903",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "yarn_count": "30s"
+    }
+  },
+  {
+    "id": "YR-2026-880",
+    "length": 332,
+    "data": {
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "supplier_name": "ABC Textiles",
+      "state": "IN STOCK",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "yarn_count": "30s",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "lot_number": "LOT-GEN-1419",
+      "id": "YR-2026-880",
+      "yarn_type": "Cotton 30s",
+      "rack_id": "2",
+      "weight": 25,
+      "bin": "B1",
+      "order_id": "ORD-NONE"
+    }
+  },
+  {
+    "id": "YR-2026-886",
+    "length": 332,
+    "data": {
+      "yarn_type": "Cotton 30s",
+      "id": "YR-2026-886",
+      "order_id": "ORD-NONE",
+      "bin": "B1",
+      "supplier_name": "ABC Textiles",
+      "yarn_count": "30s",
+      "state": "IN STOCK",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "rack_id": "2",
+      "weight": 25,
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "lot_number": "LOT-GEN-1522"
+    }
+  },
+  {
+    "id": "YR-2026-895",
+    "length": 332,
+    "data": {
+      "supplier_name": "ABC Textiles",
+      "order_id": "ORD-NONE",
+      "id": "YR-2026-895",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "lot_number": "LOT-GEN-7275",
+      "rack_id": "2",
+      "bin": "B1",
+      "yarn_type": "Cotton 30s",
+      "weight": 25,
+      "yarn_count": "30s",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "state": "IN STOCK"
+    }
+  },
+  {
+    "id": "YR-2026-896",
+    "length": 332,
+    "data": {
+      "order_id": "ORD-NONE",
+      "bin": "B2",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "lot_number": "LOT-GEN-0249",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "yarn_count": "30s",
+      "rack_id": "2",
+      "weight": 25,
+      "id": "YR-2026-896",
+      "state": "IN STOCK",
+      "supplier_name": "ABC Textiles",
+      "yarn_type": "Cotton 30s"
+    }
+  },
+  {
+    "id": "YR-2026-897",
+    "length": 332,
+    "data": {
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "id": "YR-2026-897",
+      "supplier_name": "ABC Textiles",
+      "yarn_count": "30s",
+      "lot_number": "LOT-GEN-9123",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "order_id": "ORD-NONE",
+      "state": "IN STOCK",
+      "bin": "B1",
+      "yarn_type": "Cotton 30s",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "rack_id": "2",
+      "weight": 25
+    }
+  },
+  {
+    "id": "YR-2026-915",
+    "length": 332,
+    "data": {
+      "order_id": "ORD-NONE",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "yarn_count": "30s",
+      "rack_id": "2",
+      "yarn_type": "Cotton 30s",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "id": "YR-2026-915",
+      "weight": 25,
+      "supplier_name": "ABC Textiles",
+      "bin": "B2",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "lot_number": "LOT-GEN-9845",
+      "state": "IN STOCK"
+    }
+  },
+  {
+    "id": "YR-2026-919",
+    "length": 332,
+    "data": {
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "supplier_name": "ABC Textiles",
+      "id": "YR-2026-919",
+      "rack_id": "2",
+      "lot_number": "LOT-GEN-2969",
+      "bin": "B2",
+      "order_id": "ORD-NONE",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "yarn_type": "Cotton 30s",
+      "yarn_count": "30s",
+      "weight": 25,
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "state": "IN STOCK"
+    }
+  },
+  {
+    "id": "YR-2026-925",
+    "length": 332,
+    "data": {
+      "id": "YR-2026-925",
+      "order_id": "ORD-NONE",
+      "rack_id": "2",
+      "yarn_count": "30s",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "weight": 25,
+      "supplier_name": "ABC Textiles",
+      "state": "IN STOCK",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "lot_number": "LOT-GEN-3342",
+      "bin": "B1",
+      "yarn_type": "Cotton 30s"
+    }
+  },
+  {
+    "id": "YR-2026-926",
+    "length": 332,
+    "data": {
+      "bin": "B1",
+      "supplier_name": "ABC Textiles",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "id": "YR-2026-926",
+      "order_id": "ORD-NONE",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "state": "IN STOCK",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "rack_id": "2",
+      "yarn_count": "30s",
+      "weight": 25,
+      "lot_number": "LOT-GEN-0369",
+      "yarn_type": "Cotton 30s"
+    }
+  },
+  {
+    "id": "YR-2026-933",
+    "length": 332,
+    "data": {
+      "yarn_type": "Cotton 30s",
+      "weight": 25,
+      "state": "IN STOCK",
+      "rack_id": "2",
+      "order_id": "ORD-NONE",
+      "lot_number": "LOT-GEN-3693",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "supplier_name": "ABC Textiles",
+      "bin": "B1",
+      "yarn_count": "30s",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "id": "YR-2026-933"
+    }
+  },
+  {
+    "id": "YR-2026-938",
+    "length": 332,
+    "data": {
+      "id": "YR-2026-938",
+      "yarn_type": "Cotton 30s",
+      "state": "IN STOCK",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "yarn_count": "30s",
+      "weight": 25,
+      "bin": "B1",
+      "rack_id": "2",
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "lot_number": "LOT-GEN-5775",
+      "supplier_name": "ABC Textiles",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "order_id": "ORD-NONE"
+    }
+  },
+  {
+    "id": "YR-2026-946",
+    "length": 332,
+    "data": {
+      "weight": 25,
+      "id": "YR-2026-946",
+      "supplier_name": "ABC Textiles",
+      "yarn_type": "Cotton 30s",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "yarn_count": "30s",
+      "rack_id": "2",
+      "state": "IN STOCK",
+      "bin": "B1",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "order_id": "ORD-NONE",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "lot_number": "LOT-GEN-8436"
+    }
+  },
+  {
+    "id": "YR-2026-949",
+    "length": 332,
+    "data": {
+      "order_id": "ORD-NONE",
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "weight": 25,
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "state": "IN STOCK",
+      "bin": "B1",
+      "supplier_name": "ABC Textiles",
+      "yarn_type": "Cotton 30s",
+      "lot_number": "LOT-GEN-7839",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "id": "YR-2026-949",
+      "rack_id": "2",
+      "yarn_count": "30s"
+    }
+  },
+  {
+    "id": "YR-2026-977",
+    "length": 332,
+    "data": {
+      "id": "YR-2026-977",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "order_id": "ORD-NONE",
+      "weight": 25,
+      "state": "IN STOCK",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "lot_number": "LOT-GEN-4992",
+      "rack_id": "2",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "supplier_name": "ABC Textiles",
+      "bin": "B1",
+      "yarn_type": "Cotton 30s",
+      "yarn_count": "30s"
+    }
+  },
+  {
+    "id": "YR-2026-978",
+    "length": 332,
+    "data": {
+      "createdAt": "2026-01-30T10:06:37.839Z",
+      "last_state_change": "2026-01-30T10:06:37.839Z",
+      "id": "YR-2026-978",
+      "yarn_count": "30s",
+      "weight": 25,
+      "production_date": "2026-01-30T10:06:37.839Z",
+      "lot_number": "LOT-GEN-5728",
+      "state": "IN STOCK",
+      "bin": "B1",
+      "rack_id": "2",
+      "order_id": "ORD-NONE",
+      "yarn_type": "Cotton 30s",
+      "supplier_name": "ABC Textiles"
+    }
+  },
+  {
+    "id": "YR-2026-983",
+    "length": 332,
+    "data": {
+      "state": "IN STOCK",
+      "yarn_count": "30s",
+      "rack_id": "2",
+      "yarn_type": "Cotton 30s",
+      "last_state_change": "2026-01-30T09:34:12.669Z",
+      "createdAt": "2026-01-30T09:34:12.669Z",
+      "id": "YR-2026-983",
+      "order_id": "ORD-NONE",
+      "bin": "B2",
+      "supplier_name": "ABC Textiles",
+      "lot_number": "LOT-GEN-1155",
+      "production_date": "2026-01-30T09:34:12.669Z",
+      "weight": 25
+    }
+  }
+]

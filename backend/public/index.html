@@ -372,24 +372,54 @@
           if (typeEL && typeEL.textContent.includes('[B')) {
             typeEL.textContent = typeEL.textContent.replace(/\[B+\d+\]\s*/, '');
           }
+
+          // Inject View Details Button
+          if (!card.querySelector('.view-details-link')) {
+            const footer = document.createElement('div');
+            footer.className = 'roll-footer';
+            footer.style.cssText = 'margin-top: 8px; border-top: 1px solid #f1f5f9; padding-top: 8px; text-align: right;';
+
+            const viewDetails = document.createElement('a');
+            viewDetails.href = `/details.html?id=${idStr}`;
+            viewDetails.className = 'view-details-link';
+            viewDetails.textContent = 'VIEW DETAILS';
+            viewDetails.style.cssText = 'color: #ea580c; font-size: 10px; font-weight: 700; text-decoration: none; letter-spacing: 0.05em; transition: all 0.2s;';
+
+            viewDetails.onmouseover = () => viewDetails.style.color = '#c2410c';
+            viewDetails.onmouseout = () => viewDetails.style.color = '#ea580c';
+
+            footer.appendChild(viewDetails);
+            card.appendChild(footer);
+          }
         });
 
         applyDOMFilters();
 
         const modal = document.querySelector('.modal-content');
         if (modal && (modal.textContent.includes('Register New Roll') || modal.textContent.includes('Add New Roll'))) {
-          const rackInput = modal.querySelector('input[placeholder*="RACK"]');
+          // Clear all current values and use placeholders instead
+          modal.querySelectorAll('input').forEach(input => {
+            if (!input.placeholder && input.value) {
+              input.placeholder = input.value;
+            }
+            input.value = '';
+          });
+
+          // Specific override for Rack / Location as requested
+          const rackInput = modal.querySelector('input[placeholder*="RACK"]') ||
+            Array.from(modal.querySelectorAll('input')).find(i => i.placeholder.toLowerCase().includes('rack'));
           if (rackInput) {
-            if (rackInput.value.toUpperCase() === 'STAGING') rackInput.value = '';
-            rackInput.placeholder = 'Search Rack / Enter Location...';
+            rackInput.placeholder = '1';
+            rackInput.value = '';
           }
+
           if (!document.getElementById('injected-bin-group')) {
             const labels = Array.from(modal.querySelectorAll('label'));
             const rackLabel = labels.find(l => l.textContent.includes('Rack')) || labels[labels.length - 1];
             if (rackLabel) {
               const binGroup = document.createElement('div');
               binGroup.className = 'form-group'; binGroup.id = 'injected-bin-group';
-              binGroup.innerHTML = `<label>Bin (1-9)</label><input type="number" id="in-bin" min="1" max="9" value="1"
+              binGroup.innerHTML = `<label>Bin (1-9)</label><input type="number" id="in-bin" min="1" max="9" value="" placeholder="1"
     style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1;">`;
               rackLabel.parentElement.parentElement.appendChild(binGroup);
             }

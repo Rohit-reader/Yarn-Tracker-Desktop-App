@@ -28,5 +28,35 @@
     "yarn_count": "30s",
     "yarn_type": "Cotton 30s",
     "bin": "1"
+  },
+  {
+    "id": "TEST - 1769939278117",
+    "last_state_change": "2026-02-01T09:47:58.118Z",
+    "lot_number": "TEST-LOT",
+    "order_id": "TEST-ORD",
+    "production_date": "2026-02-01T09:47:58.118Z",
+    "quality_grade": "A",
+    "rack_id": "1",
+    "state": "TESTING",
+    "supplier_name": "Akhilesh Textiles",
+    "weight": 25,
+    "yarn_count": "30s",
+    "yarn_type": "Viscose 50s",
+    "bin": "1"
+  },
+  {
+    "id": "TEST - 1769939317446",
+    "last_state_change": "2026-02-01T09:48:37.447Z",
+    "lot_number": "TEST-LOT",
+    "order_id": "TEST-ORD",
+    "production_date": "2026-02-01T09:48:37.447Z",
+    "quality_grade": "A",
+    "rack_id": "2",
+    "state": "TESTING",
+    "supplier_name": "Athik Textiles",
+    "weight": 25,
+    "yarn_count": "10s",
+    "yarn_type": "Polyester 40s",
+    "bin": "9"
   }
 ]

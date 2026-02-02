@@ -73,11 +73,7 @@
                         <label class="block text-slate-500 text-sm font-medium mb-2">Yarn Quality</label>
                         <select id="yarn_type" required
                             class="w-full p-4 rounded-xl input-field focus:outline-none focus:ring-1 focus:ring-orange-500 appearance-none">
-                            <option value="Cotton 30s">Cotton 30s</option>
-                            <option value="Cotton 40s">Cotton 40s</option>
-                            <option value="Polyester Mix">Polyester Mix</option>
-                            <option value="Silk Blend">Silk Blend</option>
-                            <option value="Linen 20s">Linen 20s</option>
+                            <option value="" disabled selected>Loading qualities...</option>
                         </select>
                     </div>
 
@@ -168,6 +164,35 @@
                     submitBtn.innerHTML = 'CONFIRM ORDER';
                 }
             };
+
+            async function populateQualities() {
+                const typeSelect = document.getElementById('yarn_type');
+                try {
+                    const response = await fetch('/api/rolls');
+                    const rolls = await response.json();
+
+                    // Filter out test rolls if needed, and get unique types
+                    const types = [...new Set(rolls
+                        .filter(r => !r.id.toLowerCase().includes('test'))
+                        .map(r => r.yarn_type)
+                        .filter(t => t)
+                    )];
+
+                    if (types.length === 0) {
+                        typeSelect.innerHTML = '<option value="" disabled selected>No qualities available</option>';
+                        return;
+                    }
+
+                    typeSelect.innerHTML = types.sort().map(t =>
+                        `<option value="${t}">${t}</option>`
+                    ).join('');
+                } catch (err) {
+                    console.error('Failed to load qualities:', err);
+                    typeSelect.innerHTML = '<option value="" disabled selected>Error loading qualities</option>';
+                }
+            }
+
+            populateQualities();
         </script>
 </body>
 

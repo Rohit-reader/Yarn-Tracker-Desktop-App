@@ -141,8 +141,9 @@
                                 Code
                             </h3>
                             <div
-                                class="flex justify-center p-4 bg-white border border-slate-200 rounded-xl w-32 h-32 mx-auto relative overflow-hidden">
-                                <img id="qrPreview" src="" alt="QR Code" class="w-full h-full object-contain">
+                                class="flex justify-center p-6 bg-white border-2 border-orange-100 rounded-3xl w-64 h-64 mx-auto relative overflow-hidden shadow-inner group">
+                                <img id="qrPreview" src="" alt="QR Code"
+                                    class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110">
                                 <div id="qrFallback"
                                     class="absolute inset-0 flex items-center justify-center bg-white hidden"></div>
                             </div>
@@ -216,8 +217,8 @@
 
                 new QRCode(qrFallback, {
                     text: JSON.stringify(qrDataObj),
-                    width: 100,
-                    height: 100,
+                    width: 200,
+                    height: 200,
                     colorDark: "#000000",
                     colorLight: "#ffffff",
                     correctLevel: QRCode.CorrectLevel.H
