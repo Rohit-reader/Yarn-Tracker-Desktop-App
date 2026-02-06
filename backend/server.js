@@ -59,11 +59,52 @@ app.get('/api/rolls', async (req, res) => {
     const q = query(collection(db, 'inventory'), orderBy('production_date', 'desc'));
     const querySnapshot = await getDocs(q);
 
-    const rolls = querySnapshot.docs.map(doc => ({
+    let rolls = querySnapshot.docs.map(doc => ({
       ...doc.data(),
       firebaseId: doc.id,
       documentPath: doc.ref.path
     }));
+
+    // SELF-HEALING: If inventory is empty, fetch from potentially unsynced hierarchy
+    if (rolls.length === 0) {
+      console.log('⚠️ Inventory empty! Triggering hierarchical recovery...');
+      try {
+        // Query all rolls in the system via Collection Group
+        // Note: We avoid sorting here to prevent "Index Missing" errors on the group
+        const groupQuery = query(collectionGroup(db, 'rolls'));
+        const groupSnap = await getDocs(groupQuery);
+
+        rolls = groupSnap.docs.map(doc => ({
+          ...doc.data(),
+          firebaseId: doc.id,
+          documentPath: doc.ref.path
+        }));
+
+        console.log(`   found ${rolls.length} rolls in hierarchy. Restoring...`);
+
+        // Sort in memory (JS) since we couldn't sort in the query
+        rolls.sort((a, b) => new Date(b.production_date) - new Date(a.production_date));
+
+        // Background: Repair the inventory collection
+        // We don't await this to keep the UI snappy
+        (async () => {
+          console.log('[Self-Healing] Starting background inventory repopulation...');
+          const batchSize = 100;
+          for (let i = 0; i < rolls.length; i += batchSize) {
+            const chunk = rolls.slice(i, i + batchSize);
+            await Promise.all(chunk.map(roll => {
+              if (roll.id && !roll.id.includes('test')) {
+                return setDoc(doc(db, 'inventory', roll.id), roll);
+              }
+            }));
+          }
+          console.log('[Self-Healing] Inventory repaired successfully.');
+        })();
+
+      } catch (err) {
+        console.error('   ✗ Recovery failed:', err.message);
+      }
+    }
 
     console.log(`Total rolls: ${rolls.length}`);
 
@@ -78,11 +119,12 @@ app.get('/api/rolls', async (req, res) => {
         const qrPath = path.join(qrDir, `${roll.id}.png`);
 
         if (!fs.existsSync(qrPath)) {
-          console.log(`[Self-Healing] Generating missing QR for ${roll.id}`);
+          // console.log(`[Self-Healing] Generating missing QR for ${roll.id}`);
 
           // Prune data for QR encoding
           const {
             quality_grade: _q, material: _m, rawQr: _r, firebaseId: _f, documentPath: _d, createdAt: _c,
+            bin: _bin, rack_id: _rack,
             ...qrDataObj
           } = roll;
 
@@ -97,7 +139,7 @@ app.get('/api/rolls', async (req, res) => {
           }
         }
       } catch (err) {
-        console.error(`[Self-Healing] Failed to generate QR for ${roll.id}:`, err.message);
+        // silent fail for individual QR gen to avoid log spam
       }
     });
 
@@ -162,18 +204,18 @@ app.post('/api/rolls', async (req, res) => {
       order_id: order_id || 'ORD-NONE',
       production_date: now,
       quality_grade: quality_grade || 'A',
-      rack_id: rack_id || '',
+      rack_id: rack_id || '1',
       state: 'IN STOCK',
       supplier_name: supplier_name || 'ABC Textiles',
       weight: parseFloat(weight) || 25,
       yarn_count: yarn_count || '30s',
       yarn_type: yarn_type || 'Cotton 30s',
-      bin: bin || 'B1'
+      bin: bin || '1'
     };
 
     // 1. Hierarchical Storage: racks/{rack}/bins/{bin}/rolls/{id}
-    const rackLabel = rack_id || 'R1';
-    const binLabel = bin || 'B1';
+    const rackLabel = rack_id || '1';
+    const binLabel = bin || '1';
 
     const rollDocRef = doc(db, 'racks', rackLabel, 'bins', binLabel, 'rolls', rollId);
     await setDoc(rollDocRef, rollData);
@@ -194,6 +236,7 @@ app.post('/api/rolls', async (req, res) => {
     // We encode a subset of data into the QR code as requested
     const {
       quality_grade: _q, material: _m, rawQr: _r, firebaseId: _f, documentPath: _d, createdAt: _c,
+      bin: _bin, rack_id: _rack,
       ...qrDataObj
     } = rollData;
     const qrData = JSON.stringify(qrDataObj);
@@ -229,7 +272,7 @@ app.post('/api/rolls/update-state', async (req, res) => {
         const invDoc = await getDoc(doc(db, 'inventory', id));
         if (invDoc.exists()) {
           const rollData = invDoc.data();
-          const masterPath = `racks/${rollData.rack_id || 'R1'}/bins/${rollData.bin || 'B1'}/rolls/${id}`;
+          const masterPath = `racks/${rollData.rack_id || '1'}/bins/${rollData.bin || '1'}/rolls/${id}`;
           const masterRef = doc(db, masterPath);
 
           const updatedData = { ...rollData, state: capitalizedState, last_state_change: now };
@@ -388,7 +431,7 @@ app.post('/api/orders/:id/approve', async (req, res) => {
     const now = new Date().toISOString();
     await Promise.all(rollsToReserve.map(async (roll) => {
       // Find master document in hierarchy using direct path reconstruction
-      const masterPath = `racks/${roll.rack_id || 'R1'}/bins/${roll.bin || 'B1'}/rolls/${roll.id}`;
+      const masterPath = `racks/${roll.rack_id || '1'}/bins/${roll.bin || '1'}/rolls/${roll.id}`;
       const masterRef = doc(db, masterPath);
 
       const inventoryDocRef = doc(db, 'inventory', roll.id);
@@ -467,8 +510,10 @@ app.get('/api/dashboard-stats', async (req, res) => {
       const roll = doc.data();
       if (!roll.id || roll.id.toLowerCase().includes('test')) return;
 
-      const rackId = roll.rack_id || 'R1';
-      const binId = roll.bin || 'B1';
+      const rackId = roll.rack_id || '1';
+      const binId = roll.bin || '1';
+      const yarnType = roll.yarn_type || 'Unknown';
+      const yarnCount = roll.yarn_count || 'N/A';
 
       if (!racksBreakdown[rackId]) {
         racksBreakdown[rackId] = {
@@ -480,11 +525,20 @@ app.get('/api/dashboard-stats', async (req, res) => {
       }
 
       if (!racksBreakdown[rackId].bins[binId]) {
-        racksBreakdown[rackId].bins[binId] = 0;
+        racksBreakdown[rackId].bins[binId] = {
+          total: 0,
+          stock: {} // Grouped by type and count
+        };
         racksBreakdown[rackId].uniqueBinsCount++;
       }
 
-      racksBreakdown[rackId].bins[binId]++;
+      const stockKey = `${yarnType} | ${yarnCount}`;
+      if (!racksBreakdown[rackId].bins[binId].stock[stockKey]) {
+        racksBreakdown[rackId].bins[binId].stock[stockKey] = 0;
+      }
+
+      racksBreakdown[rackId].bins[binId].stock[stockKey]++;
+      racksBreakdown[rackId].bins[binId].total++;
       racksBreakdown[rackId].totalYarns++;
     });
 
@@ -536,13 +590,13 @@ app.post('/api/test-rolls', async (req, res) => {
       order_id: order_id || 'TEST-ORD',
       production_date: now,
       quality_grade: quality_grade || 'T',
-      rack_id: rack_id || '',
+      rack_id: rack_id || '1',
       state: 'TESTING',
       supplier_name: supplier_name || 'Test Supplier',
       weight: parseFloat(weight) || 0,
       yarn_count: yarn_count || '30s',
       yarn_type: yarn_type || 'Test Yarn',
-      bin: bin || 'T1'
+      bin: bin || '1'
     };
 
     // Save to local JSON file
@@ -556,6 +610,7 @@ app.post('/api/test-rolls', async (req, res) => {
 
     const {
       quality_grade: _q, material: _m, rawQr: _r, firebaseId: _f, documentPath: _d, createdAt: _c,
+      bin: _bin, rack_id: _rack,
       ...qrDataObj
     } = rollData;
     const qrData = JSON.stringify({
@@ -668,6 +723,7 @@ app.post('/api/admin/regenerate-qrs', async (req, res) => {
         // Exclude specific fields for compactness
         const {
           quality_grade: _q, material: _m, rawQr: _r, firebaseId: _f, documentPath: _d, createdAt: _c,
+          bin: _bin, rack_id: _rack,
           ...qrDataObj
         } = roll;
         const qrData = JSON.stringify(qrDataObj);
@@ -813,8 +869,8 @@ app.post('/api/rolls/bulk', async (req, res) => {
       }
 
       const rollId = generateRollNumber();
-      const binLabel = `B${currentBinNum}`;
-      const rackLabel = rack_id || 'R1';
+      const binLabel = `${currentBinNum}`;
+      const rackLabel = rack_id || '1';
 
       const rollData = {
         id: rollId,
@@ -858,16 +914,70 @@ app.post('/api/rolls/bulk', async (req, res) => {
       rollsCreatedInCurrentBin++;
       createdRolls.push(rollId);
     }
-
     res.status(201).json({
       success: true,
       message: `Successfully created ${roll_count} rolls across bins starting from ${start_bin_num}`,
       rollIds: createdRolls
     });
-
   } catch (error) {
     console.error('Error in bulk creation:', error);
     res.status(500).json({ error: 'Failed to process bulk intake' });
+  }
+});
+
+// Generate Location QR Codes (Rack/Bin)
+app.post('/api/generate-location-qr', async (req, res) => {
+  try {
+    const { type, number } = req.body;
+
+    if (!type || !number) {
+      return res.status(400).json({ error: 'Type and number are required' });
+    }
+
+    if (type !== 'rack' && type !== 'bin') {
+      return res.status(400).json({ error: 'Type must be either "rack" or "bin"' });
+    }
+
+    const qrData = String(number);
+    const fileName = `${type.toUpperCase()}-${number}.png`;
+
+    // Create directories if they don't exist
+    const localQrDir = path.join(frontendPath, 'qrcodes', 'locations');
+    const rootQrDir = 'e:/QR/LOCATION_QR';
+
+    if (!fs.existsSync(localQrDir)) fs.mkdirSync(localQrDir, { recursive: true });
+    if (!fs.existsSync(rootQrDir)) fs.mkdirSync(rootQrDir, { recursive: true });
+
+    const localQrPath = path.join(localQrDir, fileName);
+    const rootQrPath = path.join(rootQrDir, fileName);
+
+    // Generate QR code
+    await QRCode.toFile(localQrPath, qrData, {
+      width: 400,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    });
+
+    // Copy to root QR directory
+    fs.copyFileSync(localQrPath, rootQrPath);
+
+    console.log(`✅ Generated ${type.toUpperCase()} QR: ${fileName}`);
+
+    res.status(201).json({
+      success: true,
+      message: `${type.charAt(0).toUpperCase() + type.slice(1)} QR code generated successfully`,
+      fileName: fileName,
+      qrPath: `/qrcodes/locations/${fileName}`,
+      type: type,
+      number: number
+    });
+
+  } catch (error) {
+    console.error('Error generating location QR:', error);
+    res.status(500).json({ error: 'Failed to generate QR code' });
   }
 });
 

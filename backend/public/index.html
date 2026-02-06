@@ -407,27 +407,150 @@
 
           // Specific override for Rack / Location as requested
           const rackInput = modal.querySelector('input[placeholder*="RACK"]') ||
-            Array.from(modal.querySelectorAll('input')).find(i => i.placeholder.toLowerCase().includes('rack'));
+            modal.querySelector('input[placeholder*="Locations"]') ||
+            Array.from(modal.querySelectorAll('input')).find(i => {
+              const ph = (i.placeholder || '').toLowerCase();
+              return ph.includes('rack') || ph.includes('location');
+            });
+
           if (rackInput) {
-            rackInput.placeholder = '1';
-            rackInput.value = '';
+            // Hide the Rack input and its container
+            const container = rackInput.closest('.form-group') || rackInput.closest('div') || rackInput.parentElement;
+            if (container) container.style.display = 'none';
+          } else {
+            // Fallback: Try to find by label if input not found by placeholder
+            const labels = Array.from(modal.querySelectorAll('label'));
+            const targetLabel = labels.find(l => {
+              const text = l.textContent.toLowerCase();
+              return text.includes('rack') || text.includes('location');
+            });
+            if (targetLabel) {
+              const container = targetLabel.closest('.form-group') || targetLabel.closest('div') || targetLabel.parentElement;
+              if (container) container.style.display = 'none';
+            }
           }
 
-          if (!document.getElementById('injected-bin-group')) {
-            const labels = Array.from(modal.querySelectorAll('label'));
-            const rackLabel = labels.find(l => l.textContent.includes('Rack')) || labels[labels.length - 1];
-            if (rackLabel) {
-              const binGroup = document.createElement('div');
-              binGroup.className = 'form-group'; binGroup.id = 'injected-bin-group';
-              binGroup.innerHTML = `<label>Bin (1-9)</label><input type="number" id="in-bin" min="1" max="9" value="" placeholder="1"
-    style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1;">`;
-              rackLabel.parentElement.parentElement.appendChild(binGroup);
-            }
+          // Inject 'Create Rack / Bin QR' Button
+          if (!modal.querySelector('#btn-create-location-qr')) {
+            const footer = modal.querySelector('button[type="submit"]')?.parentElement || modal.lastElementChild;
+
+            const btn = document.createElement('button');
+            btn.id = 'btn-create-location-qr';
+            btn.type = 'button'; // Prevent form submission
+            btn.textContent = 'Create Rack / Bin QR';
+            btn.className = 'w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition mt-4';
+            btn.onclick = (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              window.showLocationQRGenerator();
+            };
+
+            // Insert before the submit button container if possible, or append
+            if (footer) footer.before(btn);
+            else modal.appendChild(btn);
           }
         }
       });
       observer.observe(document.body, { childList: true, subtree: true });
     });
+
+    // Location QR Generator Function (Defined Globally)
+    window.showLocationQRGenerator = function () {
+      const overlay = document.createElement('div');
+      overlay.className = 'modal-overlay location-qr-overlay';
+      overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:20000000; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(4px);';
+
+      const content = document.createElement('div');
+      content.className = 'modal-content glass-card';
+      content.style.cssText = 'background:white; padding:2rem; border-radius:16px; width:90%; max-width:400px; position:relative; box-shadow: 0 20px 60px rgba(0,0,0,0.3);';
+
+      content.innerHTML = `
+            <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; color: #1e293b;">Create Location QR</h3>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #64748b; margin-bottom: 0.5rem;">QR Type</label>
+                <div style="display: flex; gap: 1rem;">
+                    <label style="display: flex; align-items: center; cursor: pointer; padding: 0.5rem 1rem; background: #f1f5f9; border-radius: 8px;">
+                        <input type="radio" name="loc-type" value="bin" checked style="margin-right: 0.5rem; accent-color: #f97316;"> 
+                        <span style="font-weight: 600; color: #334155;">Bin QR</span>
+                    </label>
+                    <label style="display: flex; align-items: center; cursor: pointer; padding: 0.5rem 1rem; background: #f1f5f9; border-radius: 8px;">
+                        <input type="radio" name="loc-type" value="rack" style="margin-right: 0.5rem; accent-color: #f97316;"> 
+                        <span style="font-weight: 600; color: #334155;">Rack QR</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #64748b; margin-bottom: 0.5rem;">ID Value (Integer)</label>
+                <input type="number" id="loc-value" placeholder="e.g. 1" 
+                    style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; font-size: 1rem;">
+            </div>
+            
+            <div id="loc-qr-result" style="display: none; justify-content: center; align-items: center; margin-bottom: 2rem; padding: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; min-height: 150px;"></div>
+            
+            <div style="display: flex; gap: 1rem;">
+                <button id="btn-loc-cancel" style="flex: 1; padding: 0.75rem; background: #f1f5f9; color: #64748b; font-weight: 600; border-radius: 10px; border: none; cursor: pointer;">Close</button>
+                <button id="btn-loc-generate" style="flex: 1; padding: 0.75rem; background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-weight: 700; border-radius: 10px; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);">Generate</button>
+                <button id="btn-loc-print" style="display: none; flex: 1; padding: 0.75rem; background: #3b82f6; color: white; font-weight: 600; border-radius: 10px; border: none; cursor: pointer;">Print</button>
+            </div>
+        `;
+
+      document.body.appendChild(overlay);
+      overlay.appendChild(content);
+
+      // Handlers
+      const closeBtn = content.querySelector('#btn-loc-cancel');
+      const genBtn = content.querySelector('#btn-loc-generate');
+      const printBtn = content.querySelector('#btn-loc-print');
+      const resultBox = content.querySelector('#loc-qr-result');
+      const valInput = content.querySelector('#loc-value');
+
+      closeBtn.onclick = () => overlay.remove();
+
+      genBtn.onclick = () => {
+        const type = content.querySelector('input[name="loc-type"]:checked').value;
+        const val = valInput.value.trim();
+
+        if (!val) {
+          valInput.style.borderColor = '#ef4444';
+          return;
+        }
+        valInput.style.borderColor = '#cbd5e1';
+
+        const payload = type === 'bin' ? { bin: parseInt(val) } : { rack: parseInt(val) };
+
+        resultBox.innerHTML = '';
+        resultBox.style.display = 'flex';
+
+        // Generate QR
+        new QRCode(resultBox, {
+          text: JSON.stringify(payload),
+          width: 150,
+          height: 150,
+          colorDark: "#000000",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H
+        });
+
+        // Show print button, hide generate text temporarily
+        genBtn.style.display = 'none';
+        printBtn.style.display = 'block';
+        closeBtn.textContent = 'Done';
+      };
+
+      printBtn.onclick = () => {
+        const qrImg = resultBox.querySelector('img');
+        if (!qrImg) return;
+
+        const win = window.open('', '', 'height=500,width=500');
+        win.document.write('<html><head><title>Print QR</title></head><body style="display:flex;justify-content:center;align-items:center;height:100vh;">');
+        win.document.write(qrImg.outerHTML);
+        win.document.write('</body></html>');
+        win.document.close();
+        win.print();
+      };
+    };
 
     const enhancedOriginalFetch = window.fetch;
     window.fetch = async function () {
@@ -449,6 +572,8 @@
         rolls.forEach(r => { if (r.id) window.rollBinMap[r.id] = r.bin || '1'; });
         return new Response(JSON.stringify(rolls), { status: response.status, headers: response.headers });
       }
+
+
       if (typeof url === 'string' && (url.endsWith('/api/rolls') || url.endsWith('/api/test-rolls')) && options &&
         options.method === 'POST') {
         try {

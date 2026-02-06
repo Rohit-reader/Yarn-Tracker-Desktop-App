@@ -278,7 +278,6 @@
                     <h3 class="font-bold text-slate-800 mb-1 tracking-tight">${roll.id}</h3>
                     <div class="space-y-1 mb-3">
                         <p class="text-xs text-slate-500">${roll.yarn_type}</p>
-                        <p class="text-xs font-bold text-blue-600">Bin: ${roll.bin || 'N/A'}</p>
                     </div>
                     <div class="text-[10px] text-slate-400 font-mono">${new Date(roll.production_date).toLocaleTimeString()}</div>
                     <button onclick='viewDetails(${JSON.stringify(roll).replace(/'/g, "&#39;")})' class="btn-view-details">
@@ -303,8 +302,6 @@
                 supplier_name: 'Supplier Name',
                 quality_grade: 'Quality Grade',
                 state: 'State',
-                rack_id: 'Rack ID',
-                bin: 'Bin',
                 production_date: 'Production Date',
                 last_state_change: 'Last State Change'
             };
