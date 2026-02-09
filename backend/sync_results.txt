@@ -1,0 +1,1302 @@
+--- Sync Analysis ---
+Rolls in Hierarchical but NOT in Inventory (0): []
+Rolls in Legacy but NOT in Inventory (68): ["YR-2026-110","YR-2026-147","YR-2026-150","YR-2026-161","YR-2026-183","YR-2026-270","YR-2026-287","YR-2026-289","YR-2026-309","YR-2026-324","YR-2026-328","YR-2026-342","YR-2026-355","YR-2026-363","YR-2026-408","YR-2026-419","YR-2026-456","YR-2026-501","YR-2026-512","YR-2026-531","YR-2026-539","YR-2026-540","YR-2026-565","YR-2026-566","YR-2026-576","YR-2026-577","YR-2026-580","YR-2026-594","YR-2026-636","YR-2026-637","YR-2026-662","YR-2026-665","YR-2026-668","YR-2026-690","YR-2026-718","YR-2026-729","YR-2026-757","YR-2026-781","YR-2026-810","YR-2026-850","YR-2026-878","YR-2026-895","YR-2026-897","YR-2026-919","YR-2026-933","YR-2026-946","YR-2026-949","YR-2026-977","YR-2026-983","YR-628261","YR-628262","YR-628263","YR-628264","YR-628265","YR-628268","YR-628269","YR-628270","YR-628271","YR-628272","YR-628273","YR-628274","YR-628275","YR-628276","YR-628277","YR-628278","YR-628279","YR-628280","YR-628281"]
+
+--- Data for Missing Legacy Rolls ---
+ID: YR-2026-110
+Data: {
+  "yarn_type": "Cotton 30s",
+  "yarn_count": "30s",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "state": "IN STOCK",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "bin": "B1",
+  "supplier_name": "ABC Textiles",
+  "weight": 25,
+  "order_id": "ORD-NONE",
+  "id": "YR-2026-110",
+  "quality_grade": "A",
+  "lot_number": "LOT-GEN-1161",
+  "rack_id": "2",
+  "production_date": "2026-01-30T09:34:12.669Z"
+}
+
+ID: YR-2026-147
+Data: {
+  "supplier_name": "ABC Textiles",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "yarn_count": "30s",
+  "rack_id": "2",
+  "state": "IN STOCK",
+  "yarn_type": "Cotton 30s",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "weight": 25,
+  "id": "YR-2026-147",
+  "bin": "B2",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "quality_grade": "A",
+  "lot_number": "LOT-GEN-1654",
+  "order_id": "ORD-NONE"
+}
+
+ID: YR-2026-150
+Data: {
+  "supplier_name": "ABC Textiles",
+  "quality_grade": "A",
+  "weight": 25,
+  "lot_number": "LOT-GEN-1222",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "yarn_type": "Cotton 30s",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "rack_id": "2",
+  "order_id": "ORD-NONE",
+  "id": "YR-2026-150",
+  "bin": "B1",
+  "yarn_count": "30s",
+  "state": "IN STOCK"
+}
+
+ID: YR-2026-161
+Data: {
+  "id": "YR-2026-161",
+  "quality_grade": "A",
+  "yarn_type": "Cotton 30s",
+  "bin": "B2",
+  "rack_id": "2",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "weight": 25,
+  "yarn_count": "30s",
+  "supplier_name": "ABC Textiles",
+  "state": "IN STOCK",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "lot_number": "LOT-GEN-9664",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "order_id": "ORD-NONE"
+}
+
+ID: YR-2026-183
+Data: {
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "state": "IN STOCK",
+  "order_id": "ORD-NONE",
+  "yarn_count": "30s",
+  "yarn_type": "Cotton 30s",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "supplier_name": "ABC Textiles",
+  "id": "YR-2026-183",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "lot_number": "LOT-GEN-5544",
+  "weight": 25,
+  "rack_id": "2",
+  "quality_grade": "A",
+  "bin": "B2"
+}
+
+ID: YR-2026-270
+Data: {
+  "bin": "B2",
+  "order_id": "ORD-NONE",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "id": "YR-2026-270",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "quality_grade": "A",
+  "lot_number": "LOT-GEN-4464",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "weight": 25,
+  "yarn_type": "Cotton 30s",
+  "state": "IN STOCK",
+  "rack_id": "2",
+  "yarn_count": "30s",
+  "supplier_name": "ABC Textiles"
+}
+
+ID: YR-2026-287
+Data: {
+  "weight": 25,
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "quality_grade": "A",
+  "state": "IN STOCK",
+  "yarn_type": "Cotton 30s",
+  "yarn_count": "30s",
+  "lot_number": "LOT-GEN-7633",
+  "id": "YR-2026-287",
+  "bin": "B2",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "rack_id": "2",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "order_id": "ORD-NONE",
+  "supplier_name": "ABC Textiles"
+}
+
+ID: YR-2026-289
+Data: {
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "lot_number": "LOT-GEN-4656",
+  "rack_id": "2",
+  "state": "IN STOCK",
+  "id": "YR-2026-289",
+  "quality_grade": "A",
+  "order_id": "ORD-NONE",
+  "supplier_name": "ABC Textiles",
+  "weight": 25,
+  "yarn_count": "30s",
+  "bin": "B1",
+  "yarn_type": "Cotton 30s",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "production_date": "2026-01-30T09:34:12.669Z"
+}
+
+ID: YR-2026-309
+Data: {
+  "rack_id": "2",
+  "yarn_count": "30s",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "lot_number": "LOT-GEN-5977",
+  "id": "YR-2026-309",
+  "bin": "B1",
+  "quality_grade": "A",
+  "state": "IN STOCK",
+  "supplier_name": "ABC Textiles",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "order_id": "ORD-NONE",
+  "yarn_type": "Cotton 30s",
+  "weight": 25,
+  "createdAt": "2026-01-30T09:34:12.669Z"
+}
+
+ID: YR-2026-324
+Data: {
+  "state": "IN STOCK",
+  "bin": "B2",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "rack_id": "2",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "yarn_count": "30s",
+  "lot_number": "LOT-GEN-3689",
+  "weight": 25,
+  "quality_grade": "A",
+  "id": "YR-2026-324",
+  "supplier_name": "ABC Textiles",
+  "order_id": "ORD-NONE",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "yarn_type": "Cotton 30s"
+}
+
+ID: YR-2026-328
+Data: {
+  "state": "IN STOCK",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "lot_number": "LOT-GEN-8242",
+  "id": "YR-2026-328",
+  "yarn_count": "30s",
+  "yarn_type": "Cotton 30s",
+  "bin": "B1",
+  "order_id": "ORD-NONE",
+  "quality_grade": "A",
+  "weight": 25,
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "rack_id": "2",
+  "supplier_name": "ABC Textiles",
+  "production_date": "2026-01-30T09:34:12.669Z"
+}
+
+ID: YR-2026-342
+Data: {
+  "yarn_count": "30s",
+  "id": "YR-2026-342",
+  "quality_grade": "A",
+  "state": "IN STOCK",
+  "bin": "B1",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "rack_id": "2",
+  "weight": 25,
+  "supplier_name": "ABC Textiles",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "yarn_type": "Cotton 30s",
+  "order_id": "ORD-NONE",
+  "lot_number": "LOT-GEN-5812"
+}
+
+ID: YR-2026-355
+Data: {
+  "state": "IN STOCK",
+  "yarn_count": "30s",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "lot_number": "LOT-GEN-7753",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "id": "YR-2026-355",
+  "bin": "B1",
+  "weight": 25,
+  "rack_id": "2",
+  "order_id": "ORD-NONE",
+  "supplier_name": "ABC Textiles",
+  "yarn_type": "Cotton 30s",
+  "quality_grade": "A"
+}
+
+ID: YR-2026-363
+Data: {
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "supplier_name": "ABC Textiles",
+  "quality_grade": "A",
+  "weight": 25,
+  "rack_id": "2",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "yarn_count": "30s",
+  "order_id": "ORD-NONE",
+  "lot_number": "LOT-GEN-7680",
+  "id": "YR-2026-363",
+  "state": "IN STOCK",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "bin": "B2",
+  "yarn_type": "Cotton 30s"
+}
+
+ID: YR-2026-408
+Data: {
+  "quality_grade": "A",
+  "lot_number": "LOT-GEN-4557",
+  "yarn_count": "30s",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "weight": 25,
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "state": "IN STOCK",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "id": "YR-2026-408",
+  "order_id": "ORD-NONE",
+  "bin": "B1",
+  "yarn_type": "Cotton 30s",
+  "rack_id": "2",
+  "supplier_name": "ABC Textiles"
+}
+
+ID: YR-2026-419
+Data: {
+  "quality_grade": "A",
+  "yarn_count": "30s",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "order_id": "ORD-NONE",
+  "rack_id": "2",
+  "supplier_name": "ABC Textiles",
+  "weight": 25,
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "state": "IN STOCK",
+  "yarn_type": "Cotton 30s",
+  "id": "YR-2026-419",
+  "bin": "B1",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "lot_number": "LOT-GEN-6065"
+}
+
+ID: YR-2026-456
+Data: {
+  "yarn_type": "Cotton 30s",
+  "quality_grade": "A",
+  "supplier_name": "ABC Textiles",
+  "state": "IN STOCK",
+  "id": "YR-2026-456",
+  "yarn_count": "30s",
+  "rack_id": "2",
+  "order_id": "ORD-NONE",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "lot_number": "LOT-GEN-4511",
+  "bin": "B1",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "weight": 25,
+  "createdAt": "2026-01-30T09:34:12.669Z"
+}
+
+ID: YR-2026-501
+Data: {
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "supplier_name": "ABC Textiles",
+  "quality_grade": "A",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "id": "YR-2026-501",
+  "bin": "B1",
+  "order_id": "ORD-NONE",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "yarn_count": "30s",
+  "rack_id": "2",
+  "yarn_type": "Cotton 30s",
+  "state": "IN STOCK",
+  "lot_number": "LOT-GEN-1116",
+  "weight": 25
+}
+
+ID: YR-2026-512
+Data: {
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "order_id": "ORD-NONE",
+  "supplier_name": "ABC Textiles",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "weight": 25,
+  "yarn_type": "Cotton 30s",
+  "rack_id": "2",
+  "bin": "B2",
+  "yarn_count": "30s",
+  "quality_grade": "A",
+  "state": "IN STOCK",
+  "id": "YR-2026-512",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "lot_number": "LOT-GEN-0522"
+}
+
+ID: YR-2026-531
+Data: {
+  "rack_id": "2",
+  "lot_number": "LOT-GEN-2684",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "id": "YR-2026-531",
+  "state": "IN STOCK",
+  "order_id": "ORD-NONE",
+  "quality_grade": "A",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "yarn_count": "30s",
+  "weight": 25,
+  "supplier_name": "ABC Textiles",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "yarn_type": "Cotton 30s",
+  "bin": "B2"
+}
+
+ID: YR-2026-539
+Data: {
+  "id": "YR-2026-539",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "weight": 25,
+  "order_id": "ORD-NONE",
+  "supplier_name": "ABC Textiles",
+  "rack_id": "2",
+  "yarn_type": "Cotton 30s",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "state": "IN STOCK",
+  "quality_grade": "A",
+  "bin": "B1",
+  "yarn_count": "30s",
+  "lot_number": "LOT-GEN-7176"
+}
+
+ID: YR-2026-540
+Data: {
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "state": "IN STOCK",
+  "rack_id": "2",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "yarn_type": "Cotton 30s",
+  "yarn_count": "30s",
+  "order_id": "ORD-NONE",
+  "lot_number": "LOT-GEN-7128",
+  "supplier_name": "ABC Textiles",
+  "weight": 25,
+  "quality_grade": "A",
+  "id": "YR-2026-540",
+  "bin": "B1"
+}
+
+ID: YR-2026-565
+Data: {
+  "yarn_type": "Cotton 30s",
+  "yarn_count": "30s",
+  "weight": 25,
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "lot_number": "LOT-GEN-2896",
+  "id": "YR-2026-565",
+  "quality_grade": "A",
+  "state": "IN STOCK",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "rack_id": "2",
+  "order_id": "ORD-NONE",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "supplier_name": "ABC Textiles",
+  "bin": "B1"
+}
+
+ID: YR-2026-566
+Data: {
+  "yarn_count": "30s",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "order_id": "ORD-NONE",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "rack_id": "2",
+  "state": "IN STOCK",
+  "lot_number": "LOT-GEN-3245",
+  "id": "YR-2026-566",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "quality_grade": "A",
+  "yarn_type": "Cotton 30s",
+  "weight": 25,
+  "supplier_name": "ABC Textiles",
+  "bin": "B1"
+}
+
+ID: YR-2026-576
+Data: {
+  "order_id": "ORD-NONE",
+  "quality_grade": "A",
+  "lot_number": "LOT-GEN-2448",
+  "yarn_type": "Cotton 30s",
+  "weight": 25,
+  "id": "YR-2026-576",
+  "rack_id": "2",
+  "supplier_name": "ABC Textiles",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "bin": "B1",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "state": "IN STOCK",
+  "yarn_count": "30s",
+  "last_state_change": "2026-01-30T09:34:12.669Z"
+}
+
+ID: YR-2026-577
+Data: {
+  "order_id": "ORD-NONE",
+  "weight": 25,
+  "quality_grade": "A",
+  "state": "IN STOCK",
+  "yarn_type": "Cotton 30s",
+  "supplier_name": "ABC Textiles",
+  "id": "YR-2026-577",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "yarn_count": "30s",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "rack_id": "2",
+  "bin": "B1",
+  "lot_number": "LOT-GEN-2035",
+  "last_state_change": "2026-01-30T09:34:12.669Z"
+}
+
+ID: YR-2026-580
+Data: {
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "state": "IN STOCK",
+  "rack_id": "2",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "yarn_type": "Cotton 30s",
+  "yarn_count": "30s",
+  "order_id": "ORD-NONE",
+  "lot_number": "LOT-GEN-0818",
+  "supplier_name": "ABC Textiles",
+  "weight": 25,
+  "quality_grade": "A",
+  "id": "YR-2026-580",
+  "bin": "B2"
+}
+
+ID: YR-2026-594
+Data: {
+  "yarn_type": "Cotton 30s",
+  "supplier_name": "ABC Textiles",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "state": "IN STOCK",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "lot_number": "LOT-GEN-6179",
+  "rack_id": "2",
+  "id": "YR-2026-594",
+  "weight": 25,
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "quality_grade": "A",
+  "order_id": "ORD-NONE",
+  "yarn_count": "30s",
+  "bin": "B2"
+}
+
+ID: YR-2026-636
+Data: {
+  "state": "IN STOCK",
+  "quality_grade": "A",
+  "yarn_type": "Cotton 30s",
+  "rack_id": "2",
+  "bin": "B1",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "lot_number": "LOT-GEN-0318",
+  "yarn_count": "30s",
+  "supplier_name": "ABC Textiles",
+  "order_id": "ORD-NONE",
+  "id": "YR-2026-636",
+  "weight": 25
+}
+
+ID: YR-2026-637
+Data: {
+  "lot_number": "LOT-GEN-8498",
+  "supplier_name": "ABC Textiles",
+  "rack_id": "2",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "id": "YR-2026-637",
+  "quality_grade": "A",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "state": "IN STOCK",
+  "bin": "B1",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "order_id": "ORD-NONE",
+  "yarn_count": "30s",
+  "weight": 25,
+  "yarn_type": "Cotton 30s"
+}
+
+ID: YR-2026-662
+Data: {
+  "state": "IN STOCK",
+  "order_id": "ORD-NONE",
+  "lot_number": "LOT-GEN-7394",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "weight": 25,
+  "quality_grade": "A",
+  "bin": "B2",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "id": "YR-2026-662",
+  "rack_id": "2",
+  "yarn_type": "Cotton 30s",
+  "supplier_name": "ABC Textiles",
+  "yarn_count": "30s",
+  "createdAt": "2026-01-30T09:34:12.669Z"
+}
+
+ID: YR-2026-665
+Data: {
+  "state": "IN STOCK",
+  "yarn_count": "30s",
+  "weight": 25,
+  "id": "YR-2026-665",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "order_id": "ORD-NONE",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "lot_number": "LOT-GEN-6316",
+  "rack_id": "2",
+  "supplier_name": "ABC Textiles",
+  "quality_grade": "A",
+  "bin": "B2",
+  "yarn_type": "Cotton 30s",
+  "last_state_change": "2026-01-30T09:34:12.669Z"
+}
+
+ID: YR-2026-668
+Data: {
+  "order_id": "ORD-NONE",
+  "yarn_count": "30s",
+  "lot_number": "LOT-GEN-9653",
+  "bin": "B1",
+  "quality_grade": "A",
+  "id": "YR-2026-668",
+  "weight": 25,
+  "supplier_name": "ABC Textiles",
+  "yarn_type": "Cotton 30s",
+  "state": "IN STOCK",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "rack_id": "2"
+}
+
+ID: YR-2026-690
+Data: {
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "order_id": "ORD-NONE",
+  "supplier_name": "ABC Textiles",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "lot_number": "LOT-GEN-8843",
+  "id": "YR-2026-690",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "weight": 25,
+  "yarn_count": "30s",
+  "bin": "B1",
+  "rack_id": "2",
+  "yarn_type": "Cotton 30s",
+  "state": "IN STOCK",
+  "quality_grade": "A"
+}
+
+ID: YR-2026-718
+Data: {
+  "lot_number": "LOT-GEN-3017",
+  "order_id": "ORD-NONE",
+  "supplier_name": "ABC Textiles",
+  "state": "IN STOCK",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "rack_id": "2",
+  "yarn_type": "Cotton 30s",
+  "bin": "B2",
+  "id": "YR-2026-718",
+  "weight": 25,
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "quality_grade": "A",
+  "yarn_count": "30s",
+  "production_date": "2026-01-30T09:34:12.669Z"
+}
+
+ID: YR-2026-729
+Data: {
+  "yarn_count": "30s",
+  "lot_number": "LOT-GEN-9160",
+  "weight": 25,
+  "quality_grade": "A",
+  "yarn_type": "Cotton 30s",
+  "supplier_name": "ABC Textiles",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "order_id": "ORD-NONE",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "id": "YR-2026-729",
+  "rack_id": "2",
+  "state": "IN STOCK",
+  "bin": "B2"
+}
+
+ID: YR-2026-757
+Data: {
+  "id": "YR-2026-757",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "supplier_name": "ABC Textiles",
+  "state": "IN STOCK",
+  "rack_id": "2",
+  "order_id": "ORD-NONE",
+  "quality_grade": "A",
+  "lot_number": "LOT-GEN-0221",
+  "yarn_count": "30s",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "yarn_type": "Cotton 30s",
+  "bin": "B2",
+  "weight": 25
+}
+
+ID: YR-2026-781
+Data: {
+  "order_id": "ORD-NONE",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "bin": "B2",
+  "yarn_count": "30s",
+  "state": "IN STOCK",
+  "quality_grade": "A",
+  "supplier_name": "ABC Textiles",
+  "id": "YR-2026-781",
+  "yarn_type": "Cotton 30s",
+  "weight": 25,
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "lot_number": "LOT-GEN-2363",
+  "rack_id": "2",
+  "last_state_change": "2026-01-30T09:34:12.669Z"
+}
+
+ID: YR-2026-810
+Data: {
+  "yarn_type": "Cotton 30s",
+  "lot_number": "LOT-GEN-4505",
+  "order_id": "ORD-NONE",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "weight": 25,
+  "yarn_count": "30s",
+  "state": "IN STOCK",
+  "rack_id": "2",
+  "quality_grade": "A",
+  "id": "YR-2026-810",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "supplier_name": "ABC Textiles",
+  "bin": "B2",
+  "production_date": "2026-01-30T09:34:12.669Z"
+}
+
+ID: YR-2026-850
+Data: {
+  "weight": 25,
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "supplier_name": "ABC Textiles",
+  "yarn_type": "Cotton 30s",
+  "order_id": "ORD-NONE",
+  "rack_id": "2",
+  "id": "YR-2026-850",
+  "yarn_count": "30s",
+  "quality_grade": "A",
+  "state": "IN STOCK",
+  "bin": "B1",
+  "lot_number": "LOT-GEN-6076",
+  "last_state_change": "2026-01-30T09:34:12.669Z"
+}
+
+ID: YR-2026-878
+Data: {
+  "lot_number": "LOT-GEN-9903",
+  "weight": 25,
+  "quality_grade": "A",
+  "rack_id": "2",
+  "id": "YR-2026-878",
+  "order_id": "ORD-NONE",
+  "state": "IN STOCK",
+  "yarn_type": "Cotton 30s",
+  "bin": "B1",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "yarn_count": "30s",
+  "supplier_name": "ABC Textiles",
+  "production_date": "2026-01-30T09:34:12.669Z"
+}
+
+ID: YR-2026-895
+Data: {
+  "quality_grade": "A",
+  "supplier_name": "ABC Textiles",
+  "order_id": "ORD-NONE",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "yarn_count": "30s",
+  "rack_id": "2",
+  "state": "IN STOCK",
+  "lot_number": "LOT-GEN-7275",
+  "id": "YR-2026-895",
+  "bin": "B1",
+  "weight": 25,
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "yarn_type": "Cotton 30s"
+}
+
+ID: YR-2026-897
+Data: {
+  "quality_grade": "A",
+  "id": "YR-2026-897",
+  "weight": 25,
+  "lot_number": "LOT-GEN-9123",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "yarn_count": "30s",
+  "bin": "B1",
+  "order_id": "ORD-NONE",
+  "supplier_name": "ABC Textiles",
+  "yarn_type": "Cotton 30s",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "state": "IN STOCK",
+  "rack_id": "2"
+}
+
+ID: YR-2026-919
+Data: {
+  "yarn_count": "30s",
+  "supplier_name": "ABC Textiles",
+  "id": "YR-2026-919",
+  "lot_number": "LOT-GEN-2969",
+  "quality_grade": "A",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "rack_id": "2",
+  "order_id": "ORD-NONE",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "state": "IN STOCK",
+  "bin": "B2",
+  "weight": 25,
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "yarn_type": "Cotton 30s"
+}
+
+ID: YR-2026-933
+Data: {
+  "bin": "B1",
+  "state": "IN STOCK",
+  "supplier_name": "ABC Textiles",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "lot_number": "LOT-GEN-3693",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "order_id": "ORD-NONE",
+  "yarn_count": "30s",
+  "rack_id": "2",
+  "weight": 25,
+  "quality_grade": "A",
+  "id": "YR-2026-933",
+  "yarn_type": "Cotton 30s"
+}
+
+ID: YR-2026-946
+Data: {
+  "weight": 25,
+  "id": "YR-2026-946",
+  "order_id": "ORD-NONE",
+  "yarn_type": "Cotton 30s",
+  "state": "IN STOCK",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "supplier_name": "ABC Textiles",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "yarn_count": "30s",
+  "bin": "B1",
+  "lot_number": "LOT-GEN-8436",
+  "rack_id": "2",
+  "quality_grade": "A"
+}
+
+ID: YR-2026-949
+Data: {
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "state": "IN STOCK",
+  "weight": 25,
+  "bin": "B1",
+  "order_id": "ORD-NONE",
+  "quality_grade": "A",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "supplier_name": "ABC Textiles",
+  "yarn_type": "Cotton 30s",
+  "rack_id": "2",
+  "lot_number": "LOT-GEN-5880",
+  "id": "YR-2026-949",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "yarn_count": "30s"
+}
+
+ID: YR-2026-977
+Data: {
+  "quality_grade": "A",
+  "state": "IN STOCK",
+  "bin": "B1",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "id": "YR-2026-977",
+  "yarn_type": "Cotton 30s",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "yarn_count": "30s",
+  "supplier_name": "ABC Textiles",
+  "weight": 25,
+  "rack_id": "2",
+  "order_id": "ORD-NONE",
+  "lot_number": "LOT-GEN-4992"
+}
+
+ID: YR-2026-983
+Data: {
+  "yarn_type": "Cotton 30s",
+  "supplier_name": "ABC Textiles",
+  "production_date": "2026-01-30T09:34:12.669Z",
+  "weight": 25,
+  "quality_grade": "A",
+  "order_id": "ORD-NONE",
+  "last_state_change": "2026-01-30T09:34:12.669Z",
+  "bin": "B2",
+  "yarn_count": "30s",
+  "state": "IN STOCK",
+  "lot_number": "LOT-GEN-1155",
+  "createdAt": "2026-01-30T09:34:12.669Z",
+  "rack_id": "2",
+  "id": "YR-2026-983"
+}
+
+ID: YR-628261
+Data: {
+  "bin": "9",
+  "yarn_count": "10s",
+  "order_id": "TEST-ORD",
+  "isTest": true,
+  "rack_id": "2",
+  "lot_number": "TEST-LOT",
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1769939628,
+    "nanoseconds": 800000000
+  },
+  "state": "TESTING",
+  "last_state_change": "2026-02-01T09:48:37.447Z",
+  "supplier_name": "Athik Textiles",
+  "id": "YR-628261",
+  "rawQr": "{\"id\":\"TEST - 1769939317446\",\"last_state_change\":\"2026-02-01T09:48:37.447Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-01T09:48:37.447Z\",\"rack_id\":\"2\",\"state\":\"TESTING\",\"supplier_name\":\"Athik Textiles\",\"weight\":25,\"yarn_count\":\"10s\",\"yarn_type\":\"Polyester 40s\",\"bin\":\"9\",\"isTest\":true}",
+  "production_date": "2026-02-01T09:48:37.447Z",
+  "weight": 25,
+  "originalQrId": "TEST - 1769939317446",
+  "yarn_type": "Polyester 40s"
+}
+
+ID: YR-628262
+Data: {
+  "yarn_count": "10s",
+  "yarn_type": "Polyester 40s",
+  "bin": "9",
+  "production_date": "2026-02-01T09:48:37.447Z",
+  "last_state_change": "2026-02-01T09:48:37.447Z",
+  "lot_number": "LOT-20260201-634",
+  "rack_id": "2",
+  "originalQrId": "TEST - 1769939317446",
+  "rawQr": "{\"id\":\"TEST - 1769939317446\",\"last_state_change\":\"2026-02-01T09:48:37.447Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-01T09:48:37.447Z\",\"rack_id\":\"2\",\"state\":\"TESTING\",\"supplier_name\":\"Athik Textiles\",\"weight\":25,\"yarn_count\":\"10s\",\"yarn_type\":\"Polyester 40s\",\"bin\":\"9\",\"isTest\":true}",
+  "order_id": "ORD-NONE",
+  "supplier_name": "Athik Textiles",
+  "id": "YR-628262",
+  "state": "IN STOCK",
+  "weight": 25,
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1769940001,
+    "nanoseconds": 416000000
+  }
+}
+
+ID: YR-628263
+Data: {
+  "supplier_name": "Akhilesh Textiles",
+  "id": "YR-628263",
+  "yarn_count": "30s",
+  "weight": 25,
+  "bin": "1",
+  "rawQr": "{\"id\":\"TEST - 1769939278117\",\"last_state_change\":\"2026-02-01T09:47:58.118Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-01T09:47:58.118Z\",\"rack_id\":\"1\",\"state\":\"TESTING\",\"supplier_name\":\"Akhilesh Textiles\",\"weight\":25,\"yarn_count\":\"30s\",\"yarn_type\":\"Viscose 50s\",\"bin\":\"1\",\"isTest\":true}",
+  "last_state_change": "2026-02-01T09:47:58.118Z",
+  "isTest": true,
+  "yarn_type": "Viscose 50s",
+  "originalQrId": "TEST - 1769939278117",
+  "rack_id": "1",
+  "order_id": "TEST-ORD",
+  "state": "TESTING",
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1769946269,
+    "nanoseconds": 477000000
+  },
+  "lot_number": "TEST-LOT",
+  "production_date": "2026-02-01T09:47:58.118Z"
+}
+
+ID: YR-628264
+Data: {
+  "state": "IN STOCK",
+  "id": "YR-628264",
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1769963501,
+    "nanoseconds": 726000000
+  },
+  "rawQr": "{\"id\":\"TEST - 1769761328497\",\"last_state_change\":\"2026-01-30T08:22:08.497Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-01-30T08:22:08.497Z\",\"rack_id\":\"2\",\"state\":\"TESTING\",\"supplier_name\":\"ABC Textiles\",\"weight\":25,\"yarn_count\":\"60s\",\"yarn_type\":\"Cotton 30s\",\"bin\":\"1\",\"isTest\":true}",
+  "originalQrId": "{\"id\":\"TEST - 1769761328497\",\"last_state_change\":\"2026-01-30T08:22:08.497Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-01-30T08:22:08.497Z\",\"rack_id\":\"2\",\"state\":\"TESTING\",\"supplier_name\":\"ABC Textiles\",\"weight\":25,\"yarn_count\":\"60s\",\"yarn_type\":\"Cotton 30s\",\"bin\":\"1\",\"isTest\":true}",
+  "order_id": "ORD-NONE"
+}
+
+ID: YR-628265
+Data: {
+  "rawQr": "{\"id\":\"TEST - 1769939278117\",\"last_state_change\":\"2026-02-01T09:47:58.118Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-01T09:47:58.118Z\",\"rack_id\":\"1\",\"state\":\"TESTING\",\"supplier_name\":\"Akhilesh Textiles\",\"weight\":25,\"yarn_count\":\"30s\",\"yarn_type\":\"Viscose 50s\",\"bin\":\"1\",\"isTest\":true}",
+  "last_state_change": "2026-02-01T09:47:58.118Z",
+  "supplier_name": "Akhilesh Textiles",
+  "order_id": "TEST-ORD",
+  "yarn_type": "Viscose 50s",
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1769966370,
+    "nanoseconds": 914000000
+  },
+  "originalQrId": "YR-628263",
+  "production_date": "2026-02-01T09:47:58.118Z",
+  "bin": "1",
+  "isTest": true,
+  "yarn_count": "30s",
+  "state": "TESTING",
+  "weight": 25,
+  "rack_id": "1",
+  "id": "YR-628265",
+  "lot_number": "TEST-LOT"
+}
+
+ID: YR-628268
+Data: {
+  "production_date": "2026-02-01T09:47:58.118Z",
+  "rawQr": "{\"id\":\"TEST - 1769939278117\",\"last_state_change\":\"2026-02-01T09:47:58.118Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-01T09:47:58.118Z\",\"rack_id\":\"1\",\"state\":\"TESTING\",\"supplier_name\":\"Akhilesh Textiles\",\"weight\":25,\"yarn_count\":\"30s\",\"yarn_type\":\"Viscose 50s\",\"bin\":\"1\",\"isTest\":true}",
+  "id": "YR-628268",
+  "weight": 25,
+  "supplier_name": "Akhilesh Textiles",
+  "bin": "1",
+  "lot_number": "TEST-LOT",
+  "order_id": "TEST-ORD",
+  "originalQrId": "YR-628263",
+  "isTest": true,
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1769967339,
+    "nanoseconds": 514000000
+  },
+  "last_state_change": "2026-02-01T09:47:58.118Z",
+  "yarn_count": "30s",
+  "rack_id": "1",
+  "yarn_type": "Viscose 50s",
+  "state": "TESTING"
+}
+
+ID: YR-628269
+Data: {
+  "state": "TESTING",
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1769967389,
+    "nanoseconds": 720000000
+  },
+  "order_id": "TEST-ORD",
+  "originalQrId": "YR-628263",
+  "lot_number": "TEST-LOT",
+  "isTest": true,
+  "production_date": "2026-02-01T09:47:58.118Z",
+  "weight": 25,
+  "yarn_count": "30s",
+  "last_state_change": "2026-02-01T09:47:58.118Z",
+  "rack_id": "1",
+  "bin": "1",
+  "supplier_name": "Akhilesh Textiles",
+  "id": "YR-628269",
+  "rawQr": "{\"id\":\"TEST - 1769939278117\",\"last_state_change\":\"2026-02-01T09:47:58.118Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-01T09:47:58.118Z\",\"rack_id\":\"1\",\"state\":\"TESTING\",\"supplier_name\":\"Akhilesh Textiles\",\"weight\":25,\"yarn_count\":\"30s\",\"yarn_type\":\"Viscose 50s\",\"bin\":\"1\",\"isTest\":true}",
+  "yarn_type": "Viscose 50s"
+}
+
+ID: YR-628270
+Data: {
+  "yarn_count": "30s",
+  "rawQr": "{\"id\":\"TEST - 1769939278117\",\"last_state_change\":\"2026-02-01T09:47:58.118Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-01T09:47:58.118Z\",\"rack_id\":\"1\",\"state\":\"TESTING\",\"supplier_name\":\"Akhilesh Textiles\",\"weight\":25,\"yarn_count\":\"30s\",\"yarn_type\":\"Viscose 50s\",\"bin\":\"1\",\"isTest\":true}",
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1769967421,
+    "nanoseconds": 581000000
+  },
+  "originalQrId": "YR-628263",
+  "isTest": true,
+  "supplier_name": "Akhilesh Textiles",
+  "production_date": "2026-02-01T09:47:58.118Z",
+  "id": "YR-628270",
+  "last_state_change": "2026-02-01T09:47:58.118Z",
+  "bin": "1",
+  "order_id": "TEST-ORD",
+  "lot_number": "TEST-LOT",
+  "weight": 25,
+  "state": "TESTING",
+  "rack_id": "1",
+  "yarn_type": "Viscose 50s"
+}
+
+ID: YR-628271
+Data: {
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1769967493,
+    "nanoseconds": 292000000
+  },
+  "supplier_name": "Akhilesh Textiles",
+  "yarn_count": "30s",
+  "state": "TESTING",
+  "order_id": "TEST-ORD",
+  "id": "YR-628271",
+  "rawQr": "{\"id\":\"TEST - 1769939278117\",\"last_state_change\":\"2026-02-01T09:47:58.118Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-01T09:47:58.118Z\",\"rack_id\":\"1\",\"state\":\"TESTING\",\"supplier_name\":\"Akhilesh Textiles\",\"weight\":25,\"yarn_count\":\"30s\",\"yarn_type\":\"Viscose 50s\",\"bin\":\"1\",\"isTest\":true}",
+  "last_state_change": "2026-02-01T09:47:58.118Z",
+  "bin": "1",
+  "originalQrId": "YR-628263",
+  "yarn_type": "Viscose 50s",
+  "weight": 25,
+  "rack_id": "1",
+  "production_date": "2026-02-01T09:47:58.118Z",
+  "lot_number": "TEST-LOT",
+  "isTest": true
+}
+
+ID: YR-628272
+Data: {
+  "yarn_count": "30s",
+  "production_date": "2026-02-01T09:47:58.118Z",
+  "order_id": "TEST-ORD",
+  "supplier_name": "Akhilesh Textiles",
+  "weight": 25,
+  "last_state_change": "2026-02-01T09:47:58.118Z",
+  "originalQrId": "YR-628263",
+  "lot_number": "TEST-LOT",
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1769967509,
+    "nanoseconds": 901000000
+  },
+  "state": "TESTING",
+  "rack_id": "1",
+  "isTest": true,
+  "yarn_type": "Viscose 50s",
+  "bin": "1",
+  "rawQr": "{\"id\":\"TEST - 1769939278117\",\"last_state_change\":\"2026-02-01T09:47:58.118Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-01T09:47:58.118Z\",\"rack_id\":\"1\",\"state\":\"TESTING\",\"supplier_name\":\"Akhilesh Textiles\",\"weight\":25,\"yarn_count\":\"30s\",\"yarn_type\":\"Viscose 50s\",\"bin\":\"1\",\"isTest\":true}",
+  "id": "YR-628272"
+}
+
+ID: YR-628273
+Data: {
+  "yarn_count": "30s",
+  "state": "TESTING",
+  "rack_id": "1",
+  "supplier_name": "Akhilesh Textiles",
+  "production_date": "2026-02-01T09:47:58.118Z",
+  "lot_number": "TEST-LOT",
+  "bin": "1",
+  "last_state_change": "2026-02-01T09:47:58.118Z",
+  "isTest": true,
+  "originalQrId": "YR-628263",
+  "weight": 25,
+  "rawQr": "{\"id\":\"TEST - 1769939278117\",\"last_state_change\":\"2026-02-01T09:47:58.118Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-01T09:47:58.118Z\",\"rack_id\":\"1\",\"state\":\"TESTING\",\"supplier_name\":\"Akhilesh Textiles\",\"weight\":25,\"yarn_count\":\"30s\",\"yarn_type\":\"Viscose 50s\",\"bin\":\"1\",\"isTest\":true}",
+  "order_id": "TEST-ORD",
+  "id": "YR-628273",
+  "yarn_type": "Viscose 50s",
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1769967560,
+    "nanoseconds": 606000000
+  }
+}
+
+ID: YR-628274
+Data: {
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1770105876,
+    "nanoseconds": 46000000
+  },
+  "binId": null,
+  "id": "YR-628274",
+  "notFound": true,
+  "rawQr": "{\"rack\":3}",
+  "originalQrId": "{\"rack\":3}"
+}
+
+ID: YR-628275
+Data: {
+  "Last State Change": "2026-02-03T08:44:54.875Z",
+  "Yarn Type": "Cotton 30s",
+  "Yarn Count": "10",
+  "Production Date": "2026-02-03T08:44:54.875Z",
+  "State": "TESTING",
+  "id": "YR-628275",
+  "rawQr": "{\"id\":\"TEST - 1770108294875\",\"last_state_change\":\"2026-02-03T08:44:54.875Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-03T08:44:54.875Z\",\"state\":\"TESTING\",\"supplier_name\":\"ABC Textiles\",\"weight\":25,\"yarn_count\":\"10\",\"yarn_type\":\"Cotton 30s\",\"isTest\":true}",
+  "binId": 1,
+  "Id": "TEST - 1770108294875",
+  "Weight": 25,
+  "IsTest": true,
+  "Order Id": "TEST-ORD",
+  "Supplier Name": "ABC Textiles",
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1770108440,
+    "nanoseconds": 934000000
+  },
+  "originalQrId": null,
+  "Lot Number": "TEST-LOT"
+}
+
+ID: YR-628276
+Data: {
+  "Production Date": "2026-02-03T08:46:44.098Z",
+  "Lot Number": "TEST-LOT",
+  "State": "TESTING",
+  "rawQr": "{\"id\":\"TEST - 1770108404098\",\"last_state_change\":\"2026-02-03T08:46:44.098Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-03T08:46:44.098Z\",\"state\":\"TESTING\",\"supplier_name\":\"ABC Textiles\",\"weight\":20,\"yarn_count\":\"13\",\"yarn_type\":\"Polyester 40s\",\"isTest\":true}",
+  "Id": "TEST - 1770108404098",
+  "originalQrId": null,
+  "Order Id": "TEST-ORD",
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1770108473,
+    "nanoseconds": 27000000
+  },
+  "id": "YR-628276",
+  "IsTest": true,
+  "Yarn Type": "Polyester 40s",
+  "Weight": 20,
+  "Last State Change": "2026-02-03T08:46:44.098Z",
+  "Supplier Name": "ABC Textiles",
+  "Yarn Count": "13",
+  "binId": 1
+}
+
+ID: YR-628277
+Data: {
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1770108521,
+    "nanoseconds": 761000000
+  },
+  "originalQrId": null,
+  "Last State Change": "2026-02-03T08:47:31.586Z",
+  "Id": "TEST - 1770108451586",
+  "Weight": 25,
+  "Yarn Type": "Viscose 50s",
+  "binId": 5,
+  "IsTest": true,
+  "State": "TESTING",
+  "Yarn Count": "4",
+  "Order Id": "TEST-ORD",
+  "id": "YR-628277",
+  "Lot Number": "TEST-LOT",
+  "rawQr": "{\"id\":\"TEST - 1770108451586\",\"last_state_change\":\"2026-02-03T08:47:31.586Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-03T08:47:31.586Z\",\"state\":\"TESTING\",\"supplier_name\":\"ABC Textiles\",\"weight\":25,\"yarn_count\":\"4\",\"yarn_type\":\"Viscose 50s\",\"isTest\":true}",
+  "Supplier Name": "ABC Textiles",
+  "Production Date": "2026-02-03T08:47:31.586Z"
+}
+
+ID: YR-628278
+Data: {
+  "id": "YR-628278",
+  "Supplier Name": "ABC Textiles",
+  "binId": 5,
+  "Last State Change": "2026-02-03T08:47:31.586Z",
+  "Id": "TEST - 1770108451586",
+  "originalQrId": null,
+  "IsTest": true,
+  "Yarn Type": "Viscose 50s",
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1770108886,
+    "nanoseconds": 8000000
+  },
+  "Production Date": "2026-02-03T08:47:31.586Z",
+  "State": "TESTING",
+  "rawQr": "{\"id\":\"TEST - 1770108451586\",\"last_state_change\":\"2026-02-03T08:47:31.586Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-03T08:47:31.586Z\",\"state\":\"TESTING\",\"supplier_name\":\"ABC Textiles\",\"weight\":25,\"yarn_count\":\"4\",\"yarn_type\":\"Viscose 50s\",\"isTest\":true}",
+  "Yarn Count": "4",
+  "Lot Number": "TEST-LOT",
+  "Weight": 25,
+  "Order Id": "TEST-ORD"
+}
+
+ID: YR-628279
+Data: {
+  "notFound": true,
+  "rawQr": "{\"id\":\"TEST - 1770620941965\",\"last_state_change\":\"2026-02-09T07:09:01.965Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-09T07:09:01.965Z\",\"state\":\"TESTING\",\"supplier_name\":\"ABC Textiles\",\"weight\":25,\"yarn_count\":\"30s\",\"yarn_type\":\"Cotton 30s\",\"isTest\":true}",
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1770620999,
+    "nanoseconds": 858000000
+  },
+  "id": "YR-628279",
+  "originalQrId": "{\"id\":\"TEST - 1770620941965\",\"last_state_change\":\"2026-02-09T07:09:01.965Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-09T07:09:01.965Z\",\"state\":\"TESTING\",\"supplier_name\":\"ABC Textiles\",\"weight\":25,\"yarn_count\":\"30s\",\"yarn_type\":\"Cotton 30s\",\"isTest\":true}"
+}
+
+ID: YR-628280
+Data: {
+  "id": "YR-628280",
+  "rawQr": "{\"id\":\"TEST - 1770621018536\",\"last_state_change\":\"2026-02-09T07:10:18.536Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-09T07:10:18.536Z\",\"state\":\"TESTING\",\"supplier_name\":\"ABC Textiles\",\"weight\":25,\"yarn_count\":\"30s\",\"yarn_type\":\"Cotton 30s\",\"isTest\":true}",
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1770621109,
+    "nanoseconds": 417000000
+  },
+  "notFound": true,
+  "originalQrId": "{\"id\":\"TEST - 1770621018536\",\"last_state_change\":\"2026-02-09T07:10:18.536Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-09T07:10:18.536Z\",\"state\":\"TESTING\",\"supplier_name\":\"ABC Textiles\",\"weight\":25,\"yarn_count\":\"30s\",\"yarn_type\":\"Cotton 30s\",\"isTest\":true}"
+}
+
+ID: YR-628281
+Data: {
+  "Lot Number": "TEST-LOT",
+  "Production Date": "2026-02-03T08:44:54.875Z",
+  "binId": 1,
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1770621134,
+    "nanoseconds": 872000000
+  },
+  "Yarn Type": "Cotton 30s",
+  "rawQr": "{\"id\":\"TEST - 1770108294875\",\"last_state_change\":\"2026-02-03T08:44:54.875Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-03T08:44:54.875Z\",\"state\":\"TESTING\",\"supplier_name\":\"ABC Textiles\",\"weight\":25,\"yarn_count\":\"10\",\"yarn_type\":\"Cotton 30s\",\"isTest\":true}",
+  "originalQrId": "YR-628275",
+  "Supplier Name": "ABC Textiles",
+  "Weight": 25,
+  "Order Id": "TEST-ORD",
+  "Last State Change": "2026-02-03T08:44:54.875Z",
+  "State": "TESTING",
+  "id": "YR-628281",
+  "Id": "TEST - 1770108294875",
+  "IsTest": true,
+  "Yarn Count": "10"
+}
+
+
+💡 SUGGESTION: Sync these rolls to the inventory collection to make them show up in the app.

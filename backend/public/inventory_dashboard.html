@@ -266,18 +266,20 @@
     </main>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collectionGroup, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // Initialize Firebase with Modular SDK from CDN
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getFirestore, collection, collectionGroup, query, getDocs, onSnapshot, where } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
-        // Firebase Configuration
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
         const firebaseConfig = {
             apiKey: "AIzaSyAYXVrRtfStYQqFFBWYyTQGfOb345di2Ls",
             authDomain: "yarn-roll.firebaseapp.com",
             projectId: "yarn-roll",
             storageBucket: "yarn-roll.firebasestorage.app",
             messagingSenderId: "157993278528",
-            appId: "1:157993278528:web:7779f57427dcf889aa13a5",
-            measurementId: "G-PRTJ08JHQZ"
+            appId: "1:157993278528:web:4e88ed6e011bc42faa13a5",
+            measurementId: "G-SE7XVEDGQR"
         };
 
         // Initialize Firebase
@@ -290,59 +292,55 @@
         let typeChartInstance = null;
         let unsubscribe = null;
 
-        function initRealTimeListener() {
-            const btn = document.getElementById('refresh-btn');
+        // Manual fetch function (replaces live sync for better control)
+        async function fetchData() {
             const icon = document.getElementById('refresh-icon');
             const text = document.getElementById('refresh-text');
-            const loadingContainer = document.getElementById('warehouse-breakdown');
+            const btn = document.getElementById('refresh-btn');
 
-            // Indicate connection status (Active)
-            if (text) text.textContent = 'Live Connection';
-            if (icon) icon.classList.add('text-green-500');
+            // Show loading state
+            if (text) text.textContent = 'Refreshing...';
+            if (icon) {
+                icon.classList.add('animate-spin');
+                icon.classList.remove('text-green-500');
+                icon.classList.add('text-orange-500');
+            }
+            if (btn) btn.disabled = true;
 
-            // Query all rolls via Collection Group for hierarchy support
-            const q = query(collectionGroup(db, 'rolls'));
+            try {
+                // Fetch from yarnRolls collection as the single source of truth
+                const snapshot = await getDocs(collection(db, 'yarnRolls'));
 
-            unsubscribe = onSnapshot(q, (snapshot) => {
                 allRolls = snapshot.docs.map(doc => ({
-                    id: doc.id,
+                    id: doc.data().id || doc.id,
                     ...doc.data()
-                }));
+                })).filter(r => r.id && !r.id.toLowerCase().includes('test'));
 
-                // Exclude test rolls
-                allRolls = allRolls.filter(r => !r.id.toLowerCase().includes('test'));
-
-                // Sort by production date desc (in memory)
                 allRolls.sort((a, b) => new Date(b.production_date) - new Date(a.production_date));
 
-                // Dynamic Type Dropdown
-                const typeSelect = document.getElementById('filter-type');
-                if (typeSelect && typeSelect.options.length <= 1) {
-                    const uniqueTypes = [...new Set(allRolls.map(r => r.yarn_type).filter(t => t))];
-                    uniqueTypes.sort().forEach(t => {
-                        const opt = document.createElement('option');
-                        opt.value = t;
-                        opt.textContent = t;
-                        typeSelect.appendChild(opt);
-                    });
-                }
-
-                updateStats(); // Update KPI cards using local aggregation
+                updateStats();
                 updateCharts();
                 applyFilter(currentFilter);
 
-                // Flash animation to indicate update
-                const header = document.querySelector('header h1');
-                if (header) {
-                    header.style.color = '#f97316';
-                    setTimeout(() => header.style.color = '', 300);
+                // Show success state
+                if (text) text.textContent = 'Refresh Data';
+                if (icon) {
+                    icon.classList.remove('animate-spin', 'text-orange-500');
+                    icon.classList.add('text-green-500');
                 }
 
-            }, (error) => {
-                console.error("Real-time listener error:", error);
-                if (text) text.textContent = 'Connection Error';
-                if (icon) icon.classList.replace('text-green-500', 'text-red-500');
-            });
+                console.log(`✅ Fetched ${allRolls.length} rolls from yarnRolls collection`);
+
+            } catch (error) {
+                console.error('❌ Error fetching data:', error);
+                if (text) text.textContent = 'Retry';
+                if (icon) {
+                    icon.classList.remove('animate-spin', 'text-orange-500');
+                    icon.classList.add('text-red-500');
+                }
+            } finally {
+                if (btn) btn.disabled = false;
+            }
         }
 
         // --- Frontend Aggregation for Stats (Replaces /api/dashboard-stats) ---
@@ -350,8 +348,8 @@
             const racks = {};
 
             rolls.forEach(r => {
-                const rackId = r.rack_id || '1';
-                const binId = r.bin || '1';
+                const rackId = String(r.rack_id || '1').replace(/[Rr]/g, '');
+                const binId = String(r.bin || '1').replace(/[Bb]/g, '');
                 const type = r.yarn_type || 'Unknown';
                 const countStr = r.yarn_count || 'N/A';
 
@@ -403,85 +401,168 @@
             renderWarehouseBreakdown(stats);
         }
 
-        // Reuses the exact same HTML template logic as before
+        // Reuses the exact same HTML template logic as before - BEAUTIFIED VERSION
         function renderWarehouseBreakdown(racksBreakdown) {
             const breakdownContainer = document.getElementById('warehouse-breakdown');
             document.getElementById('rack-count').textContent = `${racksBreakdown.length} Racks`;
 
             if (racksBreakdown.length === 0) {
                 breakdownContainer.innerHTML = `
-                     <div class="col-span-full py-12 text-center text-slate-400 glass-card">
-                         No warehouse data available.
+                     <div class="col-span-full py-16 text-center">
+                         <div class="w-20 h-20 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
+                             <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                             </svg>
+                         </div>
+                         <p class="text-slate-400 font-medium">No warehouse data available</p>
+                         <p class="text-slate-300 text-sm mt-1">Add some yarn rolls to get started</p>
                      </div>
                  `;
                 return;
             }
 
-            breakdownContainer.innerHTML = racksBreakdown.map(rack => {
+            // Calculate max yarns for progress bar scaling
+            const maxYarns = Math.max(...racksBreakdown.map(r => r.totalYarns));
+
+            breakdownContainer.innerHTML = racksBreakdown.map((rack, rackIdx) => {
                 const sortedBins = Object.entries(rack.bins).sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true, sensitivity: 'base' }));
+                const utilizationPercent = Math.round((rack.totalYarns / maxYarns) * 100);
+
+                // Color palette based on rack index
+                const colors = [
+                    { gradient: 'from-orange-500 to-amber-400', bg: 'bg-orange-50', text: 'text-orange-600', badge: 'bg-orange-100 text-orange-700' },
+                    { gradient: 'from-blue-500 to-cyan-400', bg: 'bg-blue-50', text: 'text-blue-600', badge: 'bg-blue-100 text-blue-700' },
+                    { gradient: 'from-emerald-500 to-teal-400', bg: 'bg-emerald-50', text: 'text-emerald-600', badge: 'bg-emerald-100 text-emerald-700' },
+                    { gradient: 'from-purple-500 to-pink-400', bg: 'bg-purple-50', text: 'text-purple-600', badge: 'bg-purple-100 text-purple-700' },
+                    { gradient: 'from-rose-500 to-red-400', bg: 'bg-rose-50', text: 'text-rose-600', badge: 'bg-rose-100 text-rose-700' }
+                ];
+                const color = colors[rackIdx % colors.length];
 
                 return `
-                 <div class="glass-card col-span-full p-6 border-t-4 border-orange-500 hover:shadow-lg transition-all mb-6">
-                     <div class="flex justify-between items-center mb-6">
-                         <div>
-                             <h4 class="text-xl font-bold text-slate-800">Rack ${rack.rack_id}</h4>
-                             <p class="text-sm text-slate-500">${rack.uniqueBinsCount} Active Bins | ${rack.totalYarns} Total Yarns</p>
+                 <div class="col-span-full bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-all duration-300 mb-6">
+                     <!-- Gradient Header -->
+                     <div class="bg-gradient-to-r ${color.gradient} p-6 text-white relative overflow-hidden">
+                         <div class="absolute right-0 top-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                         <div class="absolute right-20 bottom-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2"></div>
+                         
+                         <div class="flex justify-between items-start relative z-10">
+                             <div>
+                                 <div class="flex items-center gap-3 mb-2">
+                                     <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                         </svg>
+                                     </div>
+                                     <h4 class="text-2xl font-bold tracking-tight">Rack ${rack.rack_id}</h4>
+                                 </div>
+                                 <p class="text-white/80 text-sm font-medium">${rack.uniqueBinsCount} Active Bins • ${rack.totalYarns} Total Yarns</p>
+                             </div>
+                             <div class="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 text-center">
+                                 <p class="text-3xl font-bold">${rack.totalYarns}</p>
+                                 <p class="text-xs text-white/70 uppercase tracking-wider">Yarns</p>
+                             </div>
+                         </div>
+                         
+                         <!-- Progress Bar -->
+                         <div class="mt-4 relative z-10">
+                             <div class="flex justify-between text-xs text-white/70 mb-1">
+                                 <span>Capacity Utilization</span>
+                                 <span>${utilizationPercent}%</span>
+                             </div>
+                             <div class="h-2 bg-white/20 rounded-full overflow-hidden">
+                                 <div class="h-full bg-white rounded-full transition-all duration-500" style="width: ${utilizationPercent}%"></div>
+                             </div>
                          </div>
                      </div>
 
-                     <!-- Visual Grid of Bins -->
-                     <div class="mb-8">
-                         <p class="text-xs font-semibold text-slate-400 uppercase mb-3">Bins in this Rack</p>
-                         <div class="flex flex-wrap gap-2">
+                     <!-- Bins Visual Grid -->
+                     <div class="p-6 border-b border-slate-100 ${color.bg}">
+                         <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                             </svg>
+                             Quick Bin Access
+                         </p>
+                         <div class="flex flex-wrap gap-3">
                              ${sortedBins.map(([binId, data]) => `
-                                 <div class="w-12 h-12 flex flex-col items-center justify-center rounded-lg border-2 border-slate-100 bg-white hover:border-orange-400 transition-all cursor-pointer group relative"
+                                 <button class="group relative w-14 h-14 flex flex-col items-center justify-center rounded-xl bg-white border-2 border-slate-200 hover:border-${color.text.replace('text-', '')} hover:shadow-lg transition-all duration-200 cursor-pointer"
                                       onclick="scrollToBin('bin-${rack.rack_id}-${binId}')">
-                                     <span class="text-[10px] font-bold text-slate-400 group-hover:text-orange-600">${binId}</span>
-                                     <span class="text-xs font-bold text-slate-700">${data.total}</span>
-                                     
-                                     <!-- Tooltip -->
-                                     <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50 pointer-events-none">
-                                         <div class="bg-slate-800 text-white text-[10px] py-1 px-2 rounded whitespace-nowrap">
-                                             Bin ${binId}: ${data.total} rolls
-                                         </div>
-                                     </div>
-                                 </div>
+                                     <span class="text-[10px] font-bold text-slate-400 group-hover:${color.text}">BIN</span>
+                                     <span class="text-lg font-bold text-slate-700">${binId}</span>
+                                     <span class="absolute -top-2 -right-2 w-6 h-6 rounded-full ${color.badge} text-[10px] font-bold flex items-center justify-center shadow-sm">${data.total}</span>
+                                 </button>
                              `).join('')}
                          </div>
                      </div>
 
-                     <!-- Detailed Table Breakdown -->
-                     <div class="overflow-x-auto">
-                         <table class="w-full text-left text-sm border-collapse">
-                             <thead>
-                                 <tr class="border-b border-slate-100 italic text-slate-400">
-                                     <th class="py-3 px-4 font-semibold">Bin</th>
-                                     <th class="py-3 px-4 font-semibold">Yarn Type</th>
-                                     <th class="py-3 px-4 font-semibold">Yarn Count</th>
-                                     <th class="py-3 px-4 font-semibold text-right">In Stock</th>
-                                 </tr>
-                             </thead>
-                             <tbody>
-                                 ${sortedBins.map(([binId, data], binIdx) => {
+                     <!-- Detailed Table -->
+                     <div class="p-6">
+                         <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path>
+                             </svg>
+                             Detailed Inventory
+                         </p>
+                         <div class="overflow-hidden rounded-xl border border-slate-200">
+                             <table class="w-full text-left text-sm">
+                                 <thead>
+                                     <tr class="bg-slate-50 text-slate-600">
+                                         <th class="py-4 px-5 font-semibold text-xs uppercase tracking-wider">
+                                             <div class="flex items-center gap-2">
+                                                 <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                                                 </svg>
+                                                 Bin Location
+                                             </div>
+                                         </th>
+                                         <th class="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Yarn Type</th>
+                                         <th class="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Count</th>
+                                         <th class="py-4 px-5 font-semibold text-xs uppercase tracking-wider text-right">In Stock</th>
+                                     </tr>
+                                 </thead>
+                                 <tbody class="divide-y divide-slate-100">
+                                     ${sortedBins.map(([binId, data], binIdx) => {
                     const stockEntries = Object.entries(data.stock);
                     return stockEntries.map(([stockKey, count], entryIdx) => {
                         const [type, count_val] = stockKey.split(' | ');
+                        const isFirstEntry = entryIdx === 0;
+                        const rowspan = stockEntries.length;
                         return `
-                                             <tr id="bin-${rack.rack_id}-${binId}" class="group hover:bg-slate-50 border-b border-slate-50 transition-colors">
-                                                 <td class="py-3 px-4 font-bold text-slate-600">
-                                                     ${entryIdx === 0 ? `<span class="bg-slate-100 px-2 py-1 rounded text-xs">Bin ${binId}</span>` : ''}
+                                             <tr id="bin-${rack.rack_id}-${binId}" class="group hover:bg-slate-50/50 transition-colors">
+                                                 <td class="py-4 px-5">
+                                                     ${isFirstEntry ? `
+                                                         <div class="flex items-center gap-3">
+                                                             <div class="w-10 h-10 rounded-lg ${color.bg} ${color.text} flex items-center justify-center font-bold text-sm">
+                                                                 ${binId}
+                                                             </div>
+                                                             <div>
+                                                                 <p class="font-semibold text-slate-700">Bin ${binId}</p>
+                                                                 <p class="text-xs text-slate-400">${data.total} items total</p>
+                                                             </div>
+                                                         </div>
+                                                     ` : '<div class="pl-13"></div>'}
                                                  </td>
-                                                 <td class="py-3 px-4 text-slate-700">${type}</td>
-                                                 <td class="py-3 px-4 text-slate-700 font-medium">${count_val}</td>
-                                                 <td class="py-3 px-4 text-right">
-                                                     <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded font-bold">${count}</span>
+                                                 <td class="py-4 px-5">
+                                                     <span class="inline-flex items-center gap-2">
+                                                         <span class="w-2 h-2 rounded-full ${color.text.replace('text', 'bg')}"></span>
+                                                         <span class="text-slate-700 font-medium">${type}</span>
+                                                     </span>
+                                                 </td>
+                                                 <td class="py-4 px-5">
+                                                     <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold">${count_val}</span>
+                                                 </td>
+                                                 <td class="py-4 px-5 text-right">
+                                                     <span class="inline-flex items-center justify-center min-w-[40px] px-3 py-1.5 ${color.badge} rounded-lg font-bold text-sm shadow-sm">
+                                                         ${count}
+                                                     </span>
                                                  </td>
                                              </tr>
                                          `;
                     }).join('');
                 }).join('')}
-                             </tbody>
-                         </table>
+                                 </tbody>
+                             </table>
+                         </div>
                      </div>
                  </div>
              `}).join('');
@@ -662,8 +743,8 @@
         });
         document.getElementById('filter-type').addEventListener('change', () => applyFilter(currentFilter));
 
-        // Start Real-Time Listener
-        initRealTimeListener();
+        // Initial data load
+        fetchData();
     </script>
 </body>
 

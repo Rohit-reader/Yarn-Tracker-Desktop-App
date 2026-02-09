@@ -146,6 +146,19 @@
       .detail-row, .info-row { display: flex !important; justify-content: space-between !important; align-items: center !important; font-size: 0.9rem !important; }
       .detail-label, .info-label { color: #64748b !important; font-weight: 500 !important; }
       .detail-value, .info-value { color: #334155 !important; font-weight: 600 !important; text-align: right !important; }
+
+      /* Hide Admin Toggle & Labels */
+      .admin-toggle, .admin-label, [class*="admin-toggle"], [class*="admin-label"],
+      .register-btn, .add-roll-btn, [class*="register"], [class*="add-roll"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        height: 0 !important;
+        width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
     `;
     document.head.appendChild(style);
 
@@ -430,127 +443,57 @@
             }
           }
 
-          // Inject 'Create Rack / Bin QR' Button
-          if (!modal.querySelector('#btn-create-location-qr')) {
-            const footer = modal.querySelector('button[type="submit"]')?.parentElement || modal.lastElementChild;
-
-            const btn = document.createElement('button');
-            btn.id = 'btn-create-location-qr';
-            btn.type = 'button'; // Prevent form submission
-            btn.textContent = 'Create Rack / Bin QR';
-            btn.className = 'w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition mt-4';
-            btn.onclick = (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              window.showLocationQRGenerator();
-            };
-
-            // Insert before the submit button container if possible, or append
-            if (footer) footer.before(btn);
-            else modal.appendChild(btn);
-          }
         }
+        // Targeted Bulk Management Removal (Safe Version)
+        // Only target heading elements to avoid hiding entire page
+        document.querySelectorAll('h3, h4, h5, span, p, div').forEach(el => {
+          const text = (el.textContent || '').trim().toLowerCase();
+
+          // Only match "bulk management" title (must be short text, not the whole page)
+          if ((text === 'bulk management' || text.endsWith('bulk management') || text.startsWith('bulk management')) && text.length < 50) {
+            el.style.setProperty('display', 'none', 'important');
+
+            // Find and hide parent card container - be more aggressive
+            let parent = el.parentElement;
+            for (let i = 0; i < 7 && parent; i++) {
+              const classList = (parent.className || '').toLowerCase();
+              const tagName = parent.tagName;
+
+              // Skip body, html, main containers
+              if (tagName === 'BODY' || tagName === 'HTML' || tagName === 'MAIN' || classList.includes('root') || classList.includes('app')) {
+                break;
+              }
+
+              // Check if this is a card-like container
+              const style = window.getComputedStyle(parent);
+              const hasBorder = style.border && style.border !== 'none' && !style.border.startsWith('0');
+              const hasRadius = parseFloat(style.borderRadius) > 4;
+              const hasBg = style.backgroundColor !== 'rgba(0, 0, 0, 0)' && style.backgroundColor !== 'transparent';
+              const hasShadow = style.boxShadow && style.boxShadow !== 'none';
+
+              if (classList.includes('card') || classList.includes('bulk') || classList.includes('section') ||
+                classList.includes('panel') || classList.includes('box') || classList.includes('management') ||
+                (hasRadius && (hasBg || hasShadow || hasBorder))) {
+                parent.style.setProperty('display', 'none', 'important');
+                break;
+              }
+              parent = parent.parentElement;
+            }
+          }
+        });
+
+        // Hide buttons with exact forbidden text (including Reserve, Pick, Dispatch)
+        document.querySelectorAll('button, a').forEach(el => {
+          const text = (el.textContent || '').trim().toLowerCase();
+          const forbidden = ['register new roll', 'bulk load intake', 'check all', 'clear', 'reserve', 'pick', 'dispatch'];
+          if (forbidden.some(f => text === f || text.includes(f))) {
+            el.style.setProperty('display', 'none', 'important');
+          }
+        });
       });
       observer.observe(document.body, { childList: true, subtree: true });
     });
 
-    // Location QR Generator Function (Defined Globally)
-    window.showLocationQRGenerator = function () {
-      const overlay = document.createElement('div');
-      overlay.className = 'modal-overlay location-qr-overlay';
-      overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:20000000; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(4px);';
-
-      const content = document.createElement('div');
-      content.className = 'modal-content glass-card';
-      content.style.cssText = 'background:white; padding:2rem; border-radius:16px; width:90%; max-width:400px; position:relative; box-shadow: 0 20px 60px rgba(0,0,0,0.3);';
-
-      content.innerHTML = `
-            <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; color: #1e293b;">Create Location QR</h3>
-            
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #64748b; margin-bottom: 0.5rem;">QR Type</label>
-                <div style="display: flex; gap: 1rem;">
-                    <label style="display: flex; align-items: center; cursor: pointer; padding: 0.5rem 1rem; background: #f1f5f9; border-radius: 8px;">
-                        <input type="radio" name="loc-type" value="bin" checked style="margin-right: 0.5rem; accent-color: #f97316;"> 
-                        <span style="font-weight: 600; color: #334155;">Bin QR</span>
-                    </label>
-                    <label style="display: flex; align-items: center; cursor: pointer; padding: 0.5rem 1rem; background: #f1f5f9; border-radius: 8px;">
-                        <input type="radio" name="loc-type" value="rack" style="margin-right: 0.5rem; accent-color: #f97316;"> 
-                        <span style="font-weight: 600; color: #334155;">Rack QR</span>
-                    </label>
-                </div>
-            </div>
-            
-            <div style="margin-bottom: 2rem;">
-                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #64748b; margin-bottom: 0.5rem;">ID Value (Integer)</label>
-                <input type="number" id="loc-value" placeholder="e.g. 1" 
-                    style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; font-size: 1rem;">
-            </div>
-            
-            <div id="loc-qr-result" style="display: none; justify-content: center; align-items: center; margin-bottom: 2rem; padding: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; min-height: 150px;"></div>
-            
-            <div style="display: flex; gap: 1rem;">
-                <button id="btn-loc-cancel" style="flex: 1; padding: 0.75rem; background: #f1f5f9; color: #64748b; font-weight: 600; border-radius: 10px; border: none; cursor: pointer;">Close</button>
-                <button id="btn-loc-generate" style="flex: 1; padding: 0.75rem; background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-weight: 700; border-radius: 10px; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);">Generate</button>
-                <button id="btn-loc-print" style="display: none; flex: 1; padding: 0.75rem; background: #3b82f6; color: white; font-weight: 600; border-radius: 10px; border: none; cursor: pointer;">Print</button>
-            </div>
-        `;
-
-      document.body.appendChild(overlay);
-      overlay.appendChild(content);
-
-      // Handlers
-      const closeBtn = content.querySelector('#btn-loc-cancel');
-      const genBtn = content.querySelector('#btn-loc-generate');
-      const printBtn = content.querySelector('#btn-loc-print');
-      const resultBox = content.querySelector('#loc-qr-result');
-      const valInput = content.querySelector('#loc-value');
-
-      closeBtn.onclick = () => overlay.remove();
-
-      genBtn.onclick = () => {
-        const type = content.querySelector('input[name="loc-type"]:checked').value;
-        const val = valInput.value.trim();
-
-        if (!val) {
-          valInput.style.borderColor = '#ef4444';
-          return;
-        }
-        valInput.style.borderColor = '#cbd5e1';
-
-        const payload = type === 'bin' ? { bin: parseInt(val) } : { rack: parseInt(val) };
-
-        resultBox.innerHTML = '';
-        resultBox.style.display = 'flex';
-
-        // Generate QR
-        new QRCode(resultBox, {
-          text: JSON.stringify(payload),
-          width: 150,
-          height: 150,
-          colorDark: "#000000",
-          colorLight: "#ffffff",
-          correctLevel: QRCode.CorrectLevel.H
-        });
-
-        // Show print button, hide generate text temporarily
-        genBtn.style.display = 'none';
-        printBtn.style.display = 'block';
-        closeBtn.textContent = 'Done';
-      };
-
-      printBtn.onclick = () => {
-        const qrImg = resultBox.querySelector('img');
-        if (!qrImg) return;
-
-        const win = window.open('', '', 'height=500,width=500');
-        win.document.write('<html><head><title>Print QR</title></head><body style="display:flex;justify-content:center;align-items:center;height:100vh;">');
-        win.document.write(qrImg.outerHTML);
-        win.document.write('</body></html>');
-        win.document.close();
-        win.print();
-      };
-    };
 
     const enhancedOriginalFetch = window.fetch;
     window.fetch = async function () {

@@ -1,0 +1,32 @@
+﻿--- Checking Inventory Collection ---
+Inventory Count: 70
+
+--- Checking Rolls Hierarchy (Collection Group) ---
+Rolls (Hierarchy) Count: 70
+
+Sample Roll Data:
+{
+  "createdAt": {
+    "type": "firestore/timestamp/1.0",
+    "seconds": 1769946269,
+    "nanoseconds": 477000000
+  },
+  "rawQr": "{\"id\":\"TEST - 1769939278117\",\"last_state_change\":\"2026-02-01T09:47:58.118Z\",\"lot_number\":\"TEST-LOT\",\"order_id\":\"TEST-ORD\",\"production_date\":\"2026-02-01T09:47:58.118Z\",\"rack_id\":\"1\",\"state\":\"TESTING\",\"supplier_name\":\"Akhilesh Textiles\",\"weight\":25,\"yarn_count\":\"30s\",\"yarn_type\":\"Viscose 50s\",\"bin\":\"1\",\"isTest\":true}",
+  "yarn_count": "30s",
+  "id": "YR-628263",
+  "firebaseId": "YR-628263",
+  "weight": 25,
+  "documentPath": "yarnRolls/YR-628263",
+  "last_state_change": "2026-02-01T09:47:58.118Z",
+  "originalQrId": "TEST - 1769939278117",
+  "isTest": true,
+  "bin": "1",
+  "supplier_name": "Akhilesh Textiles",
+  "production_date": "2026-02-01T09:47:58.118Z",
+  "order_id": "TEST-ORD",
+  "state": "TESTING",
+  "rack_id": "1",
+  "lot_number": "TEST-LOT",
+  "yarn_type": "Viscose 50s"
+}
+

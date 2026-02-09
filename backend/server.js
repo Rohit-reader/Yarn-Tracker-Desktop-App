@@ -55,8 +55,8 @@ app.get('/api/health', (req, res) => {
 // Get all rolls
 app.get('/api/rolls', async (req, res) => {
   try {
-    console.log('\n📦 GET /api/rolls - Fetching all rolls from inventory');
-    const q = query(collection(db, 'inventory'), orderBy('production_date', 'desc'));
+    console.log('\n📦 GET /api/rolls - Fetching all rolls from yarnRolls');
+    const q = query(collection(db, 'yarnRolls'), orderBy('production_date', 'desc'));
     const querySnapshot = await getDocs(q);
 
     let rolls = querySnapshot.docs.map(doc => ({
@@ -65,22 +65,38 @@ app.get('/api/rolls', async (req, res) => {
       documentPath: doc.ref.path
     }));
 
-    // SELF-HEALING: If inventory is empty, fetch from potentially unsynced hierarchy
+    console.log(`🔍 Found ${rolls.length} rolls in 'yarnRolls' collection.`);
+
+    // SELF-HEALING: If inventory is empty, fetch from potentially unsynced hierarchy or legacy collections
     if (rolls.length === 0) {
-      console.log('⚠️ Inventory empty! Triggering hierarchical recovery...');
+      console.log('⚠️ Inventory empty! Triggering deep recovery from hierarchy and legacy...');
       try {
-        // Query all rolls in the system via Collection Group
-        // Note: We avoid sorting here to prevent "Index Missing" errors on the group
+        // 1. Query all rolls in the system via Collection Group
         const groupQuery = query(collectionGroup(db, 'rolls'));
         const groupSnap = await getDocs(groupQuery);
-
-        rolls = groupSnap.docs.map(doc => ({
+        const hierarchicalRolls = groupSnap.docs.map(doc => ({
           ...doc.data(),
           firebaseId: doc.id,
           documentPath: doc.ref.path
         }));
+        console.log(`🛠️ Recovery: Found ${hierarchicalRolls.length} rolls via collectionGroup('rolls').`);
 
-        console.log(`   found ${rolls.length} rolls in hierarchy. Restoring...`);
+        // 2. Query legacy collection
+        const legacySnap = await getDocs(collection(db, 'yarnRolls'));
+        const legacyRolls = legacySnap.docs.map(doc => ({
+          ...doc.data(),
+          firebaseId: doc.id,
+          documentPath: doc.ref.path
+        }));
+        console.log(`🛠️ Recovery: Found ${legacyRolls.length} rolls in legacy 'yarnRolls' collection.`);
+
+        // 3. Merge results (prefer hierarchical/newer data if ID collision occurs)
+        const mergedMap = new Map();
+        legacyRolls.forEach(r => mergedMap.set(r.id, r));
+        hierarchicalRolls.forEach(r => mergedMap.set(r.id, r));
+
+        rolls = Array.from(mergedMap.values());
+        console.log(`🛠️ Recovery complete. Total unique rolls found: ${rolls.length}. Restoring...`);
 
         // Sort in memory (JS) since we couldn't sort in the query
         rolls.sort((a, b) => new Date(b.production_date) - new Date(a.production_date));
@@ -210,12 +226,12 @@ app.post('/api/rolls', async (req, res) => {
       weight: parseFloat(weight) || 25,
       yarn_count: yarn_count || '30s',
       yarn_type: yarn_type || 'Cotton 30s',
-      bin: bin || '1'
+      bin: String(bin || '1').replace(/[Bb]/g, '')
     };
 
     // 1. Hierarchical Storage: racks/{rack}/bins/{bin}/rolls/{id}
-    const rackLabel = rack_id || '1';
-    const binLabel = bin || '1';
+    const rackLabel = String(rack_id || '1').replace(/[Rr]/g, '');
+    const binLabel = rollData.bin;
 
     const rollDocRef = doc(db, 'racks', rackLabel, 'bins', binLabel, 'rolls', rollId);
     await setDoc(rollDocRef, rollData);
@@ -308,6 +324,21 @@ app.post('/api/rolls/update-state', async (req, res) => {
             }
             await setDoc(doc(db, 'inventory', id), updatedData);
             await logScan(id, 'STATE_CHANGE', `State changed to ${capitalizedState}`);
+          }
+        } else {
+          // SELF-HEALING: If not in inventory, search hierarchy to find rack/bin for update
+          console.log(`   🔍 Roll ${id} not in inventory. searching hierarchy...`);
+          const groupQuery = query(collectionGroup(db, 'rolls'), where('id', '==', id), limit(1));
+          const groupSnap = await getDocs(groupQuery);
+
+          if (!groupSnap.empty) {
+            const rollData = groupSnap.docs[0].data();
+            const masterRef = groupSnap.docs[0].ref;
+            const updatedData = { ...rollData, state: capitalizedState, last_state_change: now };
+
+            await updateDoc(masterRef, { state: capitalizedState, last_state_change: now });
+            await setDoc(doc(db, 'inventory', id), updatedData);
+            console.log(`   ✅ Repaired and updated roll ${id}`);
           }
         }
       } catch (err) {
@@ -497,9 +528,8 @@ app.get('/api/dashboard-stats', async (req, res) => {
       return data.approvedAt && data.approvedAt >= startOfDay;
     }).length;
 
-    // 3. Reserved Rolls (Using inventory mirror for speed/reliability)
-    const reservedQuery = query(collection(db, 'inventory'), where('state', '==', 'RESERVED'));
-    const reservedSnap = await getDocs(reservedQuery);
+    // 3. Reserved Rolls (Query from reserved_collection directly)
+    const reservedSnap = await getDocs(collection(db, 'reserved_collection'));
     const reservedCount = reservedSnap.size;
 
     // 4. Warehouse Breakdown (Racks/Bins)
@@ -809,17 +839,28 @@ app.post('/api/settings', async (req, res) => {
 });
 app.delete('/api/rolls/clear-all', async (req, res) => {
   try {
-    console.log('\n🗑️ DELETE /api/rolls/clear-all - Clearing SYSTEM inventory');
+    console.log('\n🗑️ DELETE /api/rolls/clear-all - Clearing TOTAL system data');
 
-    // 1. Fetch from flat inventory mirror
-    const inventorySnap = await getDocs(collection(db, 'inventory'));
-    const racksSnap = await getDocs(collection(db, 'racks'));
-
-    const deletePromises = [
-      ...inventorySnap.docs.map(d => deleteDoc(d.ref))
+    const collectionsToClear = [
+      'inventory', 'racks', 'yarnRolls', 'reserved_collection',
+      'picking_collection', 'deliveries', 'scanHistory', 'testing_qrs',
+      'orders', 'notifications'
     ];
 
-    // 2. Hierarchy cleanup (wrapped in try-catch to ignore index errors)
+    const deletePromises = [];
+
+    // 1. Clear Standard Collections
+    for (const colName of collectionsToClear) {
+      try {
+        const snap = await getDocs(collection(db, colName));
+        snap.docs.forEach(d => deletePromises.push(deleteDoc(d.ref)));
+        console.log(`   Clearing ${colName}: Found ${snap.size} docs`);
+      } catch (e) {
+        console.log(`   ℹ️ Skipping ${colName} (might not exist or empty)`);
+      }
+    }
+
+    // 2. Hierarchy cleanup (rolls collectionGroup)
     try {
       const rollsSnap = await getDocs(collectionGroup(db, 'rolls'));
       rollsSnap.docs.forEach(d => deletePromises.push(deleteDoc(d.ref)));
@@ -828,15 +869,41 @@ app.delete('/api/rolls/clear-all', async (req, res) => {
       console.log('   ℹ️ Hierarchical cleanup skipped (index missing or already clean)');
     }
 
-    // 3. Wipe rack containers
-    racksSnap.docs.forEach(d => deletePromises.push(deleteDoc(d.ref)));
+    // 3. Wait for all deletions
+    if (deletePromises.length > 0) {
+      await Promise.all(deletePromises);
+    }
 
-    await Promise.all(deletePromises);
-    console.log(`[Backend] System Reset complete. Cleared ${inventorySnap.size} rolls.`);
-    res.json({ success: true, message: `System Reset: Cleared ${inventorySnap.size} rolls` });
+    // 4. Wipe Local Files (qrcodes)
+    const qrDirs = [
+      path.join(frontendPath, 'qrcodes'),
+      path.join(frontendPath, 'qrcodes', 'locations'),
+      'e:/QR/QR_CODES',
+      'e:/QR/LOCATION_QR'
+    ];
+
+    qrDirs.forEach(dir => {
+      try {
+        if (fs.existsSync(dir)) {
+          const files = fs.readdirSync(dir);
+          files.forEach(file => {
+            const filePath = path.join(dir, file);
+            if (fs.statSync(filePath).isFile()) {
+              fs.unlinkSync(filePath);
+            }
+          });
+          console.log(`   Wiped files in: ${dir}`);
+        }
+      } catch (e) {
+        console.error(`   Error wiping directory ${dir}:`, e.message);
+      }
+    });
+
+    console.log('[Backend] Global System Reset complete.');
+    res.json({ success: true, message: 'Global System Reset: All data and QR codes cleared.' });
   } catch (error) {
-    console.error('Error clearing system inventory:', error);
-    res.status(500).json({ error: 'Failed to clear inventory' });
+    console.error('Error in global system reset:', error);
+    res.status(500).json({ error: 'Failed to perform global system reset' });
   }
 });
 
@@ -925,61 +992,6 @@ app.post('/api/rolls/bulk', async (req, res) => {
   }
 });
 
-// Generate Location QR Codes (Rack/Bin)
-app.post('/api/generate-location-qr', async (req, res) => {
-  try {
-    const { type, number } = req.body;
-
-    if (!type || !number) {
-      return res.status(400).json({ error: 'Type and number are required' });
-    }
-
-    if (type !== 'rack' && type !== 'bin') {
-      return res.status(400).json({ error: 'Type must be either "rack" or "bin"' });
-    }
-
-    const qrData = String(number);
-    const fileName = `${type.toUpperCase()}-${number}.png`;
-
-    // Create directories if they don't exist
-    const localQrDir = path.join(frontendPath, 'qrcodes', 'locations');
-    const rootQrDir = 'e:/QR/LOCATION_QR';
-
-    if (!fs.existsSync(localQrDir)) fs.mkdirSync(localQrDir, { recursive: true });
-    if (!fs.existsSync(rootQrDir)) fs.mkdirSync(rootQrDir, { recursive: true });
-
-    const localQrPath = path.join(localQrDir, fileName);
-    const rootQrPath = path.join(rootQrDir, fileName);
-
-    // Generate QR code
-    await QRCode.toFile(localQrPath, qrData, {
-      width: 400,
-      margin: 2,
-      color: {
-        dark: '#000000',
-        light: '#FFFFFF'
-      }
-    });
-
-    // Copy to root QR directory
-    fs.copyFileSync(localQrPath, rootQrPath);
-
-    console.log(`✅ Generated ${type.toUpperCase()} QR: ${fileName}`);
-
-    res.status(201).json({
-      success: true,
-      message: `${type.charAt(0).toUpperCase() + type.slice(1)} QR code generated successfully`,
-      fileName: fileName,
-      qrPath: `/qrcodes/locations/${fileName}`,
-      type: type,
-      number: number
-    });
-
-  } catch (error) {
-    console.error('Error generating location QR:', error);
-    res.status(500).json({ error: 'Failed to generate QR code' });
-  }
-});
 
 // Fallback to index.html for React Router (Single Page App)
 app.get('*', (req, res) => {
