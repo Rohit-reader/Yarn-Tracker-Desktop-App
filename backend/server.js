@@ -311,6 +311,8 @@ app.post('/api/rolls/update-state', async (req, res) => {
             await setDoc(doc(db, 'reserved_collection', id), updatedData);
             await deleteDoc(doc(db, 'picking_collection', id));
             await setDoc(doc(db, 'inventory', id), updatedData);
+            // Update Legacy Sync
+            await setDoc(doc(db, 'yarnRolls', id), { ...updatedData, state: 'reserved' }, { merge: true });
             await logScan(id, 'RESERVE', 'Roll reserved for order');
           } else if (capitalizedState === 'PICKED') {
             await setDoc(doc(db, 'picking_collection', id), updatedData);
@@ -477,6 +479,14 @@ app.post('/api/orders/:id/approve', async (req, res) => {
 
       // Update Inventory Sync
       await updateDoc(inventoryDocRef, { state: 'RESERVED', order_id: orderId, last_state_change: now });
+
+      // Update Legacy Sync (yarnRolls) for backward compatibility
+      try {
+        // User requested lowercase 'reserved' for yarnRolls
+        await setDoc(doc(db, 'yarnRolls', roll.id), { ...updatedRollData, state: 'reserved' }, { merge: true });
+      } catch (e) {
+        console.log(`   ℹ️ Legacy sync skipped for yarnRolls/${roll.id}`);
+      }
 
       // Move to reserved_collection
       await setDoc(doc(db, 'reserved_collection', roll.id), updatedRollData);

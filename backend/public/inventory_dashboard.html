@@ -84,9 +84,159 @@
             color: #ea580c;
         }
 
+
         .status-dispatched {
             background: #fee2e2;
             color: #dc2626;
+        }
+
+        /* Rack Visualization Styles */
+        .rack-visual {
+            background: #e2e8f0;
+            border: 10px solid #94a3b8;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-height: 250px;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Top of the rack look */
+        .rack-visual::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            right: 10px;
+            height: 10px;
+            background: #64748b;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .shelf-row {
+            display: flex;
+            gap: 12px;
+            padding-bottom: 8px;
+            border-bottom: 8px solid #cbd5e1;
+            flex-wrap: wrap;
+            align-content: flex-end;
+            min-height: 70px;
+            position: relative;
+        }
+
+        .shelf-row::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .bin-box {
+            width: 65px;
+            height: 55px;
+            background: linear-gradient(to bottom, #3b82f6, #2563eb);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 4px 0 #1e40af, 0 6px 8px rgba(0, 0, 0, 0.15);
+            transition: all 0.1s ease;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .bin-box:hover {
+            transform: translateY(-2px);
+            z-index: 10;
+            background: linear-gradient(to bottom, #60a5fa, #3b82f6);
+        }
+
+        .bin-box:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #1e40af, inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .bin-count-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #ef4444;
+            color: white;
+            font-size: 0.65rem;
+            font-weight: bold;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 550px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                transform: translateY(30px) scale(0.95);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
     </style>
 </head>
@@ -265,6 +415,63 @@
         </div>
     </main>
 
+    <!-- Bin Details Modal -->
+    <div id="bin-modal" class="modal-overlay" onclick="closeBinModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50/50">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center font-bold text-xl shadow-inner"
+                        id="modal-bin-icon">
+                        1
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-800" id="modal-bin-title">Bin Details</h3>
+                        <p class="text-sm text-slate-500 font-medium" id="modal-rack-info">Rack location unknown</p>
+                    </div>
+                </div>
+                <button onclick="closeBinModal()"
+                    class="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-full transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto custom-scrollbar">
+                <div id="modal-bin-stats" class="grid grid-cols-2 gap-4 mb-8">
+                    <!-- Stats injected here -->
+                </div>
+
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-sm font-bold text-slate-500 uppercase tracking-wider">Contents</h4>
+                    <span class="text-xs text-slate-400 font-medium" id="modal-last-updated">Real-time</span>
+                </div>
+
+                <div class="rounded-xl border border-slate-200 overflow-hidden">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                            <tr>
+                                <th class="py-3 px-5 font-semibold text-xs uppercase">Yarn Type / Lot</th>
+                                <th class="py-3 px-5 font-semibold text-xs uppercase text-right">Qty</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-bin-content" class="divide-y divide-slate-100 bg-white">
+                            <!-- Rows injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="p-5 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                <button onclick="closeBinModal()"
+                    class="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         // Initialize Firebase with Modular SDK from CDN
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
@@ -291,6 +498,8 @@
         let rackChartInstance = null;
         let typeChartInstance = null;
         let unsubscribe = null;
+        const BIN_CAPACITY = 20; // Max items per bin
+        const RACK_CAPACITY = 320; // Approx 16 bins * 20 items
 
         // Manual fetch function (replaces live sync for better control)
         async function fetchData() {
@@ -398,11 +607,14 @@
 
             // Render Warehouse Stats locally
             const stats = calculateWarehouseStats(allRolls);
-            renderWarehouseBreakdown(stats);
+
+            // Get current filter state for highlighting
+            const activeTypeFilter = document.getElementById('filter-type').value;
+            renderWarehouseBreakdown(stats, activeTypeFilter);
         }
 
-        // Reuses the exact same HTML template logic as before - BEAUTIFIED VERSION
-        function renderWarehouseBreakdown(racksBreakdown) {
+        // Reuses the exact same HTML template logic as before - VISUAL RACK VERSION
+        function renderWarehouseBreakdown(racksBreakdown, highlightType = '') {
             const breakdownContainer = document.getElementById('warehouse-breakdown');
             document.getElementById('rack-count').textContent = `${racksBreakdown.length} Racks`;
 
@@ -421,162 +633,157 @@
                 return;
             }
 
-            // Calculate max yarns for progress bar scaling
-            const maxYarns = Math.max(...racksBreakdown.map(r => r.totalYarns));
-
             breakdownContainer.innerHTML = racksBreakdown.map((rack, rackIdx) => {
                 const sortedBins = Object.entries(rack.bins).sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true, sensitivity: 'base' }));
-                const utilizationPercent = Math.round((rack.totalYarns / maxYarns) * 100);
 
-                // Color palette based on rack index
-                const colors = [
-                    { gradient: 'from-orange-500 to-amber-400', bg: 'bg-orange-50', text: 'text-orange-600', badge: 'bg-orange-100 text-orange-700' },
-                    { gradient: 'from-blue-500 to-cyan-400', bg: 'bg-blue-50', text: 'text-blue-600', badge: 'bg-blue-100 text-blue-700' },
-                    { gradient: 'from-emerald-500 to-teal-400', bg: 'bg-emerald-50', text: 'text-emerald-600', badge: 'bg-emerald-100 text-emerald-700' },
-                    { gradient: 'from-purple-500 to-pink-400', bg: 'bg-purple-50', text: 'text-purple-600', badge: 'bg-purple-100 text-purple-700' },
-                    { gradient: 'from-rose-500 to-red-400', bg: 'bg-rose-50', text: 'text-rose-600', badge: 'bg-rose-100 text-rose-700' }
-                ];
-                const color = colors[rackIdx % colors.length];
+                // Group bins into "shelves" of 4
+                const binsPerShelf = 4;
+                const shelves = [];
+                for (let i = 0; i < sortedBins.length; i += binsPerShelf) {
+                    shelves.push(sortedBins.slice(i, i + binsPerShelf));
+                }
+
+                // Ensure at least 3 visual shelves for consistency
+                const shelfRows = shelves.map(shelf => `
+                     <div class="shelf-row">
+                         ${shelf.map(([binId, data]) => {
+                    // Logic for highlighting
+                    let isDimmed = false;
+                    let displayCount = data.total;
+                    let countLabel = 'Total';
+                    let highlightClass = '';
+
+                    if (highlightType) {
+                        const matchingStock = Object.entries(data.stock).find(([k, v]) => k.split(' | ')[0] === highlightType);
+                        if (matchingStock) {
+                            displayCount = matchingStock[1];
+                            countLabel = 'Qty';
+                            highlightClass = 'ring-4 ring-orange-400 ring-offset-2 z-20';
+                        } else {
+                            isDimmed = true;
+                        }
+                    }
+
+                    const capacityPercent = Math.min(100, Math.round((data.total / BIN_CAPACITY) * 100));
+                    const capacityColor = capacityPercent > 90 ? 'bg-red-500' : capacityPercent > 60 ? 'bg-amber-400' : 'bg-green-400';
+
+                    return `
+                             <div class="bin-box group ${isDimmed ? 'opacity-20 grayscale' : ''} ${highlightClass}" 
+                                  onclick="openBinModal('${rack.rack_id}', '${binId}')" 
+                                  title="Bin ${binId}: ${displayCount} ${countLabel} (Cap: ${data.total}/${BIN_CAPACITY})">
+                                 
+                                 <div class="flex flex-col items-center">
+                                     <span class="text-lg leading-none">${binId}</span>
+                                     <div class="w-8 h-1 bg-black/20 rounded-full mt-1 overflow-hidden">
+                                        <div class="h-full ${capacityColor}" style="width: ${capacityPercent}%"></div>
+                                     </div>
+                                 </div>
+
+                                 <div class="bin-count-badge group-hover:bg-white group-hover:text-red-500 transition-colors">
+                                    ${displayCount}
+                                 </div>
+                             </div>
+                         `}).join('')}
+                     </div>
+                 `).join('');
+
+                const emptyShelves = shelves.length < 3
+                    ? `<div class="shelf-row opacity-50"></div>`.repeat(3 - shelves.length)
+                    : '';
 
                 return `
-                 <div class="col-span-full bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-all duration-300 mb-6">
-                     <!-- Gradient Header -->
-                     <div class="bg-gradient-to-r ${color.gradient} p-6 text-white relative overflow-hidden">
-                         <div class="absolute right-0 top-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
-                         <div class="absolute right-20 bottom-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2"></div>
-                         
-                         <div class="flex justify-between items-start relative z-10">
-                             <div>
-                                 <div class="flex items-center gap-3 mb-2">
-                                     <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                                         </svg>
-                                     </div>
-                                     <h4 class="text-2xl font-bold tracking-tight">Rack ${rack.rack_id}</h4>
-                                 </div>
-                                 <p class="text-white/80 text-sm font-medium">${rack.uniqueBinsCount} Active Bins • ${rack.totalYarns} Total Yarns</p>
-                             </div>
-                             <div class="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 text-center">
-                                 <p class="text-3xl font-bold">${rack.totalYarns}</p>
-                                 <p class="text-xs text-white/70 uppercase tracking-wider">Yarns</p>
-                             </div>
+                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col h-full">
+                     <div class="flex justify-between items-center mb-6">
+                         <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center font-bold text-lg">
+                                ${rack.rack_id}
+                            </div>
+                            <h3 class="text-xl font-bold text-slate-800">Rack ${rack.rack_id}</h3>
                          </div>
-                         
-                         <!-- Progress Bar -->
-                         <div class="mt-4 relative z-10">
-                             <div class="flex justify-between text-xs text-white/70 mb-1">
-                                 <span>Capacity Utilization</span>
-                                 <span>${utilizationPercent}%</span>
-                             </div>
-                             <div class="h-2 bg-white/20 rounded-full overflow-hidden">
-                                 <div class="h-full bg-white rounded-full transition-all duration-500" style="width: ${utilizationPercent}%"></div>
-                             </div>
+                         <div class="flex flex-col items-end">
+                            <span class="text-xs font-bold bg-green-50 text-green-700 px-3 py-1.5 rounded-full border border-green-100 flex items-center gap-1">
+                                <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                                ${rack.totalYarns} / ${RACK_CAPACITY} Yarns
+                            </span>
+                            <div class="w-24 h-1.5 bg-slate-100 rounded-full mt-1 overflow-hidden">
+                                <div class="h-full bg-green-500 rounded-full" style="width: ${(rack.totalYarns / RACK_CAPACITY) * 100}%"></div>
+                            </div>
                          </div>
                      </div>
-
-                     <!-- Bins Visual Grid -->
-                     <div class="p-6 border-b border-slate-100 ${color.bg}">
-                         <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-                             </svg>
-                             Quick Bin Access
-                         </p>
-                         <div class="flex flex-wrap gap-3">
-                             ${sortedBins.map(([binId, data]) => `
-                                 <button class="group relative w-14 h-14 flex flex-col items-center justify-center rounded-xl bg-white border-2 border-slate-200 hover:border-${color.text.replace('text-', '')} hover:shadow-lg transition-all duration-200 cursor-pointer"
-                                      onclick="scrollToBin('bin-${rack.rack_id}-${binId}')">
-                                     <span class="text-[10px] font-bold text-slate-400 group-hover:${color.text}">BIN</span>
-                                     <span class="text-lg font-bold text-slate-700">${binId}</span>
-                                     <span class="absolute -top-2 -right-2 w-6 h-6 rounded-full ${color.badge} text-[10px] font-bold flex items-center justify-center shadow-sm">${data.total}</span>
-                                 </button>
-                             `).join('')}
-                         </div>
-                     </div>
-
-                     <!-- Detailed Table -->
-                     <div class="p-6">
-                         <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path>
-                             </svg>
-                             Detailed Inventory
-                         </p>
-                         <div class="overflow-hidden rounded-xl border border-slate-200">
-                             <table class="w-full text-left text-sm">
-                                 <thead>
-                                     <tr class="bg-slate-50 text-slate-600">
-                                         <th class="py-4 px-5 font-semibold text-xs uppercase tracking-wider">
-                                             <div class="flex items-center gap-2">
-                                                 <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
-                                                 </svg>
-                                                 Bin Location
-                                             </div>
-                                         </th>
-                                         <th class="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Yarn Type</th>
-                                         <th class="py-4 px-5 font-semibold text-xs uppercase tracking-wider">Count</th>
-                                         <th class="py-4 px-5 font-semibold text-xs uppercase tracking-wider text-right">In Stock</th>
-                                     </tr>
-                                 </thead>
-                                 <tbody class="divide-y divide-slate-100">
-                                     ${sortedBins.map(([binId, data], binIdx) => {
-                    const stockEntries = Object.entries(data.stock);
-                    return stockEntries.map(([stockKey, count], entryIdx) => {
-                        const [type, count_val] = stockKey.split(' | ');
-                        const isFirstEntry = entryIdx === 0;
-                        const rowspan = stockEntries.length;
-                        return `
-                                             <tr id="bin-${rack.rack_id}-${binId}" class="group hover:bg-slate-50/50 transition-colors">
-                                                 <td class="py-4 px-5">
-                                                     ${isFirstEntry ? `
-                                                         <div class="flex items-center gap-3">
-                                                             <div class="w-10 h-10 rounded-lg ${color.bg} ${color.text} flex items-center justify-center font-bold text-sm">
-                                                                 ${binId}
-                                                             </div>
-                                                             <div>
-                                                                 <p class="font-semibold text-slate-700">Bin ${binId}</p>
-                                                                 <p class="text-xs text-slate-400">${data.total} items total</p>
-                                                             </div>
-                                                         </div>
-                                                     ` : '<div class="pl-13"></div>'}
-                                                 </td>
-                                                 <td class="py-4 px-5">
-                                                     <span class="inline-flex items-center gap-2">
-                                                         <span class="w-2 h-2 rounded-full ${color.text.replace('text', 'bg')}"></span>
-                                                         <span class="text-slate-700 font-medium">${type}</span>
-                                                     </span>
-                                                 </td>
-                                                 <td class="py-4 px-5">
-                                                     <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold">${count_val}</span>
-                                                 </td>
-                                                 <td class="py-4 px-5 text-right">
-                                                     <span class="inline-flex items-center justify-center min-w-[40px] px-3 py-1.5 ${color.badge} rounded-lg font-bold text-sm shadow-sm">
-                                                         ${count}
-                                                     </span>
-                                                 </td>
-                                             </tr>
-                                         `;
-                    }).join('');
-                }).join('')}
-                                 </tbody>
-                             </table>
-                         </div>
+                     
+                     <div class="rack-visual flex-1">
+                         ${shelfRows}
+                         ${emptyShelves}
                      </div>
                  </div>
              `}).join('');
         }
 
-        // Global scope exports for UI handlers
-        window.scrollToBin = function (elementId) {
-            const el = document.getElementById(elementId);
-            if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                el.classList.add('bg-orange-50');
-                setTimeout(() => el.classList.remove('bg-orange-50'), 2000);
-            }
+        // Global Modal Functions
+        window.openBinModal = function (rackId, binId) {
+            const stats = calculateWarehouseStats(allRolls);
+            const rack = stats.find(r => r.rack_id == rackId);
+            if (!rack) return;
+
+            const binData = rack.bins[binId];
+            if (!binData) return;
+
+            document.getElementById('modal-bin-title').textContent = `Bin ${binId}`;
+            document.getElementById('modal-bin-icon').textContent = binId;
+            document.getElementById('modal-rack-info').textContent = `Located in Rack ${rackId}`;
+
+            // Populate Stats
+            const uniqueTypes = new Set(Object.keys(binData.stock).map(k => k.split(' | ')[0])).size;
+
+            document.getElementById('modal-bin-stats').innerHTML = `
+                <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                    <p class="text-xs text-indigo-500 font-bold uppercase tracking-wider mb-1">Total Items</p>
+                    <p class="text-3xl font-extrabold text-indigo-700">${binData.total}</p>
+                </div>
+                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                    <p class="text-xs text-emerald-500 font-bold uppercase tracking-wider mb-1">Yarn Types</p>
+                    <p class="text-3xl font-extrabold text-emerald-700">${uniqueTypes}</p>
+                </div>
+             `;
+
+            // Populate Content Table
+            const tableBody = document.getElementById('modal-bin-content');
+            tableBody.innerHTML = Object.entries(binData.stock).map(([key, count]) => {
+                const [type, count_info] = key.split(' | ');
+                return `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="py-3 px-5">
+                            <div class="font-bold text-slate-700">${type}</div>
+                            <!-- Helper info if count_info different from type -->
+                             ${count_info !== 'N/A' && count_info !== type ? `<div class="text-xs text-slate-400 mt-0.5">${count_info}</div>` : ''} 
+                        </td>
+                        <td class="py-3 px-5 text-right">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-bold bg-white border border-slate-200 text-slate-700 shadow-sm">
+                                ${count}
+                            </span>
+                        </td>
+                    </tr>
+                 `;
+            }).join('');
+
+            const modal = document.getElementById('bin-modal');
+            modal.classList.add('open');
+            document.body.style.overflow = 'hidden';
         };
+
+        window.closeBinModal = function (event) {
+            if (event && event.target !== event.currentTarget) return;
+
+            document.getElementById('bin-modal').classList.remove('open');
+            document.body.style.overflow = '';
+        };
+
+        // Close on Escape key
+        document.addEventListener('keydown', function (event) {
+            if (event.key === "Escape") {
+                window.closeBinModal();
+            }
+        });
 
         function updateCharts() {
             const setDynamicWidth = (wrapperId, count) => {
@@ -733,6 +940,12 @@
 
                 return matchSearch && matchBin && matchRack && matchType;
             });
+
+            // Update the Warehouse Visuals to reflect current filters (specifically Type)
+            const typeFilter = document.getElementById('filter-type').value;
+            const stats = calculateWarehouseStats(allRolls); // Recalculate base stats
+            // PASS the type filter to the renderer
+            renderWarehouseBreakdown(stats, typeFilter);
 
             renderGrid(filtered);
         };
