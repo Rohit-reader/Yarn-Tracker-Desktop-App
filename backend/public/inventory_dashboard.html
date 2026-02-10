@@ -251,14 +251,13 @@
                 <h1 class="text-3xl font-bold text-slate-800">Inventory Dashboard</h1>
                 <p class="text-slate-500 mt-1">Real-time overview of yarn stock and distribution</p>
             </div>
-            <button id="refresh-btn" onclick="fetchData()"
-                class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm hover:bg-slate-50 flex items-center gap-2 transition-all active:scale-95">
-                <svg id="refresh-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button id="refresh-btn" onclick="fetchData()" title="Refresh Data"
+                class="h-[42px] w-[42px] rounded-lg border border-slate-200 bg-white cursor-pointer text-slate-600 flex items-center justify-center p-0 hover:bg-slate-50 transition-all active:scale-95 shadow-sm">
+                <svg id="refresh-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
                     </path>
                 </svg>
-                <span id="refresh-text">Refresh Data</span>
             </button>
         </header>
 
@@ -338,6 +337,13 @@
                     <span class="text-sm font-normal text-slate-400 bg-slate-100 px-2 py-1 rounded-full"
                         id="rack-count">0 Racks</span>
                 </h2>
+                <div class="flex items-center gap-3">
+                    <span class="text-sm font-medium text-slate-500">Highlight Type:</span>
+                    <select id="warehouse-filter-type" style="height: 42px; min-width: 180px;"
+                        class="px-3 border rounded-lg text-sm outline-none focus:border-orange-500 box-sizing: border-box;">
+                        <option value="">All Types</option>
+                    </select>
+                </div>
             </div>
             <div id="warehouse-breakdown" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Rack cards will be injected here -->
@@ -475,7 +481,7 @@
     <script type="module">
         // Initialize Firebase with Modular SDK from CDN
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-        import { getFirestore, collection, collectionGroup, query, getDocs, onSnapshot, where } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, getDoc, collectionGroup, query, getDocs, onSnapshot, where } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
         // Your web app's Firebase configuration
         // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -498,8 +504,8 @@
         let rackChartInstance = null;
         let typeChartInstance = null;
         let unsubscribe = null;
-        const BIN_CAPACITY = 20; // Max items per bin
-        const RACK_CAPACITY = 320; // Approx 16 bins * 20 items
+        let BIN_CAPACITY = 20; // Default, will be updated from DB
+        let RACK_CAPACITY = 320; // Default, will be updated from DB
 
         // Manual fetch function (replaces live sync for better control)
         async function fetchData() {
@@ -517,7 +523,21 @@
             if (btn) btn.disabled = true;
 
             try {
-                // Fetch from yarnRolls collection as the single source of truth
+                // 1. Fetch Capacity Settings from DB
+                try {
+                    const settingsSnap = await getDoc(doc(db, 'config', 'general'));
+                    if (settingsSnap.exists()) {
+                        const s = settingsSnap.data();
+                        BIN_CAPACITY = parseInt(s.max_bin_capacity) || 20;
+                        const binsPerRack = parseInt(s.bins_per_rack) || 16;
+                        RACK_CAPACITY = BIN_CAPACITY * binsPerRack;
+                        console.log(`✅ Loaded settings: Bin Cap=${BIN_CAPACITY}, Rack Cap=${RACK_CAPACITY}`);
+                    }
+                } catch (e) {
+                    console.warn("⚠️ Using default capacity settings (could not fetch config)", e);
+                }
+
+                // 2. Fetch from yarnRolls collection as the single source of truth
                 const snapshot = await getDocs(collection(db, 'yarnRolls'));
 
                 allRolls = snapshot.docs.map(doc => ({
@@ -527,15 +547,18 @@
 
                 allRolls.sort((a, b) => new Date(b.production_date) - new Date(a.production_date));
 
+                // 3. Populate Dropdown dynamically
+                populateTypeDropdown(allRolls);
+
                 updateStats();
                 updateCharts();
                 applyFilter(currentFilter);
 
                 // Show success state
-                if (text) text.textContent = 'Refresh Data';
                 if (icon) {
                     icon.classList.remove('animate-spin', 'text-orange-500');
                     icon.classList.add('text-green-500');
+                    setTimeout(() => icon.classList.remove('text-green-500'), 2000);
                 }
 
                 console.log(`✅ Fetched ${allRolls.length} rolls from yarnRolls collection`);
@@ -550,6 +573,33 @@
             } finally {
                 if (btn) btn.disabled = false;
             }
+        }
+        window.fetchData = fetchData;
+
+        function populateTypeDropdown(rolls) {
+            const distinctTypes = [...new Set(rolls.map(r => r.yarn_type || 'Unknown'))].sort();
+            const dropdowns = ['filter-type', 'warehouse-filter-type'];
+
+            dropdowns.forEach(id => {
+                const typeSelect = document.getElementById(id);
+                if (!typeSelect) return;
+
+                const currentVal = typeSelect.value;
+                typeSelect.innerHTML = '<option value="">All Types</option>';
+
+                distinctTypes.forEach(type => {
+                    if (!type) return;
+                    const opt = document.createElement('option');
+                    opt.value = type;
+                    opt.textContent = type;
+                    typeSelect.appendChild(opt);
+                });
+
+                if (currentVal) {
+                    const exists = Array.from(typeSelect.options).some(o => o.value === currentVal);
+                    if (exists) typeSelect.value = currentVal;
+                }
+            });
         }
 
         // --- Frontend Aggregation for Stats (Replaces /api/dashboard-stats) ---
@@ -654,7 +704,7 @@
                     let highlightClass = '';
 
                     if (highlightType) {
-                        const matchingStock = Object.entries(data.stock).find(([k, v]) => k.split(' | ')[0] === highlightType);
+                        const matchingStock = Object.entries(data.stock).find(([k, v]) => k.split(' | ')[0].trim().toLowerCase() === highlightType.toLowerCase());
                         if (matchingStock) {
                             displayCount = matchingStock[1];
                             countLabel = 'Qty';
@@ -936,7 +986,7 @@
 
                 const matchBin = !bin || String(r.bin || '').toLowerCase().includes(bin);
                 const matchRack = !rack || String(r.rack_id || '').toLowerCase().includes(rack);
-                const matchType = !type || (r.yarn_type || '').toLowerCase() === type;
+                const matchType = !type || (r.yarn_type || '').toLowerCase() === type.toLowerCase();
 
                 return matchSearch && matchBin && matchRack && matchType;
             });
@@ -952,9 +1002,21 @@
 
         // Initialize Listeners
         ['filter-search', 'filter-bin', 'filter-rack'].forEach(id => {
-            document.getElementById(id).addEventListener('input', () => applyFilter(currentFilter));
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', () => applyFilter(currentFilter));
         });
-        document.getElementById('filter-type').addEventListener('change', () => applyFilter(currentFilter));
+
+        const syncTypeFilters = (e) => {
+            const val = e.target.value;
+            document.getElementById('filter-type').value = val;
+            document.getElementById('warehouse-filter-type').value = val;
+            applyFilter(currentFilter);
+        };
+
+        ['filter-type', 'warehouse-filter-type'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', syncTypeFilters);
+        });
 
         // Initial data load
         fetchData();

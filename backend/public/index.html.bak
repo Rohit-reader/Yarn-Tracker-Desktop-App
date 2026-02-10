@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>frontend</title>
+  <script type="module" crossorigin src="/assets/index-BdKjuw1s.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-7jtnhnhq.css">
+  <link rel="stylesheet" href="/navbar.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="/navbar.js"></script>
+  <script>
+    // Intercept fetch calls to redirect QR creation to testing endpoint
+    const originalFetch = window.fetch;
+    window.fetch = function () {
+      const url = arguments[0];
+      const options = arguments[1];
+      if (typeof url === 'string' && url.endsWith('/api/rolls') && options && options.method === 'POST') {
+        arguments[0] = url.replace('/api/rolls', '/api/test-rolls');
+      }
+      return originalFetch.apply(this, arguments);
+    };
+
+    // UI Style Overrides
+    const style = document.createElement('style');
+    style.innerHTML = `
+      /* ============================================
+         PROFESSIONAL MODAL SYSTEM - Z-INDEX HIERARCHY
+         ============================================ */
+      
+      /* Layer 1: Background UI (z-index: 100 and below) */
+      .header { position: relative !important; background: white !important; backdrop-filter: none !important; border-bottom: none !important; padding: 2rem !important; margin-bottom: 0 !important; z-index: 100 !important; }
+      .header-content { justify-content: flex-end !important; gap: 2rem; }
+      .header-content .logo { display: none !important; }
+      
+      /* Layer 1: Background UI (very low z-index) */
+      .header { position: relative !important; background: white !important; backdrop-filter: none !important; border-bottom: none !important; padding: 2rem !important; margin-bottom: 0 !important; z-index: 1 !important; }
+      .header-content { justify-content: flex-end !important; gap: 2rem; }
+      .header-content .logo { display: none !important; }
+      
+      #app-navbar, nav { z-index: 1 !important; position: relative !important; }
+      #injected-filters { z-index: 1 !important; position: relative !important; }
+      
+      /* Layer 2: Modal Overlay (MAXIMUM z-index) */
+      .ui-overlay,
+      .modal-overlay {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0, 0, 0, 0.55) !important;
+        z-index: 9999999 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+      
+      /* Layer 3: Modal Container (ABOVE OVERLAY) */
+      .ui-modal,
+      .modal-content {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        z-index: 10000000 !important;
+        background: #ffffff !important;
+        border-radius: 14px !important;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.35) !important;
+        max-height: 85vh !important;
+        overflow-y: auto !important;
+        margin: 0 !important;
+        scrollbar-width: thin;
+        scrollbar-color: var(--accent-blue) transparent;
+        pointer-events: auto !important;
+      }
+      
+      /* Ensure all modal children are interactive */
+      .modal-content *,
+      .ui-modal * {
+        pointer-events: auto !important;
+      }
+      
+      /* Layer 4: Notification Toasts (ABOVE MODAL) */
+      .ui-toast,
+      #toastContainer,
+      .toast-container,
+      .print-preview-toast {
+        position: fixed !important;
+        top: 24px !important;
+        right: 24px !important;
+        z-index: 10000001 !important;
+        pointer-events: auto !important;
+      }
+      
+      /* Modal Open State - Only prevent body scroll */
+      body.modal-open {
+        overflow: hidden !important;
+      }
+      
+      /* Notification Style Fixes */
+      div[class*="toast"], .toast, #toastContainer > div {
+        background: white !important; color: #1e293b !important; border: 2px solid #f97316 !important;
+        box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15) !important; border-radius: 8px !important;
+        padding: 12px 24px !important; display: flex !important; align-items: center !important;
+      }
+      div[class*="toast"]:hover, .toast:hover, #toastContainer > div:hover { background: white !important; border-color: #f97316 !important; }
+      
+      /* ============================================
+         QR RENDERING & GRID STYLES
+         ============================================ */
+      
+      /* Aggressive Sharp QR Rendering */
+      .qr-icon, .roll-qr-img, img[src*="qrcodes"], .qr-box img, .roll-qr-box img, canvas { 
+        opacity: 1 !important; 
+        filter: contrast(115%) !important; 
+        image-rendering: -moz-crisp-edges !important;
+        image-rendering: -webkit-optimize-contrast !important;
+        image-rendering: pixelated !important; 
+        image-rendering: crisp-edges !important;
+        border: 1px solid #e2e8f0 !important;
+        padding: 2px !important;
+        background: white !important;
+        z-index: 50 !important;
+        mask: none !important;
+        -webkit-mask: none !important;
+        mix-blend-mode: normal !important;
+      }
+
+      /* UI Polish: White + Icon */
+      button svg, .btn svg { color: white !important; }
+      .register-btn svg, .add-roll-btn svg { stroke: white !important; }
+
+      /* Grid Alignment Fixes */
+      .roll-card { 
+        display: flex !important; flex-direction: column !important; gap: 12px !important;
+        padding: 16px !important; min-height: 240px !important; justify-content: space-between !important;
+      }
+      .roll-header { display: flex !important; justify-content: space-between !important; align-items: flex-start !important; margin-bottom: 8px !important; }
+      .roll-number { font-weight: 700 !important; font-size: 1.1rem !important; color: #1e293b !important; white-space: nowrap !important; }
+      /* Hide native blurry QRs to prevent duplicates after our injection */
+      .qr-box, .roll-qr-box, .qr-icon { display: none !important; }
+      .roll-qr-img { width: 64px !important; height: 64px !important; flex-shrink: 0 !important; display: block !important; }
+      .roll-details, .roll-info { display: flex !important; flex-direction: column !important; gap: 6px !important; flex: 1 !important; }
+      .detail-row, .info-row { display: flex !important; justify-content: space-between !important; align-items: center !important; font-size: 0.9rem !important; }
+      .detail-label, .info-label { color: #64748b !important; font-weight: 500 !important; }
+      .detail-value, .info-value { color: #334155 !important; font-weight: 600 !important; text-align: right !important; }
+
+      /* Hide Admin Toggle & Labels */
+      .admin-toggle, .admin-label, [class*="admin-toggle"], [class*="admin-label"],
+      .register-btn, .add-roll-btn, [class*="register"], [class*="add-roll"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        height: 0 !important;
+        width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+    `;
+    document.head.appendChild(style);
+
+    // QR script loaded statically
+
+    window.rollBinMap = {};
+
+    // Robust Data Extraction Helper
+    const extractCardData = (card) => {
+      const getText = (selector) => card.querySelector(selector)?.textContent.trim() || '';
+
+      // extraction by label for robustness
+      const getByLabel = (label) => {
+        const rows = card.querySelectorAll('.detail-row, .info-row');
+        for (let row of rows) {
+          if (row.textContent.includes(label)) {
+            return row.querySelector('.detail-value, .info-value')?.textContent.trim() || '';
+          }
+        }
+        return '';
+      };
+
+      const id = getText('.roll-number');
+      // Try class first, then label fallback
+      let type = getText('.roll-type') || getText('.yarn-type') || getByLabel('Type') || getByLabel('Material');
+      const rack = getText('.roll-rack') || getText('.rack-id') || getByLabel('Rack') || getByLabel('Location');
+      const bin = window.rollBinMap[id] || card.getAttribute('data-bin') || getByLabel('Bin') || '1';
+      const lot = getByLabel('Lot');
+
+      // Robustness: Use authoritative data if available
+      if (window.allRolls) {
+        const rollObj = window.allRolls.find(r => r.id === id);
+        if (rollObj) {
+          if (rollObj.yarn_type) type = rollObj.yarn_type;
+        }
+      }
+
+      return { id, type, rack, bin, lot, raw: card.textContent.toLowerCase() };
+    };
+
+    // Filter Application Logic
+    const applyDOMFilters = () => {
+      const search = document.getElementById('inventory-search')?.value.toLowerCase() || '';
+      const binF = document.getElementById('filter-bin')?.value.toLowerCase() || '';
+      const typeF = document.getElementById('filter-type')?.value || '';
+      const rackF = document.getElementById('filter-rack')?.value.toLowerCase() || '';
+
+      let visibleCount = 0;
+      const allTypes = new Set();
+
+      document.querySelectorAll('.roll-card').forEach(card => {
+        const data = extractCardData(card);
+
+        // Collect types for dynamic dropdown population
+        if (data.type) allTypes.add(data.type);
+
+        if (data.id.toLowerCase().includes('test')) {
+          card.style.display = 'none';
+          return;
+        }
+
+        const binMatch = !binF || data.bin.toLowerCase().includes(binF);
+        // Case-insensitive robust matching
+        const typeMatch = !typeF || data.type.toLowerCase().trim() === typeF.toLowerCase().trim();
+        const rackMatch = !rackF || data.rack.toLowerCase().includes(rackF);
+
+        // robust search: check specific fields first, then whole card
+        const searchTerms = search.split(' ').filter(t => t);
+        const searchMatch = searchTerms.every(term =>
+          data.id.toLowerCase().includes(term) ||
+          data.type.toLowerCase().includes(term) ||
+          data.rack.toLowerCase().includes(term) ||
+          data.lot.toLowerCase().includes(term) ||
+          data.raw.includes(term)
+        );
+
+        const isVisible = binMatch && searchMatch && typeMatch && rackMatch;
+        // MUST use !important to override the global CSS rule that enforces display: flex !important
+        card.style.setProperty('display', isVisible ? 'flex' : 'none', 'important');
+        if (isVisible) visibleCount++;
+      });
+
+      // Update Type Dropdown if empty (fallback)
+      const typeSelect = document.getElementById('filter-type');
+      if (typeSelect && typeSelect.options.length <= 1 && allTypes.size > 0) {
+        // preserve current selection if any
+        const currentVal = typeSelect.value;
+        typeSelect.innerHTML = '<option value="">All Types</option>';
+        Array.from(allTypes).sort().forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t;
+          opt.textContent = t;
+          typeSelect.appendChild(opt);
+        });
+        typeSelect.value = currentVal;
+      }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const injectFilters = () => {
+        if (document.getElementById('injected-filters')) return;
+        const mainContent = document.querySelector('.header');
+        if (mainContent) {
+          const filterBar = document.createElement('div');
+          filterBar.id = 'injected-filters';
+          filterBar.style.cssText = 'display: flex; gap: 1rem; padding: 1rem 2rem; background: #fff; border-bottom: 1px solid #e1e8f0; align-items: center; z-index: 50; position: relative; margin-top: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); flex-wrap: wrap; transition: opacity 0.3s ease-out; opacity: 0;';
+          setTimeout(() => filterBar.style.opacity = '1', 50);
+          filterBar.innerHTML = `
+  <div style="flex: 1; position: relative; min-width: 200px;">
+    <input type="text" id="inventory-search" placeholder="Search ID, Type, Lot, Rack..."
+      style="width: 100%; height: 42px; padding: 0 1rem 0 2.5rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white; box-sizing: border-box;">
+    <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1.25rem; height: 1.25rem; color: #94a3b8;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+    </svg>
+  </div>
+  <input type="text" id="filter-bin" placeholder="Bin"
+    style="width: 80px; height: 42px; padding: 0 1rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white; box-sizing: border-box;">
+  <input type="text" id="filter-rack" placeholder="Rack"
+    style="width: 80px; height: 42px; padding: 0 1rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white; box-sizing: border-box;">
+  <button onclick="location.reload()" title="Refresh Application" 
+    style="height: 42px; width: 42px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; cursor: pointer; color: #475569; display: flex; align-items: center; justify-content: center; padding: 0; box-sizing: border-box;">
+    <svg style="width: 1.25rem; height: 1.25rem; color: #475569 !important;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+  </button>
+  `;
+          mainContent.after(filterBar);
+
+          // Add listeners
+          const ids = ['inventory-search', 'filter-bin', 'filter-type', 'filter-rack'];
+          ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+              el.addEventListener('input', applyDOMFilters);
+              el.addEventListener('change', applyDOMFilters);
+              el.addEventListener('keyup', applyDOMFilters);
+            }
+          });
+
+          // Initial run
+          setTimeout(applyDOMFilters, 500);
+        }
+      };
+
+      const observer = new MutationObserver(() => {
+        injectFilters();
+        // Re-run filters periodically or when nodes are added to ensure consistency
+        if (document.querySelector('.roll-card')) {
+          // Debounce the filter application slightly to avoid thrashing
+          if (window._filterTimeout) clearTimeout(window._filterTimeout);
+          window._filterTimeout = setTimeout(applyDOMFilters, 100);
+        }
+
+        document.querySelectorAll('.roll-card').forEach(card => {
+          const idEL = card.querySelector('.roll-number');
+          const idStr = idEL?.textContent.trim() || '';
+          if (!idStr) return;
+
+          // Inject QR Image into header if missing
+          const header = card.querySelector('.roll-header');
+          if (header && !card.querySelector('.roll-qr-img') && !card.querySelector('.roll-qr-fallback')) {
+            const qrContainer = document.createElement('div');
+            qrContainer.className = 'roll-qr-img';
+            qrContainer.style.width = '64px';
+            qrContainer.style.height = '64px';
+            qrContainer.style.overflow = 'hidden';
+            qrContainer.style.position = 'relative';
+
+            const qrImg = document.createElement('img');
+            qrImg.src = `/qrcodes/${idStr}.png?v=${Date.now()}`;
+            qrImg.style.width = '100%';
+            qrImg.style.height = '100%';
+            qrImg.style.objectFit = 'contain';
+            qrImg.alt = `QR ${idStr}`;
+
+            // If QR doesn't exist yet, generate it
+            qrImg.onerror = function () {
+              this.style.display = 'none';
+
+              // Create fallback container
+              const fallback = document.createElement('div');
+              fallback.className = 'roll-qr-fallback';
+              fallback.style.width = '100%';
+              fallback.style.height = '100%';
+              fallback.style.backgroundColor = 'white';
+              qrContainer.appendChild(fallback);
+
+              // Construct basic payload
+              let payload = { id: idStr, bin: window.rollBinMap[idStr] || '1' };
+              if (window.allRolls) {
+                const r = window.allRolls.find(x => x.id === idStr);
+                if (r) {
+                  const { quality_grade, material, ...rest } = r;
+                  payload = rest;
+                }
+              }
+
+              new QRCode(fallback, {
+                text: JSON.stringify(payload),
+                width: 64,
+                height: 64,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+              });
+            };
+            qrContainer.appendChild(qrImg);
+            header.appendChild(qrContainer);
+          }
+
+          const binNum = window.rollBinMap[idStr] || '';
+          if (binNum) {
+            card.setAttribute('data-bin', binNum);
+            const details = card.querySelector('.roll-details') || card.querySelector('.roll-info');
+            if (details && !card.querySelector('.bin-row')) {
+              const binRow = document.createElement('div');
+              binRow.className = 'detail-row bin-row';
+              binRow.innerHTML = `<span class="detail-label">Bin:</span><span class="detail-value">${binNum}</span>`;
+              if (details.firstChild) details.insertBefore(binRow, details.firstChild);
+              else details.appendChild(binRow);
+            }
+          }
+
+          // Cleanup display
+          const typeEL = card.querySelector('.roll-type') || card.querySelector('.yarn-type');
+          if (typeEL && typeEL.textContent.includes('[B')) {
+            typeEL.textContent = typeEL.textContent.replace(/\[B+\d+\]\s*/, '');
+          }
+
+          // Inject View Details Button
+          if (!card.querySelector('.view-details-link')) {
+            const footer = document.createElement('div');
+            footer.className = 'roll-footer';
+            footer.style.cssText = 'margin-top: 8px; border-top: 1px solid #f1f5f9; padding-top: 8px; text-align: right;';
+
+            const viewDetails = document.createElement('a');
+            viewDetails.href = `/details.html?id=${idStr}`;
+            viewDetails.className = 'view-details-link';
+            viewDetails.textContent = 'VIEW DETAILS';
+            viewDetails.style.cssText = 'color: #ea580c; font-size: 10px; font-weight: 700; text-decoration: none; letter-spacing: 0.05em; transition: all 0.2s;';
+
+            viewDetails.onmouseover = () => viewDetails.style.color = '#c2410c';
+            viewDetails.onmouseout = () => viewDetails.style.color = '#ea580c';
+
+            footer.appendChild(viewDetails);
+            card.appendChild(footer);
+          }
+        });
+
+        applyDOMFilters();
+
+        const modal = document.querySelector('.modal-content');
+        if (modal && (modal.textContent.includes('Register New Roll') || modal.textContent.includes('Add New Roll'))) {
+          // Clear all current values and use placeholders instead
+          modal.querySelectorAll('input').forEach(input => {
+            if (!input.placeholder && input.value) {
+              input.placeholder = input.value;
+            }
+            input.value = '';
+          });
+
+          // Specific override for Rack / Location as requested
+          const rackInput = modal.querySelector('input[placeholder*="RACK"]') ||
+            modal.querySelector('input[placeholder*="Locations"]') ||
+            Array.from(modal.querySelectorAll('input')).find(i => {
+              const ph = (i.placeholder || '').toLowerCase();
+              return ph.includes('rack') || ph.includes('location');
+            });
+
+          if (rackInput) {
+            // Hide the Rack input and its container
+            const container = rackInput.closest('.form-group') || rackInput.closest('div') || rackInput.parentElement;
+            if (container) container.style.display = 'none';
+          } else {
+            // Fallback: Try to find by label if input not found by placeholder
+            const labels = Array.from(modal.querySelectorAll('label'));
+            const targetLabel = labels.find(l => {
+              const text = l.textContent.toLowerCase();
+              return text.includes('rack') || text.includes('location');
+            });
+            if (targetLabel) {
+              const container = targetLabel.closest('.form-group') || targetLabel.closest('div') || targetLabel.parentElement;
+              if (container) container.style.display = 'none';
+            }
+          }
+
+        }
+        // Targeted Bulk Management Removal (Safe Version)
+        // Only target heading elements to avoid hiding entire page
+        document.querySelectorAll('h3, h4, h5, span, p, div').forEach(el => {
+          const text = (el.textContent || '').trim().toLowerCase();
+
+          // Only match "bulk management" title (must be short text, not the whole page)
+          if ((text === 'bulk management' || text.endsWith('bulk management') || text.startsWith('bulk management')) && text.length < 50) {
+            el.style.setProperty('display', 'none', 'important');
+
+            // Find and hide parent card container - be more aggressive
+            let parent = el.parentElement;
+            for (let i = 0; i < 7 && parent; i++) {
+              const classList = (parent.className || '').toLowerCase();
+              const tagName = parent.tagName;
+
+              // Skip body, html, main containers
+              if (tagName === 'BODY' || tagName === 'HTML' || tagName === 'MAIN' || classList.includes('root') || classList.includes('app')) {
+                break;
+              }
+
+              // Check if this is a card-like container
+              const style = window.getComputedStyle(parent);
+              const hasBorder = style.border && style.border !== 'none' && !style.border.startsWith('0');
+              const hasRadius = parseFloat(style.borderRadius) > 4;
+              const hasBg = style.backgroundColor !== 'rgba(0, 0, 0, 0)' && style.backgroundColor !== 'transparent';
+              const hasShadow = style.boxShadow && style.boxShadow !== 'none';
+
+              if (classList.includes('card') || classList.includes('bulk') || classList.includes('section') ||
+                classList.includes('panel') || classList.includes('box') || classList.includes('management') ||
+                (hasRadius && (hasBg || hasShadow || hasBorder))) {
+                parent.style.setProperty('display', 'none', 'important');
+                break;
+              }
+              parent = parent.parentElement;
+            }
+          }
+        });
+
+        // Hide buttons with exact forbidden text (including Reserve, Pick, Dispatch)
+        document.querySelectorAll('button, a').forEach(el => {
+          const text = (el.textContent || '').trim().toLowerCase();
+          const forbidden = ['register new roll', 'bulk load intake', 'check all', 'clear', 'reserve', 'pick', 'dispatch'];
+          if (forbidden.some(f => text === f || text.includes(f))) {
+            el.style.setProperty('display', 'none', 'important');
+          }
+        });
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    });
+
+
+    const enhancedOriginalFetch = window.fetch;
+    window.fetch = async function () {
+      const url = arguments[0];
+      const options = arguments[1];
+      if (typeof url === 'string' && url.endsWith('/api/rolls') && (!options || options.method === 'GET')) {
+        const response = await enhancedOriginalFetch.apply(this, arguments);
+        const rolls = await response.json();
+        const typeSelect = document.getElementById('filter-type');
+        if (typeSelect && typeSelect.options.length === 1) {
+          const types = [...new Set(rolls.map(r => r.yarn_type))].sort();
+          types.forEach(t => {
+            const opt = document.createElement('option'); opt.value = t; opt.textContent = t;
+            typeSelect.appendChild(opt);
+          });
+        }
+        // Map ID to Bin globally
+        window.allRolls = rolls;
+        rolls.forEach(r => { if (r.id) window.rollBinMap[r.id] = r.bin || '1'; });
+        return new Response(JSON.stringify(rolls), { status: response.status, headers: response.headers });
+      }
+
+
+      if (typeof url === 'string' && (url.endsWith('/api/rolls') || url.endsWith('/api/test-rolls')) && options &&
+        options.method === 'POST') {
+        try {
+          const body = JSON.parse(options.body);
+          const binInput = document.getElementById('in-bin');
+          if (binInput) body.bin = binInput.value || '1';
+          options.body = JSON.stringify(body);
+        } catch (e) { }
+      }
+      return enhancedOriginalFetch.apply(this, arguments);
+    };
+
+    // ============================================
+    // PROFESSIONAL MODAL CONTROL SYSTEM
+    // ============================================
+
+    // Modal state management functions
+    window.openModal = function () {
+      document.body.classList.add("modal-open");
+      const overlay = document.querySelector(".ui-overlay, .modal-overlay");
+      const modal = document.querySelector(".ui-modal, .modal-content");
+      if (overlay) overlay.style.display = "flex";
+      if (modal) modal.style.display = "block";
+    };
+
+    window.closeModal = function () {
+      document.body.classList.remove("modal-open");
+      const overlay = document.querySelector(".ui-overlay, .modal-overlay");
+      const modal = document.querySelector(".ui-modal, .modal-content");
+      if (overlay) overlay.style.display = "none";
+      if (modal) modal.style.display = "none";
+    };
+
+    // Auto-detect modal visibility changes and manage body class + force styles
+    const modalObserver = new MutationObserver(() => {
+      const overlay = document.querySelector(".modal-overlay");
+      const modal = document.querySelector(".modal-content");
+
+      // Force extreme z-index via inline styles to override React
+      if (overlay) {
+        overlay.style.zIndex = "9999999";
+        overlay.style.position = "fixed";
+        overlay.style.inset = "0";
+        overlay.style.display = overlay.style.display || "flex";
+        overlay.style.pointerEvents = "auto";
+      }
+
+      if (modal) {
+        modal.style.zIndex = "10000000";
+        modal.style.position = "fixed";
+        modal.style.top = "50%";
+        modal.style.left = "50%";
+        modal.style.transform = "translate(-50%, -50%)";
+        modal.style.pointerEvents = "auto";
+
+        // Ensure all inputs/buttons inside modal are interactive
+        modal.querySelectorAll('input, button, select, textarea, a').forEach(el => {
+          el.style.pointerEvents = "auto";
+        });
+      }
+
+      if (overlay && modal) {
+        const overlayVisible = window.getComputedStyle(overlay).display !== 'none';
+        const modalVisible = window.getComputedStyle(modal).display !== 'none';
+
+        if (overlayVisible || modalVisible) {
+          if (!document.body.classList.contains("modal-open")) {
+            document.body.classList.add("modal-open");
+          }
+        } else {
+          if (document.body.classList.contains("modal-open")) {
+            document.body.classList.remove("modal-open");
+          }
+        }
+      }
+    });
+
+    // Start observing when DOM is ready
+    window.addEventListener('DOMContentLoaded', () => {
+      modalObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style', 'class']
+      });
+    });
+  </script>
+  <style>
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.3s ease-out forwards;
+    }
+  </style>
+</head>
+
+<body class="flex flex-col min-h-screen">
+  <div id="root" class="flex-1"></div>
+</body>
+
+</html>

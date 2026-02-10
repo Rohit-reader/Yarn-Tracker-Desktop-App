@@ -1,628 +1,1026 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>frontend</title>
-  <script type="module" crossorigin src="/assets/index-BdKjuw1s.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-7jtnhnhq.css">
-  <link rel="stylesheet" href="/navbar.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="/navbar.js"></script>
-  <script>
-    // Intercept fetch calls to redirect QR creation to testing endpoint
-    const originalFetch = window.fetch;
-    window.fetch = function () {
-      const url = arguments[0];
-      const options = arguments[1];
-      if (typeof url === 'string' && url.endsWith('/api/rolls') && options && options.method === 'POST') {
-        arguments[0] = url.replace('/api/rolls', '/api/test-rolls');
-      }
-      return originalFetch.apply(this, arguments);
-    };
-
-    // UI Style Overrides
-    const style = document.createElement('style');
-    style.innerHTML = `
-      /* ============================================
-         PROFESSIONAL MODAL SYSTEM - Z-INDEX HIERARCHY
-         ============================================ */
-      
-      /* Layer 1: Background UI (z-index: 100 and below) */
-      .header { position: relative !important; background: white !important; backdrop-filter: none !important; border-bottom: none !important; padding: 2rem !important; margin-bottom: 0 !important; z-index: 100 !important; }
-      .header-content { justify-content: flex-end !important; gap: 2rem; }
-      .header-content .logo { display: none !important; }
-      
-      /* Layer 1: Background UI (very low z-index) */
-      .header { position: relative !important; background: white !important; backdrop-filter: none !important; border-bottom: none !important; padding: 2rem !important; margin-bottom: 0 !important; z-index: 1 !important; }
-      .header-content { justify-content: flex-end !important; gap: 2rem; }
-      .header-content .logo { display: none !important; }
-      
-      #app-navbar, nav { z-index: 1 !important; position: relative !important; }
-      #injected-filters { z-index: 1 !important; position: relative !important; }
-      
-      /* Layer 2: Modal Overlay (MAXIMUM z-index) */
-      .ui-overlay,
-      .modal-overlay {
-        position: fixed !important;
-        inset: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        background: rgba(0, 0, 0, 0.55) !important;
-        z-index: 9999999 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-      }
-      
-      /* Layer 3: Modal Container (ABOVE OVERLAY) */
-      .ui-modal,
-      .modal-content {
-        position: fixed !important;
-        top: 50% !important;
-        left: 50% !important;
-        transform: translate(-50%, -50%) !important;
-        z-index: 10000000 !important;
-        background: #ffffff !important;
-        border-radius: 14px !important;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.35) !important;
-        max-height: 85vh !important;
-        overflow-y: auto !important;
-        margin: 0 !important;
-        scrollbar-width: thin;
-        scrollbar-color: var(--accent-blue) transparent;
-        pointer-events: auto !important;
-      }
-      
-      /* Ensure all modal children are interactive */
-      .modal-content *,
-      .ui-modal * {
-        pointer-events: auto !important;
-      }
-      
-      /* Layer 4: Notification Toasts (ABOVE MODAL) */
-      .ui-toast,
-      #toastContainer,
-      .toast-container,
-      .print-preview-toast {
-        position: fixed !important;
-        top: 24px !important;
-        right: 24px !important;
-        z-index: 10000001 !important;
-        pointer-events: auto !important;
-      }
-      
-      /* Modal Open State - Only prevent body scroll */
-      body.modal-open {
-        overflow: hidden !important;
-      }
-      
-      /* Notification Style Fixes */
-      div[class*="toast"], .toast, #toastContainer > div {
-        background: white !important; color: #1e293b !important; border: 2px solid #f97316 !important;
-        box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15) !important; border-radius: 8px !important;
-        padding: 12px 24px !important; display: flex !important; align-items: center !important;
-      }
-      div[class*="toast"]:hover, .toast:hover, #toastContainer > div:hover { background: white !important; border-color: #f97316 !important; }
-      
-      /* ============================================
-         QR RENDERING & GRID STYLES
-         ============================================ */
-      
-      /* Aggressive Sharp QR Rendering */
-      .qr-icon, .roll-qr-img, img[src*="qrcodes"], .qr-box img, .roll-qr-box img, canvas { 
-        opacity: 1 !important; 
-        filter: contrast(115%) !important; 
-        image-rendering: -moz-crisp-edges !important;
-        image-rendering: -webkit-optimize-contrast !important;
-        image-rendering: pixelated !important; 
-        image-rendering: crisp-edges !important;
-        border: 1px solid #e2e8f0 !important;
-        padding: 2px !important;
-        background: white !important;
-        z-index: 50 !important;
-        mask: none !important;
-        -webkit-mask: none !important;
-        mix-blend-mode: normal !important;
-      }
-
-      /* UI Polish: White + Icon */
-      button svg, .btn svg { color: white !important; }
-      .register-btn svg, .add-roll-btn svg { stroke: white !important; }
-
-      /* Grid Alignment Fixes */
-      .roll-card { 
-        display: flex !important; flex-direction: column !important; gap: 12px !important;
-        padding: 16px !important; min-height: 240px !important; justify-content: space-between !important;
-      }
-      .roll-header { display: flex !important; justify-content: space-between !important; align-items: flex-start !important; margin-bottom: 8px !important; }
-      .roll-number { font-weight: 700 !important; font-size: 1.1rem !important; color: #1e293b !important; white-space: nowrap !important; }
-      /* Hide native blurry QRs to prevent duplicates after our injection */
-      .qr-box, .roll-qr-box, .qr-icon { display: none !important; }
-      .roll-qr-img { width: 64px !important; height: 64px !important; flex-shrink: 0 !important; display: block !important; }
-      .roll-details, .roll-info { display: flex !important; flex-direction: column !important; gap: 6px !important; flex: 1 !important; }
-      .detail-row, .info-row { display: flex !important; justify-content: space-between !important; align-items: center !important; font-size: 0.9rem !important; }
-      .detail-label, .info-label { color: #64748b !important; font-weight: 500 !important; }
-      .detail-value, .info-value { color: #334155 !important; font-weight: 600 !important; text-align: right !important; }
-
-      /* Hide Admin Toggle & Labels */
-      .admin-toggle, .admin-label, [class*="admin-toggle"], [class*="admin-label"],
-      .register-btn, .add-roll-btn, [class*="register"], [class*="add-roll"] {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-        height: 0 !important;
-        width: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-    `;
-    document.head.appendChild(style);
-
-    // QR script loaded statically
-
-    window.rollBinMap = {};
-
-    // Robust Data Extraction Helper
-    const extractCardData = (card) => {
-      const getText = (selector) => card.querySelector(selector)?.textContent.trim() || '';
-
-      // extraction by label for robustness
-      const getByLabel = (label) => {
-        const rows = card.querySelectorAll('.detail-row, .info-row');
-        for (let row of rows) {
-          if (row.textContent.includes(label)) {
-            return row.querySelector('.detail-value, .info-value')?.textContent.trim() || '';
-          }
-        }
-        return '';
-      };
-
-      const id = getText('.roll-number');
-      // Try class first, then label fallback
-      let type = getText('.roll-type') || getText('.yarn-type') || getByLabel('Type') || getByLabel('Material');
-      const rack = getText('.roll-rack') || getText('.rack-id') || getByLabel('Rack') || getByLabel('Location');
-      const bin = window.rollBinMap[id] || card.getAttribute('data-bin') || getByLabel('Bin') || '1';
-      const lot = getByLabel('Lot');
-
-      // Robustness: Use authoritative data if available
-      if (window.allRolls) {
-        const rollObj = window.allRolls.find(r => r.id === id);
-        if (rollObj) {
-          if (rollObj.yarn_type) type = rollObj.yarn_type;
-        }
-      }
-
-      return { id, type, rack, bin, lot, raw: card.textContent.toLowerCase() };
-    };
-
-    // Filter Application Logic
-    const applyDOMFilters = () => {
-      const search = document.getElementById('inventory-search')?.value.toLowerCase() || '';
-      const binF = document.getElementById('filter-bin')?.value.toLowerCase() || '';
-      const typeF = document.getElementById('filter-type')?.value || '';
-      const rackF = document.getElementById('filter-rack')?.value.toLowerCase() || '';
-
-      let visibleCount = 0;
-      const allTypes = new Set();
-
-      document.querySelectorAll('.roll-card').forEach(card => {
-        const data = extractCardData(card);
-
-        // Collect types for dynamic dropdown population
-        if (data.type) allTypes.add(data.type);
-
-        if (data.id.toLowerCase().includes('test')) {
-          card.style.display = 'none';
-          return;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Dashboard | S.A. Textiles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/navbar.css">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
         }
 
-        const binMatch = !binF || data.bin.toLowerCase().includes(binF);
-        // Case-insensitive robust matching
-        const typeMatch = !typeF || data.type.toLowerCase().trim() === typeF.toLowerCase().trim();
-        const rackMatch = !rackF || data.rack.toLowerCase().includes(rackF);
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
 
-        // robust search: check specific fields first, then whole card
-        const searchTerms = search.split(' ').filter(t => t);
-        const searchMatch = searchTerms.every(term =>
-          data.id.toLowerCase().includes(term) ||
-          data.type.toLowerCase().includes(term) ||
-          data.rack.toLowerCase().includes(term) ||
-          data.lot.toLowerCase().includes(term) ||
-          data.raw.includes(term)
-        );
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            border-color: #cbd5e1;
+        }
 
-        const isVisible = binMatch && searchMatch && typeMatch && rackMatch;
-        // MUST use !important to override the global CSS rule that enforces display: flex !important
-        card.style.setProperty('display', isVisible ? 'flex' : 'none', 'important');
-        if (isVisible) visibleCount++;
-      });
+        .stat-card.active {
+            border-color: #f97316;
+            background: #fff7ed;
+        }
 
-      // Update Type Dropdown if empty (fallback)
-      const typeSelect = document.getElementById('filter-type');
-      if (typeSelect && typeSelect.options.length <= 1 && allTypes.size > 0) {
-        // preserve current selection if any
-        const currentVal = typeSelect.value;
-        typeSelect.innerHTML = '<option value="">All Types</option>';
-        Array.from(allTypes).sort().forEach(t => {
-          const opt = document.createElement('option');
-          opt.value = t;
-          opt.textContent = t;
-          typeSelect.appendChild(opt);
-        });
-        typeSelect.value = currentVal;
-      }
-    };
+        .chart-container {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            height: 350px;
+            position: relative;
+        }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      const injectFilters = () => {
-        if (document.getElementById('injected-filters')) return;
-        const mainContent = document.querySelector('.header');
-        if (mainContent) {
-          const filterBar = document.createElement('div');
-          filterBar.id = 'injected-filters';
-          filterBar.style.cssText = 'display: flex; gap: 1rem; padding: 1rem 2rem; background: #fff; border-bottom: 1px solid #e1e8f0; align-items: center; z-index: 50; position: relative; margin-top: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); flex-wrap: wrap; transition: opacity 0.3s ease-out; opacity: 0;';
-          setTimeout(() => filterBar.style.opacity = '1', 50);
-          filterBar.innerHTML = `
-  <div style="flex: 1; position: relative; min-width: 200px;">
-    <input type="text" id="inventory-search" placeholder="Search ID, Type, Lot, Rack..."
-      style="width: 100%; height: 42px; padding: 0 1rem 0 2.5rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white; box-sizing: border-box;">
-    <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1.25rem; height: 1.25rem; color: #94a3b8;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-    </svg>
-  </div>
-  <input type="text" id="filter-bin" placeholder="Bin"
-    style="width: 80px; height: 42px; padding: 0 1rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white; box-sizing: border-box;">
-  <input type="text" id="filter-rack" placeholder="Rack"
-    style="width: 80px; height: 42px; padding: 0 1rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: white; box-sizing: border-box;">
-  <button onclick="location.reload()" title="Refresh Application" 
-    style="height: 42px; width: 42px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; cursor: pointer; color: #475569; display: flex; align-items: center; justify-content: center; padding: 0; box-sizing: border-box;">
-    <svg style="width: 1.25rem; height: 1.25rem; color: #475569 !important;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-  </button>
-  `;
-          mainContent.after(filterBar);
+        .roll-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
 
-          // Add listeners
-          const ids = ['inventory-search', 'filter-bin', 'filter-type', 'filter-rack'];
-          ids.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-              el.addEventListener('input', applyDOMFilters);
-              el.addEventListener('change', applyDOMFilters);
-              el.addEventListener('keyup', applyDOMFilters);
+        .roll-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .roll-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-instock {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .status-reserved {
+            background: #ffedd5;
+            color: #ea580c;
+        }
+
+
+        .status-dispatched {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        /* Rack Visualization Styles */
+        .rack-visual {
+            background: #e2e8f0;
+            border: 10px solid #94a3b8;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-height: 250px;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Top of the rack look */
+        .rack-visual::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            right: 10px;
+            height: 10px;
+            background: #64748b;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .shelf-row {
+            display: flex;
+            gap: 12px;
+            padding-bottom: 8px;
+            border-bottom: 8px solid #cbd5e1;
+            flex-wrap: wrap;
+            align-content: flex-end;
+            min-height: 70px;
+            position: relative;
+        }
+
+        .shelf-row::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .bin-box {
+            width: 65px;
+            height: 55px;
+            background: linear-gradient(to bottom, #3b82f6, #2563eb);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 4px 0 #1e40af, 0 6px 8px rgba(0, 0, 0, 0.15);
+            transition: all 0.1s ease;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .bin-box:hover {
+            transform: translateY(-2px);
+            z-index: 10;
+            background: linear-gradient(to bottom, #60a5fa, #3b82f6);
+        }
+
+        .bin-box:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #1e40af, inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .bin-count-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #ef4444;
+            color: white;
+            font-size: 0.65rem;
+            font-weight: bold;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 550px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                transform: translateY(30px) scale(0.95);
+                opacity: 0;
             }
-          });
 
-          // Initial run
-          setTimeout(applyDOMFilters, 500);
-        }
-      };
-
-      const observer = new MutationObserver(() => {
-        injectFilters();
-        // Re-run filters periodically or when nodes are added to ensure consistency
-        if (document.querySelector('.roll-card')) {
-          // Debounce the filter application slightly to avoid thrashing
-          if (window._filterTimeout) clearTimeout(window._filterTimeout);
-          window._filterTimeout = setTimeout(applyDOMFilters, 100);
-        }
-
-        document.querySelectorAll('.roll-card').forEach(card => {
-          const idEL = card.querySelector('.roll-number');
-          const idStr = idEL?.textContent.trim() || '';
-          if (!idStr) return;
-
-          // Inject QR Image into header if missing
-          const header = card.querySelector('.roll-header');
-          if (header && !card.querySelector('.roll-qr-img') && !card.querySelector('.roll-qr-fallback')) {
-            const qrContainer = document.createElement('div');
-            qrContainer.className = 'roll-qr-img';
-            qrContainer.style.width = '64px';
-            qrContainer.style.height = '64px';
-            qrContainer.style.overflow = 'hidden';
-            qrContainer.style.position = 'relative';
-
-            const qrImg = document.createElement('img');
-            qrImg.src = `/qrcodes/${idStr}.png?v=${Date.now()}`;
-            qrImg.style.width = '100%';
-            qrImg.style.height = '100%';
-            qrImg.style.objectFit = 'contain';
-            qrImg.alt = `QR ${idStr}`;
-
-            // If QR doesn't exist yet, generate it
-            qrImg.onerror = function () {
-              this.style.display = 'none';
-
-              // Create fallback container
-              const fallback = document.createElement('div');
-              fallback.className = 'roll-qr-fallback';
-              fallback.style.width = '100%';
-              fallback.style.height = '100%';
-              fallback.style.backgroundColor = 'white';
-              qrContainer.appendChild(fallback);
-
-              // Construct basic payload
-              let payload = { id: idStr, bin: window.rollBinMap[idStr] || '1' };
-              if (window.allRolls) {
-                const r = window.allRolls.find(x => x.id === idStr);
-                if (r) {
-                  const { quality_grade, material, ...rest } = r;
-                  payload = rest;
-                }
-              }
-
-              new QRCode(fallback, {
-                text: JSON.stringify(payload),
-                width: 64,
-                height: 64,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-              });
-            };
-            qrContainer.appendChild(qrImg);
-            header.appendChild(qrContainer);
-          }
-
-          const binNum = window.rollBinMap[idStr] || '';
-          if (binNum) {
-            card.setAttribute('data-bin', binNum);
-            const details = card.querySelector('.roll-details') || card.querySelector('.roll-info');
-            if (details && !card.querySelector('.bin-row')) {
-              const binRow = document.createElement('div');
-              binRow.className = 'detail-row bin-row';
-              binRow.innerHTML = `<span class="detail-label">Bin:</span><span class="detail-value">${binNum}</span>`;
-              if (details.firstChild) details.insertBefore(binRow, details.firstChild);
-              else details.appendChild(binRow);
+            to {
+                transform: translateY(0) scale(1);
+                opacity: 1;
             }
-          }
-
-          // Cleanup display
-          const typeEL = card.querySelector('.roll-type') || card.querySelector('.yarn-type');
-          if (typeEL && typeEL.textContent.includes('[B')) {
-            typeEL.textContent = typeEL.textContent.replace(/\[B+\d+\]\s*/, '');
-          }
-
-          // Inject View Details Button
-          if (!card.querySelector('.view-details-link')) {
-            const footer = document.createElement('div');
-            footer.className = 'roll-footer';
-            footer.style.cssText = 'margin-top: 8px; border-top: 1px solid #f1f5f9; padding-top: 8px; text-align: right;';
-
-            const viewDetails = document.createElement('a');
-            viewDetails.href = `/details.html?id=${idStr}`;
-            viewDetails.className = 'view-details-link';
-            viewDetails.textContent = 'VIEW DETAILS';
-            viewDetails.style.cssText = 'color: #ea580c; font-size: 10px; font-weight: 700; text-decoration: none; letter-spacing: 0.05em; transition: all 0.2s;';
-
-            viewDetails.onmouseover = () => viewDetails.style.color = '#c2410c';
-            viewDetails.onmouseout = () => viewDetails.style.color = '#ea580c';
-
-            footer.appendChild(viewDetails);
-            card.appendChild(footer);
-          }
-        });
-
-        applyDOMFilters();
-
-        const modal = document.querySelector('.modal-content');
-        if (modal && (modal.textContent.includes('Register New Roll') || modal.textContent.includes('Add New Roll'))) {
-          // Clear all current values and use placeholders instead
-          modal.querySelectorAll('input').forEach(input => {
-            if (!input.placeholder && input.value) {
-              input.placeholder = input.value;
-            }
-            input.value = '';
-          });
-
-          // Specific override for Rack / Location as requested
-          const rackInput = modal.querySelector('input[placeholder*="RACK"]') ||
-            modal.querySelector('input[placeholder*="Locations"]') ||
-            Array.from(modal.querySelectorAll('input')).find(i => {
-              const ph = (i.placeholder || '').toLowerCase();
-              return ph.includes('rack') || ph.includes('location');
-            });
-
-          if (rackInput) {
-            // Hide the Rack input and its container
-            const container = rackInput.closest('.form-group') || rackInput.closest('div') || rackInput.parentElement;
-            if (container) container.style.display = 'none';
-          } else {
-            // Fallback: Try to find by label if input not found by placeholder
-            const labels = Array.from(modal.querySelectorAll('label'));
-            const targetLabel = labels.find(l => {
-              const text = l.textContent.toLowerCase();
-              return text.includes('rack') || text.includes('location');
-            });
-            if (targetLabel) {
-              const container = targetLabel.closest('.form-group') || targetLabel.closest('div') || targetLabel.parentElement;
-              if (container) container.style.display = 'none';
-            }
-          }
-
         }
-        // Targeted Bulk Management Removal (Safe Version)
-        // Only target heading elements to avoid hiding entire page
-        document.querySelectorAll('h3, h4, h5, span, p, div').forEach(el => {
-          const text = (el.textContent || '').trim().toLowerCase();
 
-          // Only match "bulk management" title (must be short text, not the whole page)
-          if ((text === 'bulk management' || text.endsWith('bulk management') || text.startsWith('bulk management')) && text.length < 50) {
-            el.style.setProperty('display', 'none', 'important');
-
-            // Find and hide parent card container - be more aggressive
-            let parent = el.parentElement;
-            for (let i = 0; i < 7 && parent; i++) {
-              const classList = (parent.className || '').toLowerCase();
-              const tagName = parent.tagName;
-
-              // Skip body, html, main containers
-              if (tagName === 'BODY' || tagName === 'HTML' || tagName === 'MAIN' || classList.includes('root') || classList.includes('app')) {
-                break;
-              }
-
-              // Check if this is a card-like container
-              const style = window.getComputedStyle(parent);
-              const hasBorder = style.border && style.border !== 'none' && !style.border.startsWith('0');
-              const hasRadius = parseFloat(style.borderRadius) > 4;
-              const hasBg = style.backgroundColor !== 'rgba(0, 0, 0, 0)' && style.backgroundColor !== 'transparent';
-              const hasShadow = style.boxShadow && style.boxShadow !== 'none';
-
-              if (classList.includes('card') || classList.includes('bulk') || classList.includes('section') ||
-                classList.includes('panel') || classList.includes('box') || classList.includes('management') ||
-                (hasRadius && (hasBg || hasShadow || hasBorder))) {
-                parent.style.setProperty('display', 'none', 'important');
-                break;
-              }
-              parent = parent.parentElement;
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
             }
-          }
-        });
 
-        // Hide buttons with exact forbidden text (including Reserve, Pick, Dispatch)
-        document.querySelectorAll('button, a').forEach(el => {
-          const text = (el.textContent || '').trim().toLowerCase();
-          const forbidden = ['register new roll', 'bulk load intake', 'check all', 'clear', 'reserve', 'pick', 'dispatch'];
-          if (forbidden.some(f => text === f || text.includes(f))) {
-            el.style.setProperty('display', 'none', 'important');
-          }
-        });
-      });
-      observer.observe(document.body, { childList: true, subtree: true });
-    });
-
-
-    const enhancedOriginalFetch = window.fetch;
-    window.fetch = async function () {
-      const url = arguments[0];
-      const options = arguments[1];
-      if (typeof url === 'string' && url.endsWith('/api/rolls') && (!options || options.method === 'GET')) {
-        const response = await enhancedOriginalFetch.apply(this, arguments);
-        const rolls = await response.json();
-        const typeSelect = document.getElementById('filter-type');
-        if (typeSelect && typeSelect.options.length === 1) {
-          const types = [...new Set(rolls.map(r => r.yarn_type))].sort();
-          types.forEach(t => {
-            const opt = document.createElement('option'); opt.value = t; opt.textContent = t;
-            typeSelect.appendChild(opt);
-          });
+            to {
+                opacity: 1;
+            }
         }
-        // Map ID to Bin globally
-        window.allRolls = rolls;
-        rolls.forEach(r => { if (r.id) window.rollBinMap[r.id] = r.bin || '1'; });
-        return new Response(JSON.stringify(rolls), { status: response.status, headers: response.headers });
-      }
-
-
-      if (typeof url === 'string' && (url.endsWith('/api/rolls') || url.endsWith('/api/test-rolls')) && options &&
-        options.method === 'POST') {
-        try {
-          const body = JSON.parse(options.body);
-          const binInput = document.getElementById('in-bin');
-          if (binInput) body.bin = binInput.value || '1';
-          options.body = JSON.stringify(body);
-        } catch (e) { }
-      }
-      return enhancedOriginalFetch.apply(this, arguments);
-    };
-
-    // ============================================
-    // PROFESSIONAL MODAL CONTROL SYSTEM
-    // ============================================
-
-    // Modal state management functions
-    window.openModal = function () {
-      document.body.classList.add("modal-open");
-      const overlay = document.querySelector(".ui-overlay, .modal-overlay");
-      const modal = document.querySelector(".ui-modal, .modal-content");
-      if (overlay) overlay.style.display = "flex";
-      if (modal) modal.style.display = "block";
-    };
-
-    window.closeModal = function () {
-      document.body.classList.remove("modal-open");
-      const overlay = document.querySelector(".ui-overlay, .modal-overlay");
-      const modal = document.querySelector(".ui-modal, .modal-content");
-      if (overlay) overlay.style.display = "none";
-      if (modal) modal.style.display = "none";
-    };
-
-    // Auto-detect modal visibility changes and manage body class + force styles
-    const modalObserver = new MutationObserver(() => {
-      const overlay = document.querySelector(".modal-overlay");
-      const modal = document.querySelector(".modal-content");
-
-      // Force extreme z-index via inline styles to override React
-      if (overlay) {
-        overlay.style.zIndex = "9999999";
-        overlay.style.position = "fixed";
-        overlay.style.inset = "0";
-        overlay.style.display = overlay.style.display || "flex";
-        overlay.style.pointerEvents = "auto";
-      }
-
-      if (modal) {
-        modal.style.zIndex = "10000000";
-        modal.style.position = "fixed";
-        modal.style.top = "50%";
-        modal.style.left = "50%";
-        modal.style.transform = "translate(-50%, -50%)";
-        modal.style.pointerEvents = "auto";
-
-        // Ensure all inputs/buttons inside modal are interactive
-        modal.querySelectorAll('input, button, select, textarea, a').forEach(el => {
-          el.style.pointerEvents = "auto";
-        });
-      }
-
-      if (overlay && modal) {
-        const overlayVisible = window.getComputedStyle(overlay).display !== 'none';
-        const modalVisible = window.getComputedStyle(modal).display !== 'none';
-
-        if (overlayVisible || modalVisible) {
-          if (!document.body.classList.contains("modal-open")) {
-            document.body.classList.add("modal-open");
-          }
-        } else {
-          if (document.body.classList.contains("modal-open")) {
-            document.body.classList.remove("modal-open");
-          }
-        }
-      }
-    });
-
-    // Start observing when DOM is ready
-    window.addEventListener('DOMContentLoaded', () => {
-      modalObserver.observe(document.body, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['style', 'class']
-      });
-    });
-  </script>
-  <style>
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-
-      to {
-        opacity: 1;
-      }
-    }
-
-    .fade-in {
-      animation: fadeIn 0.3s ease-out forwards;
-    }
-  </style>
+    </style>
 </head>
 
-<body class="flex flex-col min-h-screen">
-  <div id="root" class="flex-1"></div>
+<body class="min-h-screen pb-10">
+    <!-- Navbar will be injected here -->
+    <script src="/navbar.js"></script>
+
+    <main class="max-w-[1600px] mx-auto px-6 py-8 mt-20">
+        <header class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-800">Inventory Dashboard</h1>
+                <p class="text-slate-500 mt-1">Real-time overview of yarn stock and distribution</p>
+            </div>
+            <button id="refresh-btn" onclick="fetchData()" title="Refresh Data"
+                class="h-[42px] w-[42px] rounded-lg border border-slate-200 bg-white cursor-pointer text-slate-600 flex items-center justify-center p-0 hover:bg-slate-50 transition-all active:scale-95 shadow-sm">
+                <svg id="refresh-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                    </path>
+                </svg>
+            </button>
+        </header>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="stat-card" onclick="applyFilter('all')">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Total Yarns</p>
+                        <h3 class="text-3xl font-bold text-slate-800 mt-1" id="total-yarns">-</h3>
+                    </div>
+                    <div class="p-2 bg-blue-50 rounded-lg text-blue-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-4">All registered rolls</p>
+            </div>
+
+            <div class="stat-card" onclick="applyFilter('reserved')">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Reserved</p>
+                        <h3 class="text-3xl font-bold text-orange-600 mt-1" id="reserved-yarns">-</h3>
+                    </div>
+                    <div class="p-2 bg-orange-50 rounded-lg text-orange-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-4">Awaiting dispatch</p>
+            </div>
+
+            <div class="stat-card" onclick="applyFilter('dispatched')">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Dispatched</p>
+                        <h3 class="text-3xl font-bold text-green-600 mt-1" id="dispatched-yarns">-</h3>
+                    </div>
+                    <div class="p-2 bg-green-50 rounded-lg text-green-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-4">Completed orders</p>
+            </div>
+
+            <div class="stat-card pointer-events-none">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Bins in Use</p>
+                        <h3 class="text-3xl font-bold text-slate-800 mt-1" id="active-bins">-</h3>
+                    </div>
+                    <div class="p-2 bg-purple-50 rounded-lg text-purple-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-4">Across active racks</p>
+            </div>
+        </div>
+
+        <!-- Warehouse Overview Section -->
+        <section class="mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    Warehouse Overview
+                    <span class="text-sm font-normal text-slate-400 bg-slate-100 px-2 py-1 rounded-full"
+                        id="rack-count">0 Racks</span>
+                </h2>
+                <div class="flex items-center gap-3">
+                    <span class="text-sm font-medium text-slate-500">Highlight Type:</span>
+                    <select id="warehouse-filter-type" style="height: 42px; min-width: 180px;"
+                        class="px-3 border rounded-lg text-sm outline-none focus:border-orange-500 box-sizing: border-box;">
+                        <option value="">All Types</option>
+                    </select>
+                </div>
+            </div>
+            <div id="warehouse-breakdown" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Rack cards will be injected here -->
+                <div class="col-span-full py-12 text-center text-slate-400 glass-card">
+                    Loading warehouse statistics...
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="chart-container flex flex-col">
+                <h3 class="text-lg font-bold text-slate-700 mb-4">Stock by Rack</h3>
+                <div class="flex-1 w-full flex justify-center overflow-hidden">
+                    <div id="rackChartWrapper" class="h-full w-full">
+                        <canvas id="rackChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container flex flex-col">
+                <h3 class="text-lg font-bold text-slate-700 mb-4">Stock by Yarn Type</h3>
+                <div class="flex-1 w-full flex justify-center overflow-hidden">
+                    <div id="typeChartWrapper" class="h-full w-full">
+                        <canvas id="typeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Details Grid -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <span id="grid-title">All Yarn Rolls</span>
+                    <span class="text-sm font-normal text-slate-400 bg-slate-100 px-2 py-1 rounded-full"
+                        id="grid-count">0</span>
+                </h2>
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="relative" style="flex: 1; min-width: 200px;">
+                        <input type="text" id="filter-search" placeholder="Search ID, Type, Lot..."
+                            style="height: 42px; padding: 0 1rem 0 2.5rem;"
+                            class="w-full border rounded-lg text-sm outline-none focus:border-orange-500 box-sizing: border-box;">
+                        <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <input type="text" id="filter-bin" placeholder="Bin" style="width: 80px; height: 42px;"
+                        class="px-3 border rounded-lg text-sm outline-none focus:border-orange-500 box-sizing: border-box;">
+                    <input type="text" id="filter-rack" placeholder="Rack" style="width: 80px; height: 42px;"
+                        class="px-3 border rounded-lg text-sm outline-none focus:border-orange-500 box-sizing: border-box;">
+                    <select id="filter-type" style="height: 42px; min-width: 150px; max-width: 200px;"
+                        class="px-3 border rounded-lg text-sm outline-none focus:border-orange-500 box-sizing: border-box;">
+                        <option value="">All Types</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="rolls-grid" class="roll-grid">
+                <!-- Rolls injected here -->
+            </div>
+
+            <div id="empty-state" class="hidden text-center py-12">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-slate-50 rounded-full mb-4">
+                    <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
+                        </path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-slate-700">No yarns found</h3>
+                <p class="text-slate-500">Try adjusting your filters or search terms.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bin Details Modal -->
+    <div id="bin-modal" class="modal-overlay" onclick="closeBinModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50/50">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center font-bold text-xl shadow-inner"
+                        id="modal-bin-icon">
+                        1
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-800" id="modal-bin-title">Bin Details</h3>
+                        <p class="text-sm text-slate-500 font-medium" id="modal-rack-info">Rack location unknown</p>
+                    </div>
+                </div>
+                <button onclick="closeBinModal()"
+                    class="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-full transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto custom-scrollbar">
+                <div id="modal-bin-stats" class="grid grid-cols-2 gap-4 mb-8">
+                    <!-- Stats injected here -->
+                </div>
+
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-sm font-bold text-slate-500 uppercase tracking-wider">Contents</h4>
+                    <span class="text-xs text-slate-400 font-medium" id="modal-last-updated">Real-time</span>
+                </div>
+
+                <div class="rounded-xl border border-slate-200 overflow-hidden">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                            <tr>
+                                <th class="py-3 px-5 font-semibold text-xs uppercase">Yarn Type / Lot</th>
+                                <th class="py-3 px-5 font-semibold text-xs uppercase text-right">Qty</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-bin-content" class="divide-y divide-slate-100 bg-white">
+                            <!-- Rows injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="p-5 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                <button onclick="closeBinModal()"
+                    class="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Initialize Firebase with Modular SDK from CDN
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getFirestore, collection, doc, getDoc, collectionGroup, query, getDocs, onSnapshot, where } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyAYXVrRtfStYQqFFBWYyTQGfOb345di2Ls",
+            authDomain: "yarn-roll.firebaseapp.com",
+            projectId: "yarn-roll",
+            storageBucket: "yarn-roll.firebasestorage.app",
+            messagingSenderId: "157993278528",
+            appId: "1:157993278528:web:4e88ed6e011bc42faa13a5",
+            measurementId: "G-SE7XVEDGQR"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let allRolls = [];
+        let currentFilter = 'all'; // all, reserved, dispatched, or specific ID types
+        let rackChartInstance = null;
+        let typeChartInstance = null;
+        let unsubscribe = null;
+        let BIN_CAPACITY = 20; // Default, will be updated from DB
+        let RACK_CAPACITY = 320; // Default, will be updated from DB
+
+        // Manual fetch function (replaces live sync for better control)
+        async function fetchData() {
+            const icon = document.getElementById('refresh-icon');
+            const text = document.getElementById('refresh-text');
+            const btn = document.getElementById('refresh-btn');
+
+            // Show loading state
+            if (text) text.textContent = 'Refreshing...';
+            if (icon) {
+                icon.classList.add('animate-spin');
+                icon.classList.remove('text-green-500');
+                icon.classList.add('text-orange-500');
+            }
+            if (btn) btn.disabled = true;
+
+            try {
+                // 1. Fetch Capacity Settings from DB
+                try {
+                    const settingsSnap = await getDoc(doc(db, 'config', 'general'));
+                    if (settingsSnap.exists()) {
+                        const s = settingsSnap.data();
+                        BIN_CAPACITY = parseInt(s.max_bin_capacity) || 20;
+                        const binsPerRack = parseInt(s.bins_per_rack) || 16;
+                        RACK_CAPACITY = BIN_CAPACITY * binsPerRack;
+                        console.log(`✅ Loaded settings: Bin Cap=${BIN_CAPACITY}, Rack Cap=${RACK_CAPACITY}`);
+                    }
+                } catch (e) {
+                    console.warn("⚠️ Using default capacity settings (could not fetch config)", e);
+                }
+
+                // 2. Fetch from yarnRolls collection as the single source of truth
+                const snapshot = await getDocs(collection(db, 'yarnRolls'));
+
+                allRolls = snapshot.docs.map(doc => ({
+                    id: doc.data().id || doc.id,
+                    ...doc.data()
+                })).filter(r => r.id && !r.id.toLowerCase().includes('test'));
+
+                allRolls.sort((a, b) => new Date(b.production_date) - new Date(a.production_date));
+
+                // 3. Populate Dropdown dynamically
+                populateTypeDropdown(allRolls);
+
+                updateStats();
+                updateCharts();
+                applyFilter(currentFilter);
+
+                // Show success state
+                if (icon) {
+                    icon.classList.remove('animate-spin', 'text-orange-500');
+                    icon.classList.add('text-green-500');
+                    setTimeout(() => icon.classList.remove('text-green-500'), 2000);
+                }
+
+                console.log(`✅ Fetched ${allRolls.length} rolls from yarnRolls collection`);
+
+            } catch (error) {
+                console.error('❌ Error fetching data:', error);
+                if (text) text.textContent = 'Retry';
+                if (icon) {
+                    icon.classList.remove('animate-spin', 'text-orange-500');
+                    icon.classList.add('text-red-500');
+                }
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+        window.fetchData = fetchData;
+
+        function populateTypeDropdown(rolls) {
+            const distinctTypes = [...new Set(rolls.map(r => r.yarn_type || 'Unknown'))].sort();
+            const dropdowns = ['filter-type', 'warehouse-filter-type'];
+
+            dropdowns.forEach(id => {
+                const typeSelect = document.getElementById(id);
+                if (!typeSelect) return;
+
+                const currentVal = typeSelect.value;
+                typeSelect.innerHTML = '<option value="">All Types</option>';
+
+                distinctTypes.forEach(type => {
+                    if (!type) return;
+                    const opt = document.createElement('option');
+                    opt.value = type;
+                    opt.textContent = type;
+                    typeSelect.appendChild(opt);
+                });
+
+                if (currentVal) {
+                    const exists = Array.from(typeSelect.options).some(o => o.value === currentVal);
+                    if (exists) typeSelect.value = currentVal;
+                }
+            });
+        }
+
+        // --- Frontend Aggregation for Stats (Replaces /api/dashboard-stats) ---
+        function calculateWarehouseStats(rolls) {
+            const racks = {};
+
+            rolls.forEach(r => {
+                const rackId = String(r.rack_id || '1').replace(/[Rr]/g, '');
+                const binId = String(r.bin || '1').replace(/[Bb]/g, '');
+                const type = r.yarn_type || 'Unknown';
+                const countStr = r.yarn_count || 'N/A';
+
+                if (!racks[rackId]) {
+                    racks[rackId] = {
+                        rack_id: rackId,
+                        uniqueBins: new Set(),
+                        totalYarns: 0,
+                        bins: {}
+                    };
+                }
+
+                racks[rackId].uniqueBins.add(binId);
+                racks[rackId].totalYarns++;
+
+                if (!racks[rackId].bins[binId]) {
+                    racks[rackId].bins[binId] = {
+                        total: 0,
+                        stock: {}
+                    };
+                }
+
+                const stockKey = `${type} | ${countStr}`;
+                if (!racks[rackId].bins[binId].stock[stockKey]) {
+                    racks[rackId].bins[binId].stock[stockKey] = 0;
+                }
+
+                racks[rackId].bins[binId].stock[stockKey]++;
+                racks[rackId].bins[binId].total++;
+            });
+
+            // Convert to array format for template
+            return Object.values(racks).map(r => ({
+                ...r,
+                uniqueBinsCount: r.uniqueBins.size
+            })).sort((a, b) => a.rack_id.localeCompare(b.rack_id, undefined, { numeric: true }));
+        }
+
+        function updateStats() {
+            document.getElementById('total-yarns').textContent = allRolls.length;
+            document.getElementById('reserved-yarns').textContent = allRolls.filter(r => r.state === 'RESERVED').length;
+            document.getElementById('dispatched-yarns').textContent = allRolls.filter(r => r.state === 'DISPATCHED').length;
+
+            let uniqueBinLocations = new Set(allRolls.map(r => `${r.rack_id || '?'}-${r.bin || '?'}`));
+            document.getElementById('active-bins').textContent = uniqueBinLocations.size;
+
+            // Render Warehouse Stats locally
+            const stats = calculateWarehouseStats(allRolls);
+
+            // Get current filter state for highlighting
+            const activeTypeFilter = document.getElementById('filter-type').value;
+            renderWarehouseBreakdown(stats, activeTypeFilter);
+        }
+
+        // Reuses the exact same HTML template logic as before - VISUAL RACK VERSION
+        function renderWarehouseBreakdown(racksBreakdown, highlightType = '') {
+            const breakdownContainer = document.getElementById('warehouse-breakdown');
+            document.getElementById('rack-count').textContent = `${racksBreakdown.length} Racks`;
+
+            if (racksBreakdown.length === 0) {
+                breakdownContainer.innerHTML = `
+                     <div class="col-span-full py-16 text-center">
+                         <div class="w-20 h-20 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
+                             <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                             </svg>
+                         </div>
+                         <p class="text-slate-400 font-medium">No warehouse data available</p>
+                         <p class="text-slate-300 text-sm mt-1">Add some yarn rolls to get started</p>
+                     </div>
+                 `;
+                return;
+            }
+
+            breakdownContainer.innerHTML = racksBreakdown.map((rack, rackIdx) => {
+                const sortedBins = Object.entries(rack.bins).sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true, sensitivity: 'base' }));
+
+                // Group bins into "shelves" of 4
+                const binsPerShelf = 4;
+                const shelves = [];
+                for (let i = 0; i < sortedBins.length; i += binsPerShelf) {
+                    shelves.push(sortedBins.slice(i, i + binsPerShelf));
+                }
+
+                // Ensure at least 3 visual shelves for consistency
+                const shelfRows = shelves.map(shelf => `
+                     <div class="shelf-row">
+                         ${shelf.map(([binId, data]) => {
+                    // Logic for highlighting
+                    let isDimmed = false;
+                    let displayCount = data.total;
+                    let countLabel = 'Total';
+                    let highlightClass = '';
+
+                    if (highlightType) {
+                        const matchingStock = Object.entries(data.stock).find(([k, v]) => k.split(' | ')[0].trim().toLowerCase() === highlightType.toLowerCase());
+                        if (matchingStock) {
+                            displayCount = matchingStock[1];
+                            countLabel = 'Qty';
+                            highlightClass = 'ring-4 ring-orange-400 ring-offset-2 z-20';
+                        } else {
+                            isDimmed = true;
+                        }
+                    }
+
+                    const capacityPercent = Math.min(100, Math.round((data.total / BIN_CAPACITY) * 100));
+                    const capacityColor = capacityPercent > 90 ? 'bg-red-500' : capacityPercent > 60 ? 'bg-amber-400' : 'bg-green-400';
+
+                    return `
+                             <div class="bin-box group ${isDimmed ? 'opacity-20 grayscale' : ''} ${highlightClass}" 
+                                  onclick="openBinModal('${rack.rack_id}', '${binId}')" 
+                                  title="Bin ${binId}: ${displayCount} ${countLabel} (Cap: ${data.total}/${BIN_CAPACITY})">
+                                 
+                                 <div class="flex flex-col items-center">
+                                     <span class="text-lg leading-none">${binId}</span>
+                                     <div class="w-8 h-1 bg-black/20 rounded-full mt-1 overflow-hidden">
+                                        <div class="h-full ${capacityColor}" style="width: ${capacityPercent}%"></div>
+                                     </div>
+                                 </div>
+
+                                 <div class="bin-count-badge group-hover:bg-white group-hover:text-red-500 transition-colors">
+                                    ${displayCount}
+                                 </div>
+                             </div>
+                         `}).join('')}
+                     </div>
+                 `).join('');
+
+                const emptyShelves = shelves.length < 3
+                    ? `<div class="shelf-row opacity-50"></div>`.repeat(3 - shelves.length)
+                    : '';
+
+                return `
+                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col h-full">
+                     <div class="flex justify-between items-center mb-6">
+                         <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center font-bold text-lg">
+                                ${rack.rack_id}
+                            </div>
+                            <h3 class="text-xl font-bold text-slate-800">Rack ${rack.rack_id}</h3>
+                         </div>
+                         <div class="flex flex-col items-end">
+                            <span class="text-xs font-bold bg-green-50 text-green-700 px-3 py-1.5 rounded-full border border-green-100 flex items-center gap-1">
+                                <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                                ${rack.totalYarns} / ${RACK_CAPACITY} Yarns
+                            </span>
+                            <div class="w-24 h-1.5 bg-slate-100 rounded-full mt-1 overflow-hidden">
+                                <div class="h-full bg-green-500 rounded-full" style="width: ${(rack.totalYarns / RACK_CAPACITY) * 100}%"></div>
+                            </div>
+                         </div>
+                     </div>
+                     
+                     <div class="rack-visual flex-1">
+                         ${shelfRows}
+                         ${emptyShelves}
+                     </div>
+                 </div>
+             `}).join('');
+        }
+
+        // Global Modal Functions
+        window.openBinModal = function (rackId, binId) {
+            const stats = calculateWarehouseStats(allRolls);
+            const rack = stats.find(r => r.rack_id == rackId);
+            if (!rack) return;
+
+            const binData = rack.bins[binId];
+            if (!binData) return;
+
+            document.getElementById('modal-bin-title').textContent = `Bin ${binId}`;
+            document.getElementById('modal-bin-icon').textContent = binId;
+            document.getElementById('modal-rack-info').textContent = `Located in Rack ${rackId}`;
+
+            // Populate Stats
+            const uniqueTypes = new Set(Object.keys(binData.stock).map(k => k.split(' | ')[0])).size;
+
+            document.getElementById('modal-bin-stats').innerHTML = `
+                <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                    <p class="text-xs text-indigo-500 font-bold uppercase tracking-wider mb-1">Total Items</p>
+                    <p class="text-3xl font-extrabold text-indigo-700">${binData.total}</p>
+                </div>
+                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                    <p class="text-xs text-emerald-500 font-bold uppercase tracking-wider mb-1">Yarn Types</p>
+                    <p class="text-3xl font-extrabold text-emerald-700">${uniqueTypes}</p>
+                </div>
+             `;
+
+            // Populate Content Table
+            const tableBody = document.getElementById('modal-bin-content');
+            tableBody.innerHTML = Object.entries(binData.stock).map(([key, count]) => {
+                const [type, count_info] = key.split(' | ');
+                return `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="py-3 px-5">
+                            <div class="font-bold text-slate-700">${type}</div>
+                            <!-- Helper info if count_info different from type -->
+                             ${count_info !== 'N/A' && count_info !== type ? `<div class="text-xs text-slate-400 mt-0.5">${count_info}</div>` : ''} 
+                        </td>
+                        <td class="py-3 px-5 text-right">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-bold bg-white border border-slate-200 text-slate-700 shadow-sm">
+                                ${count}
+                            </span>
+                        </td>
+                    </tr>
+                 `;
+            }).join('');
+
+            const modal = document.getElementById('bin-modal');
+            modal.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.closeBinModal = function (event) {
+            if (event && event.target !== event.currentTarget) return;
+
+            document.getElementById('bin-modal').classList.remove('open');
+            document.body.style.overflow = '';
+        };
+
+        // Close on Escape key
+        document.addEventListener('keydown', function (event) {
+            if (event.key === "Escape") {
+                window.closeBinModal();
+            }
+        });
+
+        function updateCharts() {
+            const setDynamicWidth = (wrapperId, count) => {
+                const wrapper = document.getElementById(wrapperId);
+                const width = Math.max(300, count * 80);
+                wrapper.style.width = width + 'px';
+                wrapper.style.maxWidth = '100%';
+            };
+
+            const rollsByRack = {};
+            allRolls.forEach(r => {
+                const rack = r.rack_id || 'Unassigned';
+                rollsByRack[rack] = (rollsByRack[rack] || 0) + 1;
+            });
+            setDynamicWidth('rackChartWrapper', Object.keys(rollsByRack).length);
+
+            const rollsByType = {};
+            allRolls.forEach(r => {
+                const type = r.yarn_type || 'Unknown';
+                rollsByType[type] = (rollsByType[type] || 0) + 1;
+            });
+            setDynamicWidth('typeChartWrapper', Object.keys(rollsByType).length);
+
+            const chartConfig = {
+                type: 'bar',
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            };
+
+            const rackCtx = document.getElementById('rackChart').getContext('2d');
+            if (rackChartInstance) rackChartInstance.destroy();
+            rackChartInstance = new Chart(rackCtx, {
+                ...chartConfig,
+                data: {
+                    labels: Object.keys(rollsByRack),
+                    datasets: [{
+                        label: 'Rolls',
+                        data: Object.values(rollsByRack),
+                        backgroundColor: '#f97316',
+                        borderRadius: 6,
+                        maxBarThickness: 40,
+                        barPercentage: 0.9,
+                        categoryPercentage: 0.9
+                    }]
+                }
+            });
+
+            const typeCtx = document.getElementById('typeChart').getContext('2d');
+            if (typeChartInstance) typeChartInstance.destroy();
+            typeChartInstance = new Chart(typeCtx, {
+                ...chartConfig,
+                data: {
+                    labels: Object.keys(rollsByType),
+                    datasets: [{
+                        label: 'Rolls',
+                        data: Object.values(rollsByType),
+                        backgroundColor: '#0ea5e9',
+                        borderRadius: 6,
+                        maxBarThickness: 40,
+                        barPercentage: 0.9,
+                        categoryPercentage: 0.9
+                    }]
+                }
+            });
+        }
+
+        function renderGrid(rolls) {
+            const grid = document.getElementById('rolls-grid');
+            const empty = document.getElementById('empty-state');
+            const count = document.getElementById('grid-count');
+
+            grid.innerHTML = '';
+            count.textContent = rolls.length;
+
+            if (rolls.length === 0) {
+                grid.classList.add('hidden');
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            grid.classList.remove('hidden');
+            empty.classList.add('hidden');
+
+            rolls.forEach(roll => {
+                const statusClass = roll.state === 'IN STOCK' ? 'status-instock' :
+                    roll.state === 'RESERVED' ? 'status-reserved' :
+                        roll.state === 'DISPATCHED' ? 'status-dispatched' : 'bg-slate-100 text-slate-600';
+
+                const card = document.createElement('div');
+                card.className = 'roll-card';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="font-bold text-lg text-slate-800">#${roll.id}</span>
+                        <span class="status-badge ${statusClass}">${roll.state}</span>
+                    </div>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Type</span>
+                            <span class="font-medium text-slate-700">${roll.yarn_type || '-'}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Lot No</span>
+                            <span class="font-medium text-slate-700">${roll.lot_number || '-'}</span>
+                        </div>
+                        <div class="flex justify-between border-t border-slate-100 pt-2 mt-2">
+                             <span class="text-slate-500">Location</span>
+                             <span class="font-medium text-slate-700">Rack ${roll.rack_id || '?'} / Bin ${roll.bin || '?'}</span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        window.applyFilter = function (filterType) {
+            currentFilter = filterType;
+            let filtered = [];
+
+            document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
+
+            if (filterType === 'all') {
+                filtered = allRolls;
+                document.getElementById('grid-title').textContent = 'All Yarn Rolls';
+            } else if (filterType === 'reserved') {
+                filtered = allRolls.filter(r => r.state === 'RESERVED');
+                document.getElementById('grid-title').textContent = 'Reserved Yarns';
+            } else if (filterType === 'dispatched') {
+                filtered = allRolls.filter(r => r.state === 'DISPATCHED');
+                document.getElementById('grid-title').textContent = 'Dispatched Yarns';
+            }
+
+            // EXTENDED FILTERS
+            const search = document.getElementById('filter-search').value.toLowerCase();
+            const bin = document.getElementById('filter-bin').value.toLowerCase();
+            const rack = document.getElementById('filter-rack').value.toLowerCase();
+            const type = document.getElementById('filter-type').value.toLowerCase();
+
+            filtered = filtered.filter(r => {
+                const matchSearch = !search ||
+                    r.id.toLowerCase().includes(search) ||
+                    (r.yarn_type && r.yarn_type.toLowerCase().includes(search)) ||
+                    (r.lot_number && r.lot_number.toLowerCase().includes(search));
+
+                const matchBin = !bin || String(r.bin || '').toLowerCase().includes(bin);
+                const matchRack = !rack || String(r.rack_id || '').toLowerCase().includes(rack);
+                const matchType = !type || (r.yarn_type || '').toLowerCase() === type.toLowerCase();
+
+                return matchSearch && matchBin && matchRack && matchType;
+            });
+
+            // Update the Warehouse Visuals to reflect current filters (specifically Type)
+            const typeFilter = document.getElementById('filter-type').value;
+            const stats = calculateWarehouseStats(allRolls); // Recalculate base stats
+            // PASS the type filter to the renderer
+            renderWarehouseBreakdown(stats, typeFilter);
+
+            renderGrid(filtered);
+        };
+
+        // Initialize Listeners
+        ['filter-search', 'filter-bin', 'filter-rack'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', () => applyFilter(currentFilter));
+        });
+
+        const syncTypeFilters = (e) => {
+            const val = e.target.value;
+            document.getElementById('filter-type').value = val;
+            document.getElementById('warehouse-filter-type').value = val;
+            applyFilter(currentFilter);
+        };
+
+        ['filter-type', 'warehouse-filter-type'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', syncTypeFilters);
+        });
+
+        // Initial data load
+        fetchData();
+    </script>
 </body>
 
 </html>
