@@ -236,8 +236,9 @@ app.post('/api/rolls', async (req, res) => {
     const rollDocRef = doc(db, 'racks', rackLabel, 'bins', binLabel, 'rolls', rollId);
     await setDoc(rollDocRef, rollData);
 
-    // 2. Legacy/Active Inventory Sync (Optional, but keeping for compatibility if parts of app rely on it)
+    // 2. Legacy/Active Inventory Sync
     await setDoc(doc(db, 'inventory', rollId), rollData);
+    await setDoc(doc(db, 'yarnRolls', rollId), rollData);
 
     // 4. History log
     await logScan(rollId, 'CREATION', `Registered in ${rackLabel} / ${binLabel}`);
@@ -312,7 +313,7 @@ app.post('/api/rolls/update-state', async (req, res) => {
             await deleteDoc(doc(db, 'picking_collection', id));
             await setDoc(doc(db, 'inventory', id), updatedData);
             // Update Legacy Sync
-            await setDoc(doc(db, 'yarnRolls', id), { ...updatedData, state: 'reserved' }, { merge: true });
+            await setDoc(doc(db, 'yarnRolls', id), { ...updatedData, state: capitalizedState }, { merge: true });
             await logScan(id, 'RESERVE', 'Roll reserved for order');
           } else if (capitalizedState === 'PICKED') {
             await setDoc(doc(db, 'picking_collection', id), updatedData);
@@ -432,22 +433,47 @@ app.post('/api/orders/:id/approve', async (req, res) => {
       return res.status(400).json({ error: `Order is already ${orderData.status.toLowerCase()}` });
     }
 
-    // Find "IN STOCK" rolls matching the yarn_type
+    // Find "IN STOCK" rolls (Fetching from both Legacy and Active Inventory for robustness)
     console.log(`   Searching for ${orderData.quantity} rolls of Type: "${orderData.yarn_type}"`);
-    const rollsQuery = query(
-      collection(db, 'inventory'),
-      where('state', '==', 'IN STOCK'),
-      where('yarn_type', '==', orderData.yarn_type)
-      // Limit is removed here to get the full count for the error message if needed
-    );
 
-    const rollsSnap = await getDocs(rollsQuery);
-    const matchingRolls = rollsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Fetch from both sources to ensure we don't miss legacy data appearing in dashboard
+    const [invSnap, legacySnap] = await Promise.all([
+      getDocs(query(collection(db, 'inventory'), where('state', '==', 'IN STOCK'))),
+      getDocs(collection(db, 'yarnRolls'))
+    ]);
 
-    console.log(`   Found ${matchingRolls.length} available rolls`);
+    // Merge by unique ID
+    const mergedMap = new Map();
+    invSnap.docs.forEach(d => mergedMap.set(d.id, d.data()));
+    // Combine with legacy, filtering for 'IN STOCK' status if present, or defaulting to available if not restricted
+    legacySnap.docs.forEach(d => {
+      const data = d.data();
+      const st = String(data.state || '').toUpperCase();
+      if (!mergedMap.has(d.id) && (st === 'IN STOCK' || !st || st === 'AVAILABLE')) {
+        mergedMap.set(d.id, data);
+      }
+    });
+
+    const matchingRolls = Array.from(mergedMap.values())
+      .filter(roll => {
+        if (roll.id && roll.id.toLowerCase().includes('test')) return false;
+        // Match dashboard filter: only exclude based on ID string
+        const orderType = String(orderData.yarn_type || '').toLowerCase().trim();
+        const rollType = String(roll.yarn_type || '').toLowerCase().trim();
+        const rollCount = String(roll.yarn_count || '').toLowerCase().trim();
+        const combined = `${rollType} ${rollCount}`.trim();
+
+        return rollType === orderType ||
+          combined === orderType ||
+          combined === orderType.replace(/\s+/g, ' ') ||
+          rollType.includes(orderType) ||
+          orderType.includes(rollType);
+      });
+
+    console.log(`   Found ${matchingRolls.length} available rolls after flexible filtering`);
 
     if (matchingRolls.length < orderData.quantity) {
-      const msg = `There is only ${matchingRolls.length} rolls in ${orderData.yarn_type} and customer asks ${orderData.quantity} rolls`;
+      const msg = `There is ${matchingRolls.length === 0 ? 'zero' : 'only ' + matchingRolls.length} rolls in ${orderData.yarn_type} and customer asks ${orderData.quantity} rolls`;
       console.log(`   ✗ Insufficient stock: ${msg}`);
       return res.status(400).json({
         error: msg,
@@ -483,7 +509,7 @@ app.post('/api/orders/:id/approve', async (req, res) => {
       // Update Legacy Sync (yarnRolls) for backward compatibility
       try {
         // User requested lowercase 'reserved' for yarnRolls
-        await setDoc(doc(db, 'yarnRolls', roll.id), { ...updatedRollData, state: 'reserved' }, { merge: true });
+        await setDoc(doc(db, 'yarnRolls', roll.id), { ...updatedRollData, state: 'RESERVED' }, { merge: true });
       } catch (e) {
         console.log(`   ℹ️ Legacy sync skipped for yarnRolls/${roll.id}`);
       }
@@ -540,7 +566,9 @@ app.get('/api/dashboard-stats', async (req, res) => {
 
     // 3. Reserved Rolls (Query from reserved_collection directly)
     const reservedSnap = await getDocs(collection(db, 'reserved_collection'));
-    const reservedCount = reservedSnap.size;
+    const reservedCount = reservedSnap.docs.filter(d =>
+      String(d.data().state || '').toLowerCase() === 'reserved'
+    ).length;
 
     // 4. Warehouse Breakdown (Racks/Bins)
     const inventorySnap = await getDocs(collection(db, 'inventory'));
@@ -820,13 +848,19 @@ app.delete('/api/orders', async (req, res) => {
 // 7. Settings Management
 app.get('/api/settings', async (req, res) => {
   try {
-    const settingsDoc = await getDoc(doc(db, 'config', 'general'));
-    if (settingsDoc.exists()) {
-      res.json(settingsDoc.data());
-    } else {
-      // Default settings
-      res.json({ max_bin_capacity: 30, bins_per_rack: 10 });
+    const rulesSnap = await getDocs(collection(db, 'config', 'inventory_rules', 'rules'));
+    const settings = {};
+    if (rulesSnap.empty) {
+      // Return defaults if collection is empty
+      return res.json({
+        max_bin_capacity: { value: 30, label: 'Rolls per Bin' },
+        bins_per_rack: { value: 10, label: 'Bins per Rack' }
+      });
     }
+    rulesSnap.forEach(doc => {
+      settings[doc.id] = doc.data();
+    });
+    res.json(settings);
   } catch (error) {
     console.error('Error fetching settings:', error);
     res.status(500).json({ error: 'Failed to fetch settings' });
@@ -835,12 +869,15 @@ app.get('/api/settings', async (req, res) => {
 
 app.post('/api/settings', async (req, res) => {
   try {
-    const { max_bin_capacity, bins_per_rack } = req.body;
-    await setDoc(doc(db, 'config', 'general'), {
-      max_bin_capacity: parseInt(max_bin_capacity) || 30,
-      bins_per_rack: parseInt(bins_per_rack) || 10,
-      updatedAt: new Date().toISOString()
-    });
+    const settings = req.body; // Expecting { rule_id: { value, label, ... } }
+    const batch = [];
+
+    for (const [id, data] of Object.entries(settings)) {
+      const docRef = doc(db, 'config', 'inventory_rules', 'rules', id);
+      batch.push(setDoc(docRef, { ...data, updatedAt: new Date().toISOString() }));
+    }
+
+    await Promise.all(batch);
     res.json({ success: true, message: 'Settings updated' });
   } catch (error) {
     console.error('Error saving settings:', error);
@@ -926,9 +963,9 @@ app.post('/api/rolls/bulk', async (req, res) => {
 
     console.log(`\n📦 Bulk creating ${roll_count} rolls...`);
 
-    // Fetch max capacity from settings
-    const settingsDoc = await getDoc(doc(db, 'config', 'general'));
-    const maxCapacity = settingsDoc.exists() ? settingsDoc.data().max_bin_capacity : 30;
+    // Fetch max capacity from rules collection
+    const capacityDoc = await getDoc(doc(db, 'config', 'inventory_rules', 'rules', 'max_bin_capacity'));
+    const maxCapacity = capacityDoc.exists() ? (parseInt(capacityDoc.data().value) || 30) : 30;
 
     let currentBinNum = parseInt(start_bin_num) || 1;
     let rollsCreatedInCurrentBin = 0;
@@ -972,6 +1009,10 @@ app.post('/api/rolls/bulk', async (req, res) => {
 
       // Inventory keep-sync
       await setDoc(doc(db, 'inventory', rollId), rollData);
+
+      // Legacy Sync (for Dashboard visibility)
+      await setDoc(doc(db, 'yarnRolls', rollId), rollData);
+
       await logScan(rollId, 'BULK_CREATION', `Roll created in ${rackLabel} / ${binLabel}`);
 
       // QR Generation

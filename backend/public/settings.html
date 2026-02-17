@@ -149,8 +149,16 @@
                 const response = await fetch('/api/settings');
                 const settings = await response.json();
                 if (settings) {
-                    if (settings.max_bin_capacity) document.getElementById('maxBinCapacity').value = settings.max_bin_capacity;
-                    if (settings.bins_per_rack) document.getElementById('binsPerRack').value = settings.bins_per_rack;
+                    // Update specific fields by ID if they exist in the response
+                    if (settings.max_bin_capacity) {
+                        document.getElementById('maxBinCapacity').value = settings.max_bin_capacity.value;
+                    }
+                    if (settings.bins_per_rack) {
+                        document.getElementById('binsPerRack').value = settings.bins_per_rack.value;
+                    }
+
+                    // Store the labels for saving back
+                    window.currentSettings = settings;
                 }
             } catch (err) {
                 console.error('Failed to fetch settings:', err);
@@ -165,14 +173,23 @@
             btn.disabled = true;
             btn.innerText = 'SAVING...';
 
+            // Prepare payload according to new collection structure
+            const payload = {
+                max_bin_capacity: {
+                    value: maxBinCapacity,
+                    label: 'Rolls per Bin'
+                },
+                bins_per_rack: {
+                    value: binsPerRack,
+                    label: 'Bins per Rack'
+                }
+            };
+
             try {
                 const response = await fetch('/api/settings', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        max_bin_capacity: maxBinCapacity,
-                        bins_per_rack: binsPerRack
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {

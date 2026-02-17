@@ -138,10 +138,10 @@
         }
 
         .bin-box {
-            width: 65px;
-            height: 55px;
+            width: 70px;
+            height: 65px;
             background: linear-gradient(to bottom, #3b82f6, #2563eb);
-            border-radius: 4px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -262,7 +262,7 @@
         </header>
 
         <!-- KPI Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
             <div class="stat-card" onclick="applyFilter('all')">
                 <div class="flex justify-between items-start">
                     <div>
@@ -295,6 +295,23 @@
                 <p class="text-xs text-slate-400 mt-4">Awaiting dispatch</p>
             </div>
 
+            <div class="stat-card" onclick="applyFilter('picked')">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Picked</p>
+                        <h3 class="text-3xl font-bold text-indigo-600 mt-1" id="picked-yarns">-</h3>
+                    </div>
+                    <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-4">Moved to picking area</p>
+            </div>
+
             <div class="stat-card" onclick="applyFilter('dispatched')">
                 <div class="flex justify-between items-start">
                     <div>
@@ -311,7 +328,7 @@
                 <p class="text-xs text-slate-400 mt-4">Completed orders</p>
             </div>
 
-            <div class="stat-card pointer-events-none">
+            <div class="stat-card">
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-sm font-medium text-slate-500">Bins in Use</p>
@@ -426,9 +443,10 @@
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50/50">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center font-bold text-xl shadow-inner"
+                    <div class="min-w-[56px] h-14 bg-blue-100 text-blue-600 rounded-xl flex flex-col items-center justify-center font-bold shadow-inner"
                         id="modal-bin-icon">
-                        1
+                        <span class="text-[10px] uppercase opacity-70 leading-none">Bin</span>
+                        <span class="text-xl">1</span>
                     </div>
                     <div>
                         <h3 class="text-xl font-bold text-slate-800" id="modal-bin-title">Bin Details</h3>
@@ -504,72 +522,76 @@
         let rackChartInstance = null;
         let typeChartInstance = null;
         let unsubscribe = null;
-        let BIN_CAPACITY = 20; // Default, will be updated from DB
-        let RACK_CAPACITY = 320; // Default, will be updated from DB
+        let BIN_CAPACITY = 10; // Default, will be updated from DB
+        let RACK_CAPACITY = 100; // Default (10 bins * 10 rolls)
+        let reservedRollsFromCollection = []; // Track reserved documents separately
 
         // Manual fetch function (replaces live sync for better control)
+        let previousDataState = "";
+
         async function fetchData() {
             const icon = document.getElementById('refresh-icon');
-            const text = document.getElementById('refresh-text');
             const btn = document.getElementById('refresh-btn');
 
-            // Show loading state
-            if (text) text.textContent = 'Refreshing...';
-            if (icon) {
-                icon.classList.add('animate-spin');
-                icon.classList.remove('text-green-500');
-                icon.classList.add('text-orange-500');
-            }
+            if (icon) icon.classList.add('animate-spin');
             if (btn) btn.disabled = true;
 
             try {
                 // 1. Fetch Capacity Settings from DB
+                let settings = { bin: 10, rack: 100 };
                 try {
-                    const settingsSnap = await getDoc(doc(db, 'config', 'general'));
-                    if (settingsSnap.exists()) {
-                        const s = settingsSnap.data();
-                        BIN_CAPACITY = parseInt(s.max_bin_capacity) || 20;
-                        const binsPerRack = parseInt(s.bins_per_rack) || 16;
-                        RACK_CAPACITY = BIN_CAPACITY * binsPerRack;
-                        console.log(`✅ Loaded settings: Bin Cap=${BIN_CAPACITY}, Rack Cap=${RACK_CAPACITY}`);
+                    const rulesSnap = await getDocs(collection(db, 'config', 'inventory_rules', 'rules'));
+                    if (!rulesSnap.empty) {
+                        const rules = {};
+                        rulesSnap.forEach(d => rules[d.id] = d.data());
+                        if (rules.max_bin_capacity) settings.bin = parseInt(rules.max_bin_capacity.value) || 10;
+                        if (rules.bins_per_rack) {
+                            settings.rack = settings.bin * (parseInt(rules.bins_per_rack.value) || 10);
+                        }
                     }
-                } catch (e) {
-                    console.warn("⚠️ Using default capacity settings (could not fetch config)", e);
-                }
+                } catch (e) { console.warn("Settings fetch failed"); }
 
-                // 2. Fetch from yarnRolls collection as the single source of truth
+                // 2. Fetch Rolls
                 const snapshot = await getDocs(collection(db, 'yarnRolls'));
-
-                allRolls = snapshot.docs.map(doc => ({
-                    id: doc.data().id || doc.id,
+                const newRolls = snapshot.docs.map(doc => ({
+                    id: doc.id,
                     ...doc.data()
                 })).filter(r => r.id && !r.id.toLowerCase().includes('test'));
 
+                const reservedSnapshot = await getDocs(collection(db, 'reserved_collection'));
+                const newReserved = reservedSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                })).filter(r => ['reserved', 'moved'].includes(String(r.state || '').toLowerCase()));
+
+                // 3. Diff Check - Only update UI if state changed
+                const currentStateString = JSON.stringify({ rolls: newRolls, reserved: newReserved, settings });
+                if (currentStateString === previousDataState) {
+                    if (icon) icon.classList.remove('animate-spin');
+                    if (btn) btn.disabled = false;
+                    return;
+                }
+
+                allRolls = newRolls;
+                reservedRollsFromCollection = newReserved;
+                BIN_CAPACITY = settings.bin;
+                RACK_CAPACITY = settings.rack;
+                previousDataState = currentStateString;
+
                 allRolls.sort((a, b) => new Date(b.production_date) - new Date(a.production_date));
 
-                // 3. Populate Dropdown dynamically
                 populateTypeDropdown(allRolls);
-
                 updateStats();
                 updateCharts();
                 applyFilter(currentFilter);
 
-                // Show success state
                 if (icon) {
-                    icon.classList.remove('animate-spin', 'text-orange-500');
+                    icon.classList.remove('animate-spin');
                     icon.classList.add('text-green-500');
                     setTimeout(() => icon.classList.remove('text-green-500'), 2000);
                 }
-
-                console.log(`✅ Fetched ${allRolls.length} rolls from yarnRolls collection`);
-
             } catch (error) {
-                console.error('❌ Error fetching data:', error);
-                if (text) text.textContent = 'Retry';
-                if (icon) {
-                    icon.classList.remove('animate-spin', 'text-orange-500');
-                    icon.classList.add('text-red-500');
-                }
+                console.error('Fetch error:', error);
             } finally {
                 if (btn) btn.disabled = false;
             }
@@ -585,20 +607,19 @@
                 if (!typeSelect) return;
 
                 const currentVal = typeSelect.value;
-                typeSelect.innerHTML = '<option value="">All Types</option>';
+                const existingTypes = Array.from(typeSelect.options).map(o => o.value).filter(v => v !== "");
 
+                // Only update if types have changed
+                if (JSON.stringify(existingTypes) === JSON.stringify(distinctTypes)) return;
+
+                typeSelect.innerHTML = '<option value="">All Types</option>';
                 distinctTypes.forEach(type => {
-                    if (!type) return;
                     const opt = document.createElement('option');
                     opt.value = type;
                     opt.textContent = type;
                     typeSelect.appendChild(opt);
                 });
-
-                if (currentVal) {
-                    const exists = Array.from(typeSelect.options).some(o => o.value === currentVal);
-                    if (exists) typeSelect.value = currentVal;
-                }
+                typeSelect.value = currentVal;
             });
         }
 
@@ -649,13 +670,24 @@
 
         function updateStats() {
             document.getElementById('total-yarns').textContent = allRolls.length;
-            document.getElementById('reserved-yarns').textContent = allRolls.filter(r => r.state === 'RESERVED').length;
+
+            // Display count from reserved_collection where state is 'reserved'
+            const reservedCount = reservedRollsFromCollection.filter(r =>
+                String(r.state).toLowerCase() === 'reserved'
+            ).length;
+            document.getElementById('reserved-yarns').textContent = reservedCount;
+
+            const pickedCount = reservedRollsFromCollection.filter(r =>
+                String(r.state).toLowerCase() === 'moved'
+            ).length;
+            document.getElementById('picked-yarns').textContent = pickedCount;
+
             document.getElementById('dispatched-yarns').textContent = allRolls.filter(r => r.state === 'DISPATCHED').length;
 
             let uniqueBinLocations = new Set(allRolls.map(r => `${r.rack_id || '?'}-${r.bin || '?'}`));
             document.getElementById('active-bins').textContent = uniqueBinLocations.size;
 
-            // Render Warehouse Stats locally
+            // Render Warehouse Stats locally using yarnRolls data
             const stats = calculateWarehouseStats(allRolls);
 
             // Get current filter state for highlighting
@@ -722,9 +754,10 @@
                                   onclick="openBinModal('${rack.rack_id}', '${binId}')" 
                                   title="Bin ${binId}: ${displayCount} ${countLabel} (Cap: ${data.total}/${BIN_CAPACITY})">
                                  
-                                 <div class="flex flex-col items-center">
-                                     <span class="text-lg leading-none">${binId}</span>
-                                     <div class="w-8 h-1 bg-black/20 rounded-full mt-1 overflow-hidden">
+                                 <div class="flex flex-col items-center justify-center">
+                                     <span class="text-[11px] uppercase tracking-wider font-extrabold opacity-90 leading-none mb-1">Bin</span>
+                                     <span class="text-2xl leading-none">${binId}</span>
+                                     <div class="w-12 h-1 bg-white/30 rounded-full mt-2 overflow-hidden">
                                         <div class="h-full ${capacityColor}" style="width: ${capacityPercent}%"></div>
                                      </div>
                                  </div>
@@ -779,7 +812,10 @@
             if (!binData) return;
 
             document.getElementById('modal-bin-title').textContent = `Bin ${binId}`;
-            document.getElementById('modal-bin-icon').textContent = binId;
+            document.getElementById('modal-bin-icon').innerHTML = `
+                <span class="text-[10px] uppercase opacity-70 leading-none">Bin</span>
+                <span class="text-xl">${binId}</span>
+            `;
             document.getElementById('modal-rack-info').textContent = `Located in Rack ${rackId}`;
 
             // Populate Stats
@@ -870,41 +906,69 @@
                 }
             };
 
-            const rackCtx = document.getElementById('rackChart').getContext('2d');
-            if (rackChartInstance) rackChartInstance.destroy();
-            rackChartInstance = new Chart(rackCtx, {
-                ...chartConfig,
-                data: {
-                    labels: Object.keys(rollsByRack),
-                    datasets: [{
-                        label: 'Rolls',
-                        data: Object.values(rollsByRack),
-                        backgroundColor: '#f97316',
-                        borderRadius: 6,
-                        maxBarThickness: 40,
-                        barPercentage: 0.9,
-                        categoryPercentage: 0.9
-                    }]
-                }
-            });
+            // Persistent Rack Chart
+            const rackLabels = Object.keys(rollsByRack);
+            const rackData = Object.values(rollsByRack);
 
-            const typeCtx = document.getElementById('typeChart').getContext('2d');
-            if (typeChartInstance) typeChartInstance.destroy();
-            typeChartInstance = new Chart(typeCtx, {
-                ...chartConfig,
-                data: {
-                    labels: Object.keys(rollsByType),
-                    datasets: [{
-                        label: 'Rolls',
-                        data: Object.values(rollsByType),
-                        backgroundColor: '#0ea5e9',
-                        borderRadius: 6,
-                        maxBarThickness: 40,
-                        barPercentage: 0.9,
-                        categoryPercentage: 0.9
-                    }]
-                }
-            });
+            if (rackChartInstance) {
+                rackChartInstance.data.labels = rackLabels;
+                rackChartInstance.data.datasets[0].data = rackData;
+                rackChartInstance.update('none'); // Update without animation to prevent flicker
+            } else {
+                const rackCtx = document.getElementById('rackChart').getContext('2d');
+                rackChartInstance = new Chart(rackCtx, {
+                    ...chartConfig,
+                    options: {
+                        ...chartConfig.options,
+                        scales: {
+                            y: { ...chartConfig.options.scales.y, title: { display: true, text: 'Quantity (Rolls)', font: { weight: 'bold' } } },
+                            x: { ...chartConfig.options.scales.x, title: { display: true, text: 'Rack Locations', font: { weight: 'bold' } } }
+                        }
+                    },
+                    data: {
+                        labels: rackLabels,
+                        datasets: [{
+                            label: 'Rolls',
+                            data: rackData,
+                            backgroundColor: '#f97316',
+                            borderRadius: 6,
+                            maxBarThickness: 40
+                        }]
+                    }
+                });
+            }
+
+            // Persistent Type Chart
+            const typeLabels = Object.keys(rollsByType);
+            const typeData = Object.values(rollsByType);
+
+            if (typeChartInstance) {
+                typeChartInstance.data.labels = typeLabels;
+                typeChartInstance.data.datasets[0].data = typeData;
+                typeChartInstance.update('none');
+            } else {
+                const typeCtx = document.getElementById('typeChart').getContext('2d');
+                typeChartInstance = new Chart(typeCtx, {
+                    ...chartConfig,
+                    options: {
+                        ...chartConfig.options,
+                        scales: {
+                            y: { ...chartConfig.options.scales.y, title: { display: true, text: 'Quantity (Rolls)', font: { weight: 'bold' } } },
+                            x: { ...chartConfig.options.scales.x, title: { display: true, text: 'Yarn Types', font: { weight: 'bold' } } }
+                        }
+                    },
+                    data: {
+                        labels: typeLabels,
+                        datasets: [{
+                            label: 'Rolls',
+                            data: typeData,
+                            backgroundColor: '#0ea5e9',
+                            borderRadius: 6,
+                            maxBarThickness: 40
+                        }]
+                    }
+                });
+            }
         }
 
         function renderGrid(rolls) {
@@ -967,6 +1031,9 @@
             } else if (filterType === 'reserved') {
                 filtered = allRolls.filter(r => r.state === 'RESERVED');
                 document.getElementById('grid-title').textContent = 'Reserved Yarns';
+            } else if (filterType === 'picked') {
+                filtered = reservedRollsFromCollection.filter(r => String(r.state).toLowerCase() === 'moved');
+                document.getElementById('grid-title').textContent = 'Picked Yarns';
             } else if (filterType === 'dispatched') {
                 filtered = allRolls.filter(r => r.state === 'DISPATCHED');
                 document.getElementById('grid-title').textContent = 'Dispatched Yarns';
@@ -991,9 +1058,9 @@
                 return matchSearch && matchBin && matchRack && matchType;
             });
 
-            // Update the Warehouse Visuals to reflect current filters (specifically Type)
+            // Update the Warehouse Visuals to reflect yarnRolls data
             const typeFilter = document.getElementById('filter-type').value;
-            const stats = calculateWarehouseStats(allRolls); // Recalculate base stats
+            const stats = calculateWarehouseStats(allRolls);
             // PASS the type filter to the renderer
             renderWarehouseBreakdown(stats, typeFilter);
 
