@@ -107,6 +107,23 @@
                 opacity: 0;
             }
         }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f8fafc;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #cbd5e1;
+        }
     </style>
     <link rel="stylesheet" href="/navbar.css">
     <script src="/navbar.js"></script>
@@ -206,6 +223,22 @@
             </button>
         </div>
 
+        <!-- Tabs -->
+        <div class="flex gap-8 mb-8 border-b border-slate-200 px-2">
+            <button onclick="switchTab('PENDING')" id="tab-pending"
+                class="pb-4 text-sm font-bold transition-all relative text-orange-600">
+                PENDING ORDERS
+                <span id="line-pending"
+                    class="absolute bottom-0 left-0 w-full h-1 bg-orange-500 rounded-t-full transition-opacity"></span>
+            </button>
+            <button onclick="switchTab('APPROVED')" id="tab-approved"
+                class="pb-4 text-sm font-bold text-slate-400 hover:text-slate-600 transition-all relative">
+                APPROVED ORDERS
+                <span id="line-approved"
+                    class="absolute bottom-0 left-0 w-full h-1 bg-orange-500 rounded-t-full opacity-0 transition-opacity"></span>
+            </button>
+        </div>
+
         <!-- Orders Queue -->
         <div id="orderQueue" class="space-y-6">
             <div class="glass-card p-12 text-center text-gray-500 border-dashed border-2">
@@ -254,14 +287,117 @@
         </div>
     </div>
 
+    <!-- Order Details Modal -->
+    <div id="order-modal"
+        class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[70] flex items-center justify-center p-4"
+        onclick="closeOrderModal(event)">
+        <div class="glass-card bg-white !max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl scale-95 transition-all duration-300"
+            id="orderModalCard" onclick="event.stopPropagation()">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-orange-50/30">
+                <div class="flex items-center gap-4">
+                    <div
+                        class="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center font-bold text-xl shadow-inner">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-800" id="modal-order-id">Order Details</h3>
+                        <p class="text-sm text-orange-600 font-bold" id="modal-customer-name">Customer Name</p>
+                    </div>
+                </div>
+                <button onclick="closeOrderModal()"
+                    class="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-full transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-8 custom-scrollbar">
+                <!-- Asked Items -->
+                <section>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                            </path>
+                        </svg>
+                        Items Asked
+                    </h4>
+                    <div id="modal-order-asked" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <!-- Asked items go here -->
+                    </div>
+                </section>
+
+                <!-- Allocated Rolls -->
+                <section>
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                            </svg>
+                            Allocated Rolls
+                        </h4>
+                        <span id="modal-allocated-count"
+                            class="text-xs font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-500">0 Rolls</span>
+                    </div>
+                    <div id="modal-order-allocated" class="space-y-2">
+                        <!-- Allocated rolls go here -->
+                    </div>
+                </section>
+            </div>
+
+            <div class="p-5 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+                <button onclick="closeOrderModal()"
+                    class="px-6 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-all shadow-sm active:scale-95">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div id="toastContainer" class="fixed top-[90px] right-4 z-[100] flex flex-col gap-3 pointer-events-none"></div>
 
     <script>
         let allOrders = [];
         let filteredOrders = [];
+        let reservedRolls = [];
         let lastNotifId = localStorage.getItem('lastSeenNotifId');
         let isFetching = false;
+        let currentTab = 'PENDING';
+
+        function switchTab(status) {
+            currentTab = status;
+
+            const pBtn = document.getElementById('tab-pending');
+            const aBtn = document.getElementById('tab-approved');
+            const pLine = document.getElementById('line-pending');
+            const aLine = document.getElementById('line-approved');
+
+            if (status === 'PENDING') {
+                pBtn.classList.add('text-orange-600');
+                pBtn.classList.remove('text-slate-400');
+                pLine.classList.remove('opacity-0');
+
+                aBtn.classList.remove('text-orange-600');
+                aBtn.classList.add('text-slate-400');
+                aLine.classList.add('opacity-0');
+            } else {
+                aBtn.classList.add('text-orange-600');
+                aBtn.classList.remove('text-slate-400');
+                aLine.classList.remove('opacity-0');
+
+                pBtn.classList.remove('text-orange-600');
+                pBtn.classList.add('text-slate-400');
+                pLine.classList.add('opacity-0');
+            }
+
+            applyFilters();
+        }
 
         function toggleNotifications() {
             const dropdown = document.getElementById('notifDropdown');
@@ -338,9 +474,16 @@
                 const response = await fetch('/api/orders');
                 const newOrders = await response.json();
 
-                // Compare with previous orders to avoid unnecessary re-renders
-                if (JSON.stringify(newOrders) !== JSON.stringify(allOrders)) {
+                const resReserved = await fetch('/api/reserved');
+                const newReserved = await resReserved.json();
+
+                // Compare with previous orders/reserved to avoid unnecessary re-renders
+                const stateCheck = JSON.stringify({ orders: newOrders, reserved: newReserved });
+                const prevState = JSON.stringify({ orders: allOrders, reserved: reservedRolls });
+
+                if (stateCheck !== prevState) {
                     allOrders = newOrders;
+                    reservedRolls = newReserved;
                     updateTypeDropdown();
                     applyFilters(); // Re-apply current filters to new data
                 }
@@ -385,12 +528,20 @@
             const type = document.getElementById('typeFilter').value.toLowerCase();
 
             filteredOrders = allOrders.filter(order => {
-                if (order.status !== 'PENDING') return false; // Default: Only show pending
+                if (order.status !== currentTab) return false;
 
                 const matchSearch = !search ||
                     order.id.toLowerCase().includes(search) ||
                     order.customer_name.toLowerCase().includes(search);
-                const matchType = !type || (order.yarn_type || '').toLowerCase() === type;
+
+                let matchType = !type;
+                if (type) {
+                    if (order.items && Array.isArray(order.items)) {
+                        matchType = order.items.some(item => (item.yarn_type || '').toLowerCase() === type);
+                    } else {
+                        matchType = (order.yarn_type || '').toLowerCase() === type;
+                    }
+                }
 
                 return matchSearch && matchType;
             });
@@ -411,10 +562,14 @@
                 return;
             }
 
-            container.innerHTML = filteredOrders.map(order => `
-                <div class="glass-card p-6 pr-12 flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0 relative group">
+            container.innerHTML = filteredOrders.map(order => {
+                const isApproved = order.status === 'APPROVED';
+
+                return `
+                <div class="glass-card p-6 pr-12 flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0 relative group ${isApproved ? 'cursor-pointer hover:bg-emerald-50/30' : ''}" 
+                     ${isApproved ? `onclick="openOrderModal('${order.id}')"` : ''}>
                     <!-- Individual Delete Icon -->
-                    <button onclick="deleteOrder('${order.id}')" 
+                    <button onclick="event.stopPropagation(); deleteOrder('${order.id}')" 
                         class="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors md:opacity-0 group-hover:opacity-100"
                         title="Delete Order">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -429,27 +584,68 @@
                             <span class="text-xs bg-amber-100 text-amber-600 px-2 py-1 rounded-md font-semibold">NEW ORDER</span>
                         </div>
                         <h4 class="text-xl font-bold text-slate-800 mb-1">${order.customer_name}</h4>
-                        <div class="flex space-x-6 text-sm text-slate-500">
-                            <span class="flex items-center"><svg class="w-4 h-4 mr-1 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"></path></svg>${order.yarn_type}</span>
-                            <span class="flex items-center"><svg class="w-4 h-4 mr-1 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>${order.quantity} Rolls</span>
-                            <span class="flex items-center"><svg class="w-4 h-4 mr-1 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${new Date(order.createdAt).toLocaleTimeString()}</span>
+                        <div class="space-y-1 mb-3">
+                            ${(order.items || [{ yarn_type: order.yarn_type, quantity: order.quantity }]).map(item => `
+                                <div class="flex items-center space-x-4 text-sm">
+                                    <span class="flex items-center text-slate-600 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                                        <svg class="w-3.5 h-3.5 mr-1.5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"></path></svg>
+                                        ${item.yarn_type}
+                                    </span>
+                                    <span class="flex items-center text-orange-600 font-semibold">
+                                        <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                                        ${item.quantity} Rolls
+                                    </span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="flex items-center text-xs text-slate-400 uppercase tracking-wider font-semibold">
+                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            ${order.status === 'APPROVED' ? 'Approved' : 'Ordered'} ${new Date(order.status === 'APPROVED' ? order.approvedAt : order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </div>
                     </div>
-                    <div>
-                        <button onclick="approveOrder('${order.id}')" class="btn-approve text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-orange-600/20 transition transform hover:scale-105">
-                            APPROVE & RESERVE STOCK
+                    ${order.status === 'PENDING' ? `
+                    <div class="flex items-center gap-3">
+                        <!-- Approve (Tick) icon -->
+                        <button onclick="event.stopPropagation(); approveOrder('${order.id}')" 
+                            class="p-3 bg-emerald-100 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm hover:shadow-emerald-200 active:scale-90"
+                            title="Approve & Reserve">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </button>
+                        
+                        <!-- Reject (X) icon -->
+                        <button onclick="event.stopPropagation(); deleteOrder('${order.id}')" 
+                            class="p-3 bg-rose-100 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition-all shadow-sm hover:shadow-rose-200 active:scale-90"
+                            title="Reject Order">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
                         </button>
                     </div>
+                    ` : `
+                    <div class="flex flex-col items-end gap-2">
+                        <div class="flex items-center gap-2 text-emerald-600 font-bold bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            APPROVED
+                        </div>
+                        <span class="text-[10px] text-emerald-500 font-bold tracking-tight opacity-60">CLICK TO VIEW ALLOCATIONS</span>
+                    </div>
+                    `}
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         async function approveOrder(id) {
+            const btn = event.currentTarget;
+            if (btn.disabled) return;
+
             try {
-                const btn = event.target;
-                const originalText = btn.innerText;
-                btn.innerText = 'Reserving...';
                 btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                const btnIcon = btn.querySelector('svg');
+                if (btnIcon) btnIcon.classList.add('animate-spin');
 
                 const response = await fetch(`/api/orders/${id}/approve`, { method: 'POST' });
                 const result = await response.json();
@@ -560,6 +756,62 @@
 
         function closeModal() {
             document.getElementById('statusModal').classList.add('hidden');
+        }
+
+        function openOrderModal(orderId) {
+            const orderDoc = allOrders.find(o => o.id === orderId);
+            const orderAllocations = reservedRolls.filter(r => r.order_id === orderId);
+
+            if (!orderDoc) {
+                alert('Order details not found.');
+                return;
+            }
+
+            document.getElementById('modal-order-id').textContent = orderId;
+            document.getElementById('modal-customer-name').textContent = orderDoc.customer_name || 'Unknown Customer';
+
+            // Render Asked Items
+            const items = orderDoc.items || [{ yarn_type: orderDoc.yarn_type, quantity: orderDoc.quantity }];
+            document.getElementById('modal-order-asked').innerHTML = items.map(item => `
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center transition-all hover:shadow-sm">
+                    <span class="font-bold text-slate-700">${item.yarn_type}</span>
+                    <span class="bg-white px-2 py-1 rounded-lg border border-slate-200 text-xs font-bold text-orange-600">${item.quantity} Rolls</span>
+                </div>
+            `).join('');
+
+            // Render Allocated Rolls
+            document.getElementById('modal-allocated-count').textContent = `${orderAllocations.length} Rolls`;
+            document.getElementById('modal-order-allocated').innerHTML = orderAllocations.map(roll => `
+                <div class="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl shadow-sm hover:border-orange-200 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center font-bold text-xs">
+                            #${roll.id.slice(-4)}
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-slate-800">${roll.yarn_type}</div>
+                            <div class="text-[10px] text-slate-400 font-medium lowercase">Rack ${roll.rack_id} / Bin ${roll.bin} • Lot ${roll.lot_number || '-'}</div>
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-bold text-slate-300 uppercase tracking-tighter">Allocated</span>
+                </div>
+            `).join('');
+
+            const modal = document.getElementById('order-modal');
+            const card = document.getElementById('orderModalCard');
+            modal.classList.remove('hidden');
+            setTimeout(() => card.classList.remove('scale-95'), 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeOrderModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            const modal = document.getElementById('order-modal');
+            const card = document.getElementById('orderModalCard');
+            card.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 200);
         }
 
         // Event listeners for instant feedback (optional, but requested search button exists)

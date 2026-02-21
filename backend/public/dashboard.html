@@ -69,20 +69,38 @@
                             placeholder="e.g. S.A. Textiles Ltd.">
                     </div>
 
-                    <div>
-                        <label class="block text-slate-500 text-sm font-medium mb-2">Yarn Quality</label>
-                        <select id="yarn_type" required
-                            class="w-full p-4 rounded-xl input-field focus:outline-none focus:ring-1 focus:ring-orange-500 appearance-none">
-                            <option value="" disabled selected>Loading qualities...</option>
-                        </select>
+                    <div id="itemsContainer" class="space-y-4">
+                        <div class="item-row glass p-4 rounded-2xl border border-orange-100/50 relative">
+                            <div class="grid grid-cols-1 gap-4">
+                                <div>
+                                    <label
+                                        class="block text-slate-500 text-xs font-medium mb-1 uppercase tracking-wider">Yarn
+                                        Quality</label>
+                                    <select required name="yarn_type"
+                                        class="yarn-type-select w-full p-4 rounded-xl input-field focus:outline-none focus:ring-1 focus:ring-orange-500 appearance-none">
+                                        <option value="" disabled selected>Loading qualities...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-slate-500 text-xs font-medium mb-1 uppercase tracking-wider">Quantity
+                                        (Rolls)</label>
+                                    <input type="number" required name="quantity" min="1"
+                                        class="w-full p-4 rounded-xl input-field focus:outline-none focus:ring-1 focus:ring-orange-500"
+                                        value="1">
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div>
-                        <label class="block text-slate-500 text-sm font-medium mb-2">Quantity (Rolls Required)</label>
-                        <input type="number" id="quantity" required min="1"
-                            class="w-full p-4 rounded-xl input-field focus:outline-none focus:ring-1 focus:ring-orange-500"
-                            value="1">
-                    </div>
+                    <button type="button" onclick="addItemRow()"
+                        class="w-full py-3 border-2 border-dashed border-orange-200 text-orange-500 rounded-xl font-bold hover:bg-orange-50 transition-all flex justify-center items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+                            </path>
+                        </svg>
+                        ADD ANOTHER ITEM
+                    </button>
 
                     <div class="pt-4">
                         <button type="submit" id="submitBtn"
@@ -100,7 +118,7 @@
                     class="hidden mt-8 text-center p-6 bg-orange-100/50 border border-orange-200/50 rounded-2xl">
                     <div class="text-orange-600 font-bold mb-1">Order Placed Successfully!</div>
                     <p class="text-secondary text-sm">Waiting for admin approval. We will notify you soon.</p>
-                    <button onclick="resetForm()" class="mt-4 text-sm text-accent hover:underline">Place another
+                    <button onclick="location.reload()" class="mt-4 text-sm text-accent hover:underline">Place another
                         order</button>
                 </div>
             </div>
@@ -113,33 +131,70 @@
         </div>
 
         <script>
+            let cachedQualities = [];
+
             function showToast(message, isError = false) {
                 const toast = document.getElementById('toast');
                 const msg = document.getElementById('toastMessage');
                 msg.innerText = message;
-                toast.style.borderColor = isError ? '#f56565' : 'var(--accent)';
+                toast.style.borderColor = isError ? '#f56565' : '#f97316';
                 toast.classList.remove('translate-y-20', 'opacity-0');
                 setTimeout(() => {
                     toast.classList.add('translate-y-20', 'opacity-0');
                 }, 3000);
             }
 
-            function resetForm() {
-                document.getElementById('orderForm').classList.remove('hidden');
-                document.getElementById('successMsg').classList.add('hidden');
-                document.getElementById('orderForm').reset();
+            function addItemRow() {
+                const container = document.getElementById('itemsContainer');
+                const row = document.createElement('div');
+                row.className = 'item-row glass p-4 rounded-2xl border border-orange-100/50 relative group animate-in slide-in-from-top-2 duration-300';
+                row.innerHTML = `
+                    <button type="button" onclick="this.parentElement.remove()" 
+                        class="absolute -right-2 -top-2 bg-white text-rose-500 rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity border border-rose-100">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-slate-500 text-sm font-medium mb-1 uppercase tracking-wider" style="font-size: 0.65rem;">Yarn Quality</label>
+                            <select required name="yarn_type"
+                                class="yarn-type-select w-full p-4 rounded-xl input-field focus:outline-none focus:ring-1 focus:ring-orange-500 appearance-none">
+                                ${cachedQualities.map(t => `<option value="${t}">${t}</option>`).join('') || '<option disabled selected>Loading...</option>'}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-slate-500 text-sm font-medium mb-1 uppercase tracking-wider" style="font-size: 0.65rem;">Quantity (Rolls)</label>
+                            <input type="number" required name="quantity" min="1"
+                                class="w-full p-4 rounded-xl input-field focus:outline-none focus:ring-1 focus:ring-orange-500"
+                                value="1">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(row);
+                // If we already have qualities, update the new select
+                if (cachedQualities.length > 0) {
+                    const select = row.querySelector('.yarn-type-select');
+                    select.innerHTML = cachedQualities.map(t => `<option value="${t}">${t}</option>`).join('');
+                } else {
+                    populateQualities();
+                }
             }
 
             document.getElementById('orderForm').onsubmit = async (e) => {
                 e.preventDefault();
                 const submitBtn = document.getElementById('submitBtn');
                 submitBtn.disabled = true;
-                submitBtn.innerHTML = 'Sending...';
+                const originalContent = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span>SENDING...</span>';
+
+                const rows = document.querySelectorAll('.item-row');
+                const items = Array.from(rows).map(row => ({
+                    yarn_type: row.querySelector('[name="yarn_type"]').value,
+                    quantity: row.querySelector('[name="quantity"]').value
+                }));
 
                 const data = {
                     customer_name: document.getElementById('customer_name').value,
-                    yarn_type: document.getElementById('yarn_type').value,
-                    quantity: document.getElementById('quantity').value
+                    items: items
                 };
 
                 try {
@@ -156,39 +211,39 @@
                         const error = await response.json();
                         showToast(error.error || 'Failed to place order', true);
                         submitBtn.disabled = false;
-                        submitBtn.innerHTML = 'CONFIRM ORDER';
+                        submitBtn.innerHTML = originalContent;
                     }
                 } catch (err) {
                     showToast('Network error', true);
                     submitBtn.disabled = false;
-                    submitBtn.innerHTML = 'CONFIRM ORDER';
+                    submitBtn.innerHTML = originalContent;
                 }
             };
 
             async function populateQualities() {
-                const typeSelect = document.getElementById('yarn_type');
                 try {
                     const response = await fetch('/api/rolls');
                     const rolls = await response.json();
 
-                    // Filter out test rolls if needed, and get unique types
-                    const types = [...new Set(rolls
+                    cachedQualities = [...new Set(rolls
                         .filter(r => !r.id.toLowerCase().includes('test'))
                         .map(r => r.yarn_type)
                         .filter(t => t)
-                    )];
+                    )].sort();
 
-                    if (types.length === 0) {
-                        typeSelect.innerHTML = '<option value="" disabled selected>No qualities available</option>';
-                        return;
-                    }
-
-                    typeSelect.innerHTML = types.sort().map(t =>
-                        `<option value="${t}">${t}</option>`
-                    ).join('');
+                    const selects = document.querySelectorAll('.yarn-type-select');
+                    selects.forEach(select => {
+                        const currentVal = select.value;
+                        if (cachedQualities.length === 0) {
+                            select.innerHTML = '<option value="" disabled selected>No qualities available</option>';
+                        } else {
+                            select.innerHTML = cachedQualities.map(t =>
+                                `<option value="${t}" ${t === currentVal ? 'selected' : ''}>${t}</option>`
+                            ).join('');
+                        }
+                    });
                 } catch (err) {
                     console.error('Failed to load qualities:', err);
-                    typeSelect.innerHTML = '<option value="" disabled selected>Error loading qualities</option>';
                 }
             }
 

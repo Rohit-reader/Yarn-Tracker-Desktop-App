@@ -362,15 +362,31 @@ const ordersCollection = collection(db, 'Order_collection');
 // 1. Create a new order
 app.post('/api/orders', async (req, res) => {
   try {
-    const { customer_name, yarn_type, quantity } = req.body;
+    const { customer_name, yarn_type, quantity, items } = req.body;
     const orderId = `ORD-${Date.now()}`;
     const now = new Date().toISOString();
+
+    // Support both single item (legacy) and multi-item format
+    let orderItems = [];
+    if (items && Array.isArray(items) && items.length > 0) {
+      orderItems = items.map(item => ({
+        yarn_type: item.yarn_type,
+        quantity: parseInt(item.quantity) || 1
+      }));
+    } else {
+      orderItems = [{
+        yarn_type: yarn_type || 'Cotton 30s',
+        quantity: parseInt(quantity) || 1
+      }];
+    }
 
     const orderData = {
       id: orderId,
       customer_name: customer_name || 'Anonymous Customer',
-      yarn_type: yarn_type || 'Cotton 30s',
-      quantity: parseInt(quantity) || 1,
+      items: orderItems,
+      // Keep legacy fields for partial backward compatibility in UI if needed
+      yarn_type: orderItems[0].yarn_type,
+      quantity: orderItems[0].quantity,
       status: 'PENDING',
       createdAt: now,
       approvedAt: null
@@ -380,13 +396,15 @@ app.post('/api/orders', async (req, res) => {
 
     // 2. Create a notification for the admin
     const notificationId = `NOTIF-${Date.now()}`;
+    const itemsSummary = orderItems.map(i => `${i.quantity} x ${i.yarn_type}`).join(', ');
+
     await setDoc(doc(db, 'notifications', notificationId), {
       id: notificationId,
       userId: 'SYSTEM_ADMIN', // Or a group role
       title: 'New Order Received',
-      message: `Customer ${orderData.customer_name} placed an order for ${quantity} rolls of ${yarn_type}.`,
-      type: 'ORDER_PENDING',
+      message: `Customer ${orderData.customer_name} placed an order for: ${itemsSummary}.`,
       orderId: orderId,
+      type: 'ORDER_PENDING',
       isRead: false,
       createdAt: now
     });
@@ -411,7 +429,16 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
-// 3. Approve Order and reserve rolls
+app.get('/api/reserved', async (req, res) => {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'reserved_collection'));
+    const reserved = querySnapshot.docs.map(doc => doc.data());
+    res.json(reserved);
+  } catch (error) {
+    console.error('Error fetching reserved collection:', error);
+    res.status(500).json({ error: 'Failed to fetch reserved collection' });
+  }
+});
 app.post('/api/orders/:id/approve', async (req, res) => {
   try {
     const orderId = req.params.id;
@@ -421,31 +448,30 @@ app.post('/api/orders/:id/approve', async (req, res) => {
     const orderSnap = await getDoc(orderDocRef);
 
     if (!orderSnap.exists()) {
-      console.log(`   ✗ Order ${orderId} not found`);
       return res.status(404).json({ error: 'Order not found' });
     }
 
     const orderData = orderSnap.data();
-    console.log(`   Order Info: ${orderData.quantity} rolls of ${orderData.yarn_type} for ${orderData.customer_name}`);
-
     if (orderData.status !== 'PENDING') {
-      console.log(`   ✗ Order ${orderId} already in status: ${orderData.status}`);
       return res.status(400).json({ error: `Order is already ${orderData.status.toLowerCase()}` });
     }
 
-    // Find "IN STOCK" rolls (Fetching from both Legacy and Active Inventory for robustness)
-    console.log(`   Searching for ${orderData.quantity} rolls of Type: "${orderData.yarn_type}"`);
+    // Support both multi-item and legacy single-item
+    const orderItems = orderData.items || [{
+      yarn_type: orderData.yarn_type,
+      quantity: orderData.quantity
+    }];
 
-    // Fetch from both sources to ensure we don't miss legacy data appearing in dashboard
+    console.log(`   Order Info: ${orderData.customer_name} requesting ${orderItems.length} types of yarn.`);
+
+    // Fetch all available rolls once
     const [invSnap, legacySnap] = await Promise.all([
       getDocs(query(collection(db, 'inventory'), where('state', '==', 'IN STOCK'))),
       getDocs(collection(db, 'yarnRolls'))
     ]);
 
-    // Merge by unique ID
     const mergedMap = new Map();
     invSnap.docs.forEach(d => mergedMap.set(d.id, d.data()));
-    // Combine with legacy, filtering for 'IN STOCK' status if present, or defaulting to available if not restricted
     legacySnap.docs.forEach(d => {
       const data = d.data();
       const st = String(data.state || '').toUpperCase();
@@ -454,11 +480,13 @@ app.post('/api/orders/:id/approve', async (req, res) => {
       }
     });
 
-    const matchingRolls = Array.from(mergedMap.values())
-      .filter(roll => {
-        if (roll.id && roll.id.toLowerCase().includes('test')) return false;
-        // Match dashboard filter: only exclude based on ID string
-        const orderType = String(orderData.yarn_type || '').toLowerCase().trim();
+    let availablePool = Array.from(mergedMap.values()).filter(roll => roll.id && !roll.id.toLowerCase().includes('test'));
+    const rollsToReserve = [];
+    const missingItems = [];
+
+    for (const item of orderItems) {
+      const orderType = String(item.yarn_type || '').toLowerCase().trim();
+      const matchingRolls = availablePool.filter(roll => {
         const rollType = String(roll.yarn_type || '').toLowerCase().trim();
         const rollCount = String(roll.yarn_count || '').toLowerCase().trim();
         const combined = `${rollType} ${rollCount}`.trim();
@@ -470,59 +498,45 @@ app.post('/api/orders/:id/approve', async (req, res) => {
           orderType.includes(rollType);
       });
 
-    console.log(`   Found ${matchingRolls.length} available rolls after flexible filtering`);
+      if (matchingRolls.length < item.quantity) {
+        missingItems.push({
+          type: item.yarn_type,
+          required: item.quantity,
+          available: matchingRolls.length
+        });
+      } else {
+        const selected = matchingRolls.slice(0, item.quantity);
+        rollsToReserve.push(...selected);
+        // Remove selected rolls from pool so they aren't double-counted for another item
+        const selectedIds = new Set(selected.map(r => r.id));
+        availablePool = availablePool.filter(r => !selectedIds.has(r.id));
+      }
+    }
 
-    if (matchingRolls.length < orderData.quantity) {
-      const msg = `There is ${matchingRolls.length === 0 ? 'zero' : 'only ' + matchingRolls.length} rolls in ${orderData.yarn_type} and customer asks ${orderData.quantity} rolls`;
-      console.log(`   ✗ Insufficient stock: ${msg}`);
+    if (missingItems.length > 0) {
+      const msg = missingItems.map(m => `${m.type}: needs ${m.required}, has ${m.available}`).join('; ');
+      console.log(`   ✗ Insufficient stock for: ${msg}`);
       return res.status(400).json({
-        error: msg,
-        available: matchingRolls.length,
-        required: orderData.quantity
+        error: `Insufficient stock for some items: ${msg}`,
+        missing: missingItems
       });
     }
 
-    // Take only what's needed
-    const rollsToReserve = matchingRolls.slice(0, orderData.quantity);
-    console.log(`   Reserving ${rollsToReserve.length} rolls...`);
-
-    // Reserve those rolls
+    // Reserve all selected rolls
     const now = new Date().toISOString();
     await Promise.all(rollsToReserve.map(async (roll) => {
-      // Find master document in hierarchy using direct path reconstruction
       const masterPath = `racks/${roll.rack_id || '1'}/bins/${roll.bin || '1'}/rolls/${roll.id}`;
       const masterRef = doc(db, masterPath);
-
       const inventoryDocRef = doc(db, 'inventory', roll.id);
       const updatedRollData = { ...roll, state: 'RESERVED', order_id: orderId, last_state_change: now };
 
-      // Update Hierarchical Master (if it exists)
-      try {
-        await updateDoc(masterRef, { state: 'RESERVED', order_id: orderId, last_state_change: now });
-      } catch (e) {
-        console.log(`   ℹ️ No master doc at ${masterPath}, skipping nested update.`);
-      }
-
-      // Update Inventory Sync
-      await updateDoc(inventoryDocRef, { state: 'RESERVED', order_id: orderId, last_state_change: now });
-
-      // Update Legacy Sync (yarnRolls) for backward compatibility
-      try {
-        // User requested lowercase 'reserved' for yarnRolls
-        await setDoc(doc(db, 'yarnRolls', roll.id), { ...updatedRollData, state: 'RESERVED' }, { merge: true });
-      } catch (e) {
-        console.log(`   ℹ️ Legacy sync skipped for yarnRolls/${roll.id}`);
-      }
-
-      // Move to reserved_collection
+      try { await updateDoc(masterRef, { state: 'RESERVED', order_id: orderId, last_state_change: now }); } catch (e) { }
+      await setDoc(inventoryDocRef, { state: 'RESERVED', order_id: orderId, last_state_change: now }, { merge: true });
+      try { await setDoc(doc(db, 'yarnRolls', roll.id), { ...updatedRollData, state: 'RESERVED' }, { merge: true }); } catch (e) { }
       await setDoc(doc(db, 'reserved_collection', roll.id), updatedRollData);
-
-      // Log it
       await logScan(roll.id, 'AUTO_RESERVE', `Automatically reserved for order ${orderId}`);
     }));
 
-    // Mark order as approved
-    console.log(`   Updating order status to APPROVED`);
     await updateDoc(orderDocRef, {
       status: 'APPROVED',
       approvedAt: now,
@@ -537,11 +551,7 @@ app.post('/api/orders/:id/approve', async (req, res) => {
     });
   } catch (error) {
     console.error(`\n❌ Error approving order ${req.params.id}:`, error);
-    res.status(500).json({
-      error: 'Failed to approve order',
-      detail: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    res.status(500).json({ error: 'Failed to approve order', detail: error.message });
   }
 });
 
@@ -1043,6 +1053,11 @@ app.post('/api/rolls/bulk', async (req, res) => {
   }
 });
 
+
+// --- 404 HANDLER FOR API ---
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ error: `API Route Not Found: ${req.method} ${req.url}` });
+});
 
 // Fallback to index.html for React Router (Single Page App)
 app.get('*', (req, res) => {

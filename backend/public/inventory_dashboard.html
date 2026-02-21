@@ -494,214 +494,275 @@
                 </button>
             </div>
         </div>
-    </div>
+        <!-- Order Details Modal -->
+        <div id="order-modal" class="modal-overlay" onclick="closeOrderModal(event)">
+            <div class="modal-content !max-w-2xl" onclick="event.stopPropagation()">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-orange-50/50">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center font-bold text-xl shadow-inner">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800" id="modal-order-id">Order Details</h3>
+                            <p class="text-sm text-orange-600 font-bold" id="modal-customer-name">Customer Name</p>
+                        </div>
+                    </div>
+                    <button onclick="closeOrderModal()"
+                        class="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-full transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
 
-    <script type="module">
-        // Initialize Firebase with Modular SDK from CDN
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-        import { getFirestore, collection, doc, getDoc, collectionGroup, query, getDocs, onSnapshot, where } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+                <div class="p-6 overflow-y-auto custom-scrollbar space-y-8">
+                    <!-- Asked Items -->
+                    <section>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Items Asked</h4>
+                        <div id="modal-order-asked" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <!-- Asked items go here -->
+                        </div>
+                    </section>
 
-        // Your web app's Firebase configuration
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-        const firebaseConfig = {
-            apiKey: "AIzaSyAYXVrRtfStYQqFFBWYyTQGfOb345di2Ls",
-            authDomain: "yarn-roll.firebaseapp.com",
-            projectId: "yarn-roll",
-            storageBucket: "yarn-roll.firebasestorage.app",
-            messagingSenderId: "157993278528",
-            appId: "1:157993278528:web:4e88ed6e011bc42faa13a5",
-            measurementId: "G-SE7XVEDGQR"
-        };
+                    <!-- Allocated Rolls -->
+                    <section>
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Allocated Rolls</h4>
+                            <span id="modal-allocated-count"
+                                class="text-xs font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-500">0 Rolls</span>
+                        </div>
+                        <div id="modal-order-allocated" class="space-y-2">
+                            <!-- Allocated rolls go here -->
+                        </div>
+                    </section>
+                </div>
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+                <div class="p-5 border-t border-slate-100 bg-slate-50 flex justify-end">
+                    <button onclick="closeOrderModal()"
+                        class="px-6 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-all shadow-sm">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
 
-        let allRolls = [];
-        let currentFilter = 'all'; // all, reserved, dispatched, or specific ID types
-        let rackChartInstance = null;
-        let typeChartInstance = null;
-        let unsubscribe = null;
-        let BIN_CAPACITY = 10; // Default, will be updated from DB
-        let RACK_CAPACITY = 100; // Default (10 bins * 10 rolls)
-        let reservedRollsFromCollection = []; // Track reserved documents separately
+        <script type="module">
+            // Initialize Firebase with Modular SDK from CDN
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+            import { getFirestore, collection, doc, getDoc, collectionGroup, query, getDocs, onSnapshot, where } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
-        // Manual fetch function (replaces live sync for better control)
-        let previousDataState = "";
+            // Your web app's Firebase configuration
+            // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+            const firebaseConfig = {
+                apiKey: "AIzaSyAYXVrRtfStYQqFFBWYyTQGfOb345di2Ls",
+                authDomain: "yarn-roll.firebaseapp.com",
+                projectId: "yarn-roll",
+                storageBucket: "yarn-roll.firebasestorage.app",
+                messagingSenderId: "157993278528",
+                appId: "1:157993278528:web:4e88ed6e011bc42faa13a5",
+                measurementId: "G-SE7XVEDGQR"
+            };
 
-        async function fetchData() {
-            const icon = document.getElementById('refresh-icon');
-            const btn = document.getElementById('refresh-btn');
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
 
-            if (icon) icon.classList.add('animate-spin');
-            if (btn) btn.disabled = true;
+            let allRolls = [];
+            let currentFilter = 'all'; // all, reserved, dispatched, or specific ID types
+            let rackChartInstance = null;
+            let typeChartInstance = null;
+            let unsubscribe = null;
+            let BIN_CAPACITY = 10; // Default, will be updated from DB
+            let RACK_CAPACITY = 100; // Default (10 bins * 10 rolls)
+            let reservedRollsFromCollection = []; // Track reserved documents separately
+            let allOrders = []; // Track order documents for customer names
 
-            try {
-                // 1. Fetch Capacity Settings from DB
-                let settings = { bin: 10, rack: 100 };
+            // Manual fetch function (replaces live sync for better control)
+            let previousDataState = "";
+
+            async function fetchData() {
+                const icon = document.getElementById('refresh-icon');
+                const btn = document.getElementById('refresh-btn');
+
+                if (icon) icon.classList.add('animate-spin');
+                if (btn) btn.disabled = true;
+
                 try {
-                    const rulesSnap = await getDocs(collection(db, 'config', 'inventory_rules', 'rules'));
-                    if (!rulesSnap.empty) {
-                        const rules = {};
-                        rulesSnap.forEach(d => rules[d.id] = d.data());
-                        if (rules.max_bin_capacity) settings.bin = parseInt(rules.max_bin_capacity.value) || 10;
-                        if (rules.bins_per_rack) {
-                            settings.rack = settings.bin * (parseInt(rules.bins_per_rack.value) || 10);
+                    // 1. Fetch Capacity Settings from DB
+                    let settings = { bin: 10, rack: 100 };
+                    try {
+                        const rulesSnap = await getDocs(collection(db, 'config', 'inventory_rules', 'rules'));
+                        if (!rulesSnap.empty) {
+                            const rules = {};
+                            rulesSnap.forEach(d => rules[d.id] = d.data());
+                            if (rules.max_bin_capacity) settings.bin = parseInt(rules.max_bin_capacity.value) || 10;
+                            if (rules.bins_per_rack) {
+                                settings.rack = settings.bin * (parseInt(rules.bins_per_rack.value) || 10);
+                            }
                         }
+                    } catch (e) { console.warn("Settings fetch failed"); }
+
+                    // 2. Fetch Rolls
+                    const snapshot = await getDocs(collection(db, 'yarnRolls'));
+                    const newRolls = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    })).filter(r => r.id && !r.id.toLowerCase().includes('test'));
+
+                    const reservedSnapshot = await getDocs(collection(db, 'reserved_collection'));
+                    const newReserved = reservedSnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    })).filter(r => ['reserved', 'moved'].includes(String(r.state || '').toLowerCase()));
+
+                    const ordersSnapshot = await getDocs(collection(db, 'Order_collection'));
+                    const newOrders = ordersSnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+
+                    // 3. Diff Check - Only update UI if state changed
+                    const currentStateString = JSON.stringify({ rolls: newRolls, reserved: newReserved, orders: newOrders, settings });
+                    if (currentStateString === previousDataState) {
+                        if (icon) icon.classList.remove('animate-spin');
+                        if (btn) btn.disabled = false;
+                        return;
                     }
-                } catch (e) { console.warn("Settings fetch failed"); }
 
-                // 2. Fetch Rolls
-                const snapshot = await getDocs(collection(db, 'yarnRolls'));
-                const newRolls = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                })).filter(r => r.id && !r.id.toLowerCase().includes('test'));
+                    allRolls = newRolls;
+                    reservedRollsFromCollection = newReserved;
+                    allOrders = newOrders;
+                    BIN_CAPACITY = settings.bin;
+                    RACK_CAPACITY = settings.rack;
+                    previousDataState = currentStateString;
 
-                const reservedSnapshot = await getDocs(collection(db, 'reserved_collection'));
-                const newReserved = reservedSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                })).filter(r => ['reserved', 'moved'].includes(String(r.state || '').toLowerCase()));
+                    allRolls.sort((a, b) => new Date(b.production_date) - new Date(a.production_date));
 
-                // 3. Diff Check - Only update UI if state changed
-                const currentStateString = JSON.stringify({ rolls: newRolls, reserved: newReserved, settings });
-                if (currentStateString === previousDataState) {
-                    if (icon) icon.classList.remove('animate-spin');
+                    populateTypeDropdown(allRolls);
+                    updateStats();
+                    updateCharts();
+                    applyFilter(currentFilter);
+
+                    if (icon) {
+                        icon.classList.remove('animate-spin');
+                        icon.classList.add('text-green-500');
+                        setTimeout(() => icon.classList.remove('text-green-500'), 2000);
+                    }
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                } finally {
                     if (btn) btn.disabled = false;
-                    return;
                 }
-
-                allRolls = newRolls;
-                reservedRollsFromCollection = newReserved;
-                BIN_CAPACITY = settings.bin;
-                RACK_CAPACITY = settings.rack;
-                previousDataState = currentStateString;
-
-                allRolls.sort((a, b) => new Date(b.production_date) - new Date(a.production_date));
-
-                populateTypeDropdown(allRolls);
-                updateStats();
-                updateCharts();
-                applyFilter(currentFilter);
-
-                if (icon) {
-                    icon.classList.remove('animate-spin');
-                    icon.classList.add('text-green-500');
-                    setTimeout(() => icon.classList.remove('text-green-500'), 2000);
-                }
-            } catch (error) {
-                console.error('Fetch error:', error);
-            } finally {
-                if (btn) btn.disabled = false;
             }
-        }
-        window.fetchData = fetchData;
+            window.fetchData = fetchData;
 
-        function populateTypeDropdown(rolls) {
-            const distinctTypes = [...new Set(rolls.map(r => r.yarn_type || 'Unknown'))].sort();
-            const dropdowns = ['filter-type', 'warehouse-filter-type'];
+            function populateTypeDropdown(rolls) {
+                const distinctTypes = [...new Set(rolls.map(r => r.yarn_type || 'Unknown'))].sort();
+                const dropdowns = ['filter-type', 'warehouse-filter-type'];
 
-            dropdowns.forEach(id => {
-                const typeSelect = document.getElementById(id);
-                if (!typeSelect) return;
+                dropdowns.forEach(id => {
+                    const typeSelect = document.getElementById(id);
+                    if (!typeSelect) return;
 
-                const currentVal = typeSelect.value;
-                const existingTypes = Array.from(typeSelect.options).map(o => o.value).filter(v => v !== "");
+                    const currentVal = typeSelect.value;
+                    const existingTypes = Array.from(typeSelect.options).map(o => o.value).filter(v => v !== "");
 
-                // Only update if types have changed
-                if (JSON.stringify(existingTypes) === JSON.stringify(distinctTypes)) return;
+                    // Only update if types have changed
+                    if (JSON.stringify(existingTypes) === JSON.stringify(distinctTypes)) return;
 
-                typeSelect.innerHTML = '<option value="">All Types</option>';
-                distinctTypes.forEach(type => {
-                    const opt = document.createElement('option');
-                    opt.value = type;
-                    opt.textContent = type;
-                    typeSelect.appendChild(opt);
+                    typeSelect.innerHTML = '<option value="">All Types</option>';
+                    distinctTypes.forEach(type => {
+                        const opt = document.createElement('option');
+                        opt.value = type;
+                        opt.textContent = type;
+                        typeSelect.appendChild(opt);
+                    });
+                    typeSelect.value = currentVal;
                 });
-                typeSelect.value = currentVal;
-            });
-        }
+            }
 
-        // --- Frontend Aggregation for Stats (Replaces /api/dashboard-stats) ---
-        function calculateWarehouseStats(rolls) {
-            const racks = {};
+            // --- Frontend Aggregation for Stats (Replaces /api/dashboard-stats) ---
+            function calculateWarehouseStats(rolls) {
+                const racks = {};
 
-            rolls.forEach(r => {
-                const rackId = String(r.rack_id || '1').replace(/[Rr]/g, '');
-                const binId = String(r.bin || '1').replace(/[Bb]/g, '');
-                const type = r.yarn_type || 'Unknown';
-                const countStr = r.yarn_count || 'N/A';
+                rolls.forEach(r => {
+                    const rackId = String(r.rack_id || '1').replace(/[Rr]/g, '');
+                    const binId = String(r.bin || '1').replace(/[Bb]/g, '');
+                    const type = r.yarn_type || 'Unknown';
+                    const countStr = r.yarn_count || 'N/A';
 
-                if (!racks[rackId]) {
-                    racks[rackId] = {
-                        rack_id: rackId,
-                        uniqueBins: new Set(),
-                        totalYarns: 0,
-                        bins: {}
-                    };
-                }
+                    if (!racks[rackId]) {
+                        racks[rackId] = {
+                            rack_id: rackId,
+                            uniqueBins: new Set(),
+                            totalYarns: 0,
+                            bins: {}
+                        };
+                    }
 
-                racks[rackId].uniqueBins.add(binId);
-                racks[rackId].totalYarns++;
+                    racks[rackId].uniqueBins.add(binId);
+                    racks[rackId].totalYarns++;
 
-                if (!racks[rackId].bins[binId]) {
-                    racks[rackId].bins[binId] = {
-                        total: 0,
-                        stock: {}
-                    };
-                }
+                    if (!racks[rackId].bins[binId]) {
+                        racks[rackId].bins[binId] = {
+                            total: 0,
+                            stock: {}
+                        };
+                    }
 
-                const stockKey = `${type} | ${countStr}`;
-                if (!racks[rackId].bins[binId].stock[stockKey]) {
-                    racks[rackId].bins[binId].stock[stockKey] = 0;
-                }
+                    const stockKey = `${type} | ${countStr}`;
+                    if (!racks[rackId].bins[binId].stock[stockKey]) {
+                        racks[rackId].bins[binId].stock[stockKey] = 0;
+                    }
 
-                racks[rackId].bins[binId].stock[stockKey]++;
-                racks[rackId].bins[binId].total++;
-            });
+                    racks[rackId].bins[binId].stock[stockKey]++;
+                    racks[rackId].bins[binId].total++;
+                });
 
-            // Convert to array format for template
-            return Object.values(racks).map(r => ({
-                ...r,
-                uniqueBinsCount: r.uniqueBins.size
-            })).sort((a, b) => a.rack_id.localeCompare(b.rack_id, undefined, { numeric: true }));
-        }
+                // Convert to array format for template
+                return Object.values(racks).map(r => ({
+                    ...r,
+                    uniqueBinsCount: r.uniqueBins.size
+                })).sort((a, b) => a.rack_id.localeCompare(b.rack_id, undefined, { numeric: true }));
+            }
 
-        function updateStats() {
-            document.getElementById('total-yarns').textContent = allRolls.length;
+            function updateStats() {
+                document.getElementById('total-yarns').textContent = allRolls.length;
 
-            // Display count from reserved_collection where state is 'reserved'
-            const reservedCount = reservedRollsFromCollection.filter(r =>
-                String(r.state).toLowerCase() === 'reserved'
-            ).length;
-            document.getElementById('reserved-yarns').textContent = reservedCount;
+                // Display count from reserved_collection where state is 'reserved'
+                const reservedCount = reservedRollsFromCollection.filter(r =>
+                    String(r.state).toLowerCase() === 'reserved'
+                ).length;
+                document.getElementById('reserved-yarns').textContent = reservedCount;
 
-            const pickedCount = reservedRollsFromCollection.filter(r =>
-                String(r.state).toLowerCase() === 'moved'
-            ).length;
-            document.getElementById('picked-yarns').textContent = pickedCount;
+                const pickedCount = reservedRollsFromCollection.filter(r =>
+                    String(r.state).toLowerCase() === 'moved'
+                ).length;
+                document.getElementById('picked-yarns').textContent = pickedCount;
 
-            document.getElementById('dispatched-yarns').textContent = allRolls.filter(r => r.state === 'DISPATCHED').length;
+                document.getElementById('dispatched-yarns').textContent = allRolls.filter(r => r.state === 'DISPATCHED').length;
 
-            let uniqueBinLocations = new Set(allRolls.map(r => `${r.rack_id || '?'}-${r.bin || '?'}`));
-            document.getElementById('active-bins').textContent = uniqueBinLocations.size;
+                let uniqueBinLocations = new Set(allRolls.map(r => `${r.rack_id || '?'}-${r.bin || '?'}`));
+                document.getElementById('active-bins').textContent = uniqueBinLocations.size;
 
-            // Render Warehouse Stats locally using yarnRolls data
-            const stats = calculateWarehouseStats(allRolls);
+                // Render Warehouse Stats locally using yarnRolls data
+                const stats = calculateWarehouseStats(allRolls);
 
-            // Get current filter state for highlighting
-            const activeTypeFilter = document.getElementById('filter-type').value;
-            renderWarehouseBreakdown(stats, activeTypeFilter);
-        }
+                // Get current filter state for highlighting
+                const activeTypeFilter = document.getElementById('filter-type').value;
+                renderWarehouseBreakdown(stats, activeTypeFilter);
+            }
 
-        // Reuses the exact same HTML template logic as before - VISUAL RACK VERSION
-        function renderWarehouseBreakdown(racksBreakdown, highlightType = '') {
-            const breakdownContainer = document.getElementById('warehouse-breakdown');
-            document.getElementById('rack-count').textContent = `${racksBreakdown.length} Racks`;
+            // Reuses the exact same HTML template logic as before - VISUAL RACK VERSION
+            function renderWarehouseBreakdown(racksBreakdown, highlightType = '') {
+                const breakdownContainer = document.getElementById('warehouse-breakdown');
+                document.getElementById('rack-count').textContent = `${racksBreakdown.length} Racks`;
 
-            if (racksBreakdown.length === 0) {
-                breakdownContainer.innerHTML = `
+                if (racksBreakdown.length === 0) {
+                    breakdownContainer.innerHTML = `
                      <div class="col-span-full py-16 text-center">
                          <div class="w-20 h-20 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
                              <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -712,44 +773,44 @@
                          <p class="text-slate-300 text-sm mt-1">Add some yarn rolls to get started</p>
                      </div>
                  `;
-                return;
-            }
-
-            breakdownContainer.innerHTML = racksBreakdown.map((rack, rackIdx) => {
-                const sortedBins = Object.entries(rack.bins).sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true, sensitivity: 'base' }));
-
-                // Group bins into "shelves" of 4
-                const binsPerShelf = 4;
-                const shelves = [];
-                for (let i = 0; i < sortedBins.length; i += binsPerShelf) {
-                    shelves.push(sortedBins.slice(i, i + binsPerShelf));
+                    return;
                 }
 
-                // Ensure at least 3 visual shelves for consistency
-                const shelfRows = shelves.map(shelf => `
-                     <div class="shelf-row">
-                         ${shelf.map(([binId, data]) => {
-                    // Logic for highlighting
-                    let isDimmed = false;
-                    let displayCount = data.total;
-                    let countLabel = 'Total';
-                    let highlightClass = '';
+                breakdownContainer.innerHTML = racksBreakdown.map((rack, rackIdx) => {
+                    const sortedBins = Object.entries(rack.bins).sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true, sensitivity: 'base' }));
 
-                    if (highlightType) {
-                        const matchingStock = Object.entries(data.stock).find(([k, v]) => k.split(' | ')[0].trim().toLowerCase() === highlightType.toLowerCase());
-                        if (matchingStock) {
-                            displayCount = matchingStock[1];
-                            countLabel = 'Qty';
-                            highlightClass = 'ring-4 ring-orange-400 ring-offset-2 z-20';
-                        } else {
-                            isDimmed = true;
-                        }
+                    // Group bins into "shelves" of 4
+                    const binsPerShelf = 4;
+                    const shelves = [];
+                    for (let i = 0; i < sortedBins.length; i += binsPerShelf) {
+                        shelves.push(sortedBins.slice(i, i + binsPerShelf));
                     }
 
-                    const capacityPercent = Math.min(100, Math.round((data.total / BIN_CAPACITY) * 100));
-                    const capacityColor = capacityPercent > 90 ? 'bg-red-500' : capacityPercent > 60 ? 'bg-amber-400' : 'bg-green-400';
+                    // Ensure at least 3 visual shelves for consistency
+                    const shelfRows = shelves.map(shelf => `
+                     <div class="shelf-row">
+                         ${shelf.map(([binId, data]) => {
+                        // Logic for highlighting
+                        let isDimmed = false;
+                        let displayCount = data.total;
+                        let countLabel = 'Total';
+                        let highlightClass = '';
 
-                    return `
+                        if (highlightType) {
+                            const matchingStock = Object.entries(data.stock).find(([k, v]) => k.split(' | ')[0].trim().toLowerCase() === highlightType.toLowerCase());
+                            if (matchingStock) {
+                                displayCount = matchingStock[1];
+                                countLabel = 'Qty';
+                                highlightClass = 'ring-4 ring-orange-400 ring-offset-2 z-20';
+                            } else {
+                                isDimmed = true;
+                            }
+                        }
+
+                        const capacityPercent = Math.min(100, Math.round((data.total / BIN_CAPACITY) * 100));
+                        const capacityColor = capacityPercent > 90 ? 'bg-red-500' : capacityPercent > 60 ? 'bg-amber-400' : 'bg-green-400';
+
+                        return `
                              <div class="bin-box group ${isDimmed ? 'opacity-20 grayscale' : ''} ${highlightClass}" 
                                   onclick="openBinModal('${rack.rack_id}', '${binId}')" 
                                   title="Bin ${binId}: ${displayCount} ${countLabel} (Cap: ${data.total}/${BIN_CAPACITY})">
@@ -770,11 +831,11 @@
                      </div>
                  `).join('');
 
-                const emptyShelves = shelves.length < 3
-                    ? `<div class="shelf-row opacity-50"></div>`.repeat(3 - shelves.length)
-                    : '';
+                    const emptyShelves = shelves.length < 3
+                        ? `<div class="shelf-row opacity-50"></div>`.repeat(3 - shelves.length)
+                        : '';
 
-                return `
+                    return `
                  <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col h-full">
                      <div class="flex justify-between items-center mb-6">
                          <div class="flex items-center gap-3">
@@ -800,28 +861,28 @@
                      </div>
                  </div>
              `}).join('');
-        }
+            }
 
-        // Global Modal Functions
-        window.openBinModal = function (rackId, binId) {
-            const stats = calculateWarehouseStats(allRolls);
-            const rack = stats.find(r => r.rack_id == rackId);
-            if (!rack) return;
+            // Global Modal Functions
+            window.openBinModal = function (rackId, binId) {
+                const stats = calculateWarehouseStats(allRolls);
+                const rack = stats.find(r => r.rack_id == rackId);
+                if (!rack) return;
 
-            const binData = rack.bins[binId];
-            if (!binData) return;
+                const binData = rack.bins[binId];
+                if (!binData) return;
 
-            document.getElementById('modal-bin-title').textContent = `Bin ${binId}`;
-            document.getElementById('modal-bin-icon').innerHTML = `
+                document.getElementById('modal-bin-title').textContent = `Bin ${binId}`;
+                document.getElementById('modal-bin-icon').innerHTML = `
                 <span class="text-[10px] uppercase opacity-70 leading-none">Bin</span>
                 <span class="text-xl">${binId}</span>
             `;
-            document.getElementById('modal-rack-info').textContent = `Located in Rack ${rackId}`;
+                document.getElementById('modal-rack-info').textContent = `Located in Rack ${rackId}`;
 
-            // Populate Stats
-            const uniqueTypes = new Set(Object.keys(binData.stock).map(k => k.split(' | ')[0])).size;
+                // Populate Stats
+                const uniqueTypes = new Set(Object.keys(binData.stock).map(k => k.split(' | ')[0])).size;
 
-            document.getElementById('modal-bin-stats').innerHTML = `
+                document.getElementById('modal-bin-stats').innerHTML = `
                 <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
                     <p class="text-xs text-indigo-500 font-bold uppercase tracking-wider mb-1">Total Items</p>
                     <p class="text-3xl font-extrabold text-indigo-700">${binData.total}</p>
@@ -832,11 +893,11 @@
                 </div>
              `;
 
-            // Populate Content Table
-            const tableBody = document.getElementById('modal-bin-content');
-            tableBody.innerHTML = Object.entries(binData.stock).map(([key, count]) => {
-                const [type, count_info] = key.split(' | ');
-                return `
+                // Populate Content Table
+                const tableBody = document.getElementById('modal-bin-content');
+                tableBody.innerHTML = Object.entries(binData.stock).map(([key, count]) => {
+                    const [type, count_info] = key.split(' | ');
+                    return `
                     <tr class="hover:bg-slate-50 transition-colors">
                         <td class="py-3 px-5">
                             <div class="font-bold text-slate-700">${type}</div>
@@ -850,152 +911,233 @@
                         </td>
                     </tr>
                  `;
-            }).join('');
+                }).join('');
 
-            const modal = document.getElementById('bin-modal');
-            modal.classList.add('open');
-            document.body.style.overflow = 'hidden';
-        };
-
-        window.closeBinModal = function (event) {
-            if (event && event.target !== event.currentTarget) return;
-
-            document.getElementById('bin-modal').classList.remove('open');
-            document.body.style.overflow = '';
-        };
-
-        // Close on Escape key
-        document.addEventListener('keydown', function (event) {
-            if (event.key === "Escape") {
-                window.closeBinModal();
-            }
-        });
-
-        function updateCharts() {
-            const setDynamicWidth = (wrapperId, count) => {
-                const wrapper = document.getElementById(wrapperId);
-                const width = Math.max(300, count * 80);
-                wrapper.style.width = width + 'px';
-                wrapper.style.maxWidth = '100%';
+                const modal = document.getElementById('bin-modal');
+                modal.classList.add('open');
+                document.body.style.overflow = 'hidden';
             };
 
-            const rollsByRack = {};
-            allRolls.forEach(r => {
-                const rack = r.rack_id || 'Unassigned';
-                rollsByRack[rack] = (rollsByRack[rack] || 0) + 1;
-            });
-            setDynamicWidth('rackChartWrapper', Object.keys(rollsByRack).length);
+            window.closeBinModal = function (event) {
+                if (event && event.target !== event.currentTarget) return;
 
-            const rollsByType = {};
-            allRolls.forEach(r => {
-                const type = r.yarn_type || 'Unknown';
-                rollsByType[type] = (rollsByType[type] || 0) + 1;
-            });
-            setDynamicWidth('typeChartWrapper', Object.keys(rollsByType).length);
+                document.getElementById('bin-modal').classList.remove('open');
+                document.body.style.overflow = '';
+            };
 
-            const chartConfig = {
-                type: 'bar',
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                        x: { grid: { display: false } }
-                    }
+            window.openOrderModal = function (orderId) {
+                const orderDoc = allOrders.find(o => o.id === orderId);
+                const orderRolls = reservedRollsFromCollection.filter(r => r.order_id === orderId);
+
+                if (!orderDoc) {
+                    alert('Order details not found in database.');
+                    return;
                 }
+
+                document.getElementById('modal-order-id').textContent = orderId;
+                document.getElementById('modal-customer-name').textContent = orderDoc.customer_name || 'Unknown Customer';
+
+                // Render Asked Items
+                const items = orderDoc.items || [{ yarn_type: orderDoc.yarn_type, quantity: orderDoc.quantity }];
+                document.getElementById('modal-order-asked').innerHTML = items.map(item => `
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center">
+                        <span class="font-bold text-slate-700">${item.yarn_type}</span>
+                        <span class="bg-white px-2 py-1 rounded-lg border border-slate-200 text-xs font-bold text-orange-600">${item.quantity} Rolls</span>
+                    </div>
+                `).join('');
+
+                // Render Allocated Rolls
+                document.getElementById('modal-allocated-count').textContent = `${orderRolls.length} Rolls`;
+                document.getElementById('modal-order-allocated').innerHTML = orderRolls.map(roll => `
+                    <div class="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center font-bold text-xs">
+                                #${roll.id.slice(-4)}
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold text-slate-800">${roll.yarn_type}</div>
+                               <div class="text-[10px] text-slate-400 font-medium">Rack ${roll.rack_id} / Bin ${roll.bin} • Lot ${roll.lot_number || '-'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                document.getElementById('order-modal').classList.add('open');
+                document.body.style.overflow = 'hidden';
             };
 
-            // Persistent Rack Chart
-            const rackLabels = Object.keys(rollsByRack);
-            const rackData = Object.values(rollsByRack);
+            window.closeOrderModal = function (event) {
+                if (event && event.target !== event.currentTarget) return;
+                document.getElementById('order-modal').classList.remove('open');
+                document.body.style.overflow = '';
+            };
 
-            if (rackChartInstance) {
-                rackChartInstance.data.labels = rackLabels;
-                rackChartInstance.data.datasets[0].data = rackData;
-                rackChartInstance.update('none'); // Update without animation to prevent flicker
-            } else {
-                const rackCtx = document.getElementById('rackChart').getContext('2d');
-                rackChartInstance = new Chart(rackCtx, {
-                    ...chartConfig,
-                    options: {
-                        ...chartConfig.options,
-                        scales: {
-                            y: { ...chartConfig.options.scales.y, title: { display: true, text: 'Quantity (Rolls)', font: { weight: 'bold' } } },
-                            x: { ...chartConfig.options.scales.x, title: { display: true, text: 'Rack Locations', font: { weight: 'bold' } } }
-                        }
-                    },
-                    data: {
-                        labels: rackLabels,
-                        datasets: [{
-                            label: 'Rolls',
-                            data: rackData,
-                            backgroundColor: '#f97316',
-                            borderRadius: 6,
-                            maxBarThickness: 40
-                        }]
-                    }
+            // Close on Escape key
+            document.addEventListener('keydown', function (event) {
+                if (event.key === "Escape") {
+                    window.closeBinModal();
+                    window.closeOrderModal();
+                }
+            });
+
+            function updateCharts() {
+                const setDynamicWidth = (wrapperId, count) => {
+                    const wrapper = document.getElementById(wrapperId);
+                    const width = Math.max(300, count * 80);
+                    wrapper.style.width = width + 'px';
+                    wrapper.style.maxWidth = '100%';
+                };
+
+                const rollsByRack = {};
+                allRolls.forEach(r => {
+                    const rack = r.rack_id || 'Unassigned';
+                    rollsByRack[rack] = (rollsByRack[rack] || 0) + 1;
                 });
-            }
+                setDynamicWidth('rackChartWrapper', Object.keys(rollsByRack).length);
 
-            // Persistent Type Chart
-            const typeLabels = Object.keys(rollsByType);
-            const typeData = Object.values(rollsByType);
-
-            if (typeChartInstance) {
-                typeChartInstance.data.labels = typeLabels;
-                typeChartInstance.data.datasets[0].data = typeData;
-                typeChartInstance.update('none');
-            } else {
-                const typeCtx = document.getElementById('typeChart').getContext('2d');
-                typeChartInstance = new Chart(typeCtx, {
-                    ...chartConfig,
-                    options: {
-                        ...chartConfig.options,
-                        scales: {
-                            y: { ...chartConfig.options.scales.y, title: { display: true, text: 'Quantity (Rolls)', font: { weight: 'bold' } } },
-                            x: { ...chartConfig.options.scales.x, title: { display: true, text: 'Yarn Types', font: { weight: 'bold' } } }
-                        }
-                    },
-                    data: {
-                        labels: typeLabels,
-                        datasets: [{
-                            label: 'Rolls',
-                            data: typeData,
-                            backgroundColor: '#0ea5e9',
-                            borderRadius: 6,
-                            maxBarThickness: 40
-                        }]
-                    }
+                const rollsByType = {};
+                allRolls.forEach(r => {
+                    const type = r.yarn_type || 'Unknown';
+                    rollsByType[type] = (rollsByType[type] || 0) + 1;
                 });
+                setDynamicWidth('typeChartWrapper', Object.keys(rollsByType).length);
+
+                const chartConfig = {
+                    type: 'bar',
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                };
+
+                // Persistent Rack Chart
+                const rackLabels = Object.keys(rollsByRack);
+                const rackData = Object.values(rollsByRack);
+
+                if (rackChartInstance) {
+                    rackChartInstance.data.labels = rackLabels;
+                    rackChartInstance.data.datasets[0].data = rackData;
+                    rackChartInstance.update('none'); // Update without animation to prevent flicker
+                } else {
+                    const rackCtx = document.getElementById('rackChart').getContext('2d');
+                    rackChartInstance = new Chart(rackCtx, {
+                        ...chartConfig,
+                        options: {
+                            ...chartConfig.options,
+                            scales: {
+                                y: { ...chartConfig.options.scales.y, title: { display: true, text: 'Quantity (Rolls)', font: { weight: 'bold' } } },
+                                x: { ...chartConfig.options.scales.x, title: { display: true, text: 'Rack Locations', font: { weight: 'bold' } } }
+                            }
+                        },
+                        data: {
+                            labels: rackLabels,
+                            datasets: [{
+                                label: 'Rolls',
+                                data: rackData,
+                                backgroundColor: '#f97316',
+                                borderRadius: 6,
+                                maxBarThickness: 40
+                            }]
+                        }
+                    });
+                }
+
+                // Persistent Type Chart
+                const typeLabels = Object.keys(rollsByType);
+                const typeData = Object.values(rollsByType);
+
+                if (typeChartInstance) {
+                    typeChartInstance.data.labels = typeLabels;
+                    typeChartInstance.data.datasets[0].data = typeData;
+                    typeChartInstance.update('none');
+                } else {
+                    const typeCtx = document.getElementById('typeChart').getContext('2d');
+                    typeChartInstance = new Chart(typeCtx, {
+                        ...chartConfig,
+                        options: {
+                            ...chartConfig.options,
+                            scales: {
+                                y: { ...chartConfig.options.scales.y, title: { display: true, text: 'Quantity (Rolls)', font: { weight: 'bold' } } },
+                                x: { ...chartConfig.options.scales.x, title: { display: true, text: 'Yarn Types', font: { weight: 'bold' } } }
+                            }
+                        },
+                        data: {
+                            labels: typeLabels,
+                            datasets: [{
+                                label: 'Rolls',
+                                data: typeData,
+                                backgroundColor: '#0ea5e9',
+                                borderRadius: 6,
+                                maxBarThickness: 40
+                            }]
+                        }
+                    });
+                }
             }
-        }
 
-        function renderGrid(rolls) {
-            const grid = document.getElementById('rolls-grid');
-            const empty = document.getElementById('empty-state');
-            const count = document.getElementById('grid-count');
+            function renderGrid(rolls) {
+                const grid = document.getElementById('rolls-grid');
+                const empty = document.getElementById('empty-state');
+                const count = document.getElementById('grid-count');
 
-            grid.innerHTML = '';
-            count.textContent = rolls.length;
+                grid.innerHTML = '';
+                count.textContent = rolls.length;
 
-            if (rolls.length === 0) {
-                grid.classList.add('hidden');
-                empty.classList.remove('hidden');
-                return;
-            }
+                if (rolls.length === 0) {
+                    grid.classList.add('hidden');
+                    empty.classList.remove('hidden');
+                    return;
+                }
 
-            grid.classList.remove('hidden');
-            empty.classList.add('hidden');
+                grid.classList.remove('hidden');
+                empty.classList.add('hidden');
 
-            rolls.forEach(roll => {
-                const statusClass = roll.state === 'IN STOCK' ? 'status-instock' :
-                    roll.state === 'RESERVED' ? 'status-reserved' :
-                        roll.state === 'DISPATCHED' ? 'status-dispatched' : 'bg-slate-100 text-slate-600';
+                rolls.forEach(item => {
+                    if (item.isOrderGroup) {
+                        // Render Order Card
+                        const card = document.createElement('div');
+                        card.className = 'roll-card border-l-4 border-l-orange-500 cursor-pointer hover:bg-orange-50/30';
+                        card.onclick = () => openOrderModal(item.order_id);
+                        card.innerHTML = `
+                            <div class="flex justify-between items-start mb-3">
+                                 <div class="flex flex-col">
+                                    <span class="text-[10px] font-bold text-orange-600 uppercase tracking-wider">Reserved Order</span>
+                                    <span class="font-bold text-slate-800">${item.customer_name}</span>
+                                 </div>
+                                 <span class="status-badge bg-orange-100 text-orange-600">${item.rolls.length} Rolls</span>
+                            </div>
+                            <div class="space-y-2 text-sm border-t border-slate-50 pt-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-400 text-xs">Order ID</span>
+                                    <span class="font-mono text-xs text-slate-600 font-bold bg-slate-50 px-1.5 py-0.5 rounded">${item.order_id}</span>
+                                </div>
+                                <div class="flex flex-wrap gap-1 mt-2">
+                                    ${Array.from(new Set(item.rolls.map(r => r.yarn_type))).map(type => `
+                                        <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">${type}</span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <div class="mt-4 flex justify-center">
+                                 <span class="text-[10px] text-orange-500 font-bold hover:underline">VIEW ALLOCATION DETAILS →</span>
+                            </div>
+                        `;
+                        grid.appendChild(card);
+                        return;
+                    }
 
-                const card = document.createElement('div');
-                card.className = 'roll-card';
-                card.innerHTML = `
+                    const roll = item;
+                    const statusClass = roll.state === 'IN STOCK' ? 'status-instock' :
+                        roll.state === 'RESERVED' ? 'status-reserved' :
+                            roll.state === 'DISPATCHED' ? 'status-dispatched' : 'bg-slate-100 text-slate-600';
+
+                    const card = document.createElement('div');
+                    card.className = 'roll-card';
+                    card.innerHTML = `
                     <div class="flex justify-between items-start mb-4">
                         <span class="font-bold text-lg text-slate-800">#${roll.id}</span>
                         <span class="status-badge ${statusClass}">${roll.state}</span>
@@ -1015,79 +1157,111 @@
                         </div>
                     </div>
                 `;
-                grid.appendChild(card);
-            });
-        }
-
-        window.applyFilter = function (filterType) {
-            currentFilter = filterType;
-            let filtered = [];
-
-            document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
-
-            if (filterType === 'all') {
-                filtered = allRolls;
-                document.getElementById('grid-title').textContent = 'All Yarn Rolls';
-            } else if (filterType === 'reserved') {
-                filtered = allRolls.filter(r => r.state === 'RESERVED');
-                document.getElementById('grid-title').textContent = 'Reserved Yarns';
-            } else if (filterType === 'picked') {
-                filtered = reservedRollsFromCollection.filter(r => String(r.state).toLowerCase() === 'moved');
-                document.getElementById('grid-title').textContent = 'Picked Yarns';
-            } else if (filterType === 'dispatched') {
-                filtered = allRolls.filter(r => r.state === 'DISPATCHED');
-                document.getElementById('grid-title').textContent = 'Dispatched Yarns';
+                    grid.appendChild(card);
+                });
             }
 
-            // EXTENDED FILTERS
-            const search = document.getElementById('filter-search').value.toLowerCase();
-            const bin = document.getElementById('filter-bin').value.toLowerCase();
-            const rack = document.getElementById('filter-rack').value.toLowerCase();
-            const type = document.getElementById('filter-type').value.toLowerCase();
+            window.applyFilter = function (filterType) {
+                currentFilter = filterType;
+                let filtered = [];
 
-            filtered = filtered.filter(r => {
-                const matchSearch = !search ||
-                    r.id.toLowerCase().includes(search) ||
-                    (r.yarn_type && r.yarn_type.toLowerCase().includes(search)) ||
-                    (r.lot_number && r.lot_number.toLowerCase().includes(search));
+                document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
 
-                const matchBin = !bin || String(r.bin || '').toLowerCase().includes(bin);
-                const matchRack = !rack || String(r.rack_id || '').toLowerCase().includes(rack);
-                const matchType = !type || (r.yarn_type || '').toLowerCase() === type.toLowerCase();
+                if (filterType === 'all') {
+                    filtered = allRolls;
+                    document.getElementById('grid-title').textContent = 'All Yarn Rolls';
+                } else if (filterType === 'reserved') {
+                    // Group by Order
+                    const grouped = {};
+                    reservedRollsFromCollection.filter(r => String(r.state).toLowerCase() === 'reserved').forEach(r => {
+                        const oid = r.order_id || 'UNKNOWN';
+                        if (!grouped[oid]) {
+                            const orderObj = allOrders.find(o => o.id === oid) || {};
+                            grouped[oid] = {
+                                order_id: oid,
+                                customer_name: orderObj.customer_name || 'Unknown',
+                                rolls: [],
+                                isOrderGroup: true
+                            };
+                        }
+                        grouped[oid].rolls.push(r);
+                    });
+                    filtered = Object.values(grouped);
+                    document.getElementById('grid-title').textContent = 'Reserved Orders';
+                } else if (filterType === 'picked') {
+                    const grouped = {};
+                    reservedRollsFromCollection.filter(r => String(r.state).toLowerCase() === 'moved').forEach(r => {
+                        const oid = r.order_id || 'UNKNOWN';
+                        if (!grouped[oid]) {
+                            const orderObj = allOrders.find(o => o.id === oid) || {};
+                            grouped[oid] = {
+                                order_id: oid,
+                                customer_name: orderObj.customer_name || 'Unknown',
+                                rolls: [],
+                                isOrderGroup: true
+                            };
+                        }
+                        grouped[oid].rolls.push(r);
+                    });
+                    filtered = Object.values(grouped);
+                    document.getElementById('grid-title').textContent = 'Picked Orders';
+                } else if (filterType === 'dispatched') {
+                    filtered = allRolls.filter(r => r.state === 'DISPATCHED');
+                    document.getElementById('grid-title').textContent = 'Dispatched Yarns';
+                }
 
-                return matchSearch && matchBin && matchRack && matchType;
+                // EXTENDED FILTERS
+                const search = document.getElementById('filter-search').value.toLowerCase();
+                const bin = document.getElementById('filter-bin').value.toLowerCase();
+                const rack = document.getElementById('filter-rack').value.toLowerCase();
+                const type = document.getElementById('filter-type').value.toLowerCase();
+
+                filtered = filtered.filter(r => {
+                    const searchStr = r.isOrderGroup ?
+                        `${r.customer_name} ${r.order_id} ${r.rolls.map(rr => rr.yarn_type).join(' ')}` :
+                        `${r.id} ${r.yarn_type} ${r.lot_number}`;
+
+                    const matchSearch = !search || searchStr.toLowerCase().includes(search);
+
+                    if (r.isOrderGroup) return matchSearch;
+
+                    const matchBin = !bin || String(r.bin || '').toLowerCase().includes(bin);
+                    const matchRack = !rack || String(r.rack_id || '').toLowerCase().includes(rack);
+                    const matchType = !type || (r.yarn_type || '').toLowerCase() === type.toLowerCase();
+
+                    return matchSearch && matchBin && matchRack && matchType;
+                });
+
+                // Update the Warehouse Visuals to reflect yarnRolls data
+                const typeFilter = document.getElementById('filter-type').value;
+                const stats = calculateWarehouseStats(allRolls);
+                // PASS the type filter to the renderer
+                renderWarehouseBreakdown(stats, typeFilter);
+
+                renderGrid(filtered);
+            };
+
+            // Initialize Listeners
+            ['filter-search', 'filter-bin', 'filter-rack'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', () => applyFilter(currentFilter));
             });
 
-            // Update the Warehouse Visuals to reflect yarnRolls data
-            const typeFilter = document.getElementById('filter-type').value;
-            const stats = calculateWarehouseStats(allRolls);
-            // PASS the type filter to the renderer
-            renderWarehouseBreakdown(stats, typeFilter);
+            const syncTypeFilters = (e) => {
+                const val = e.target.value;
+                document.getElementById('filter-type').value = val;
+                document.getElementById('warehouse-filter-type').value = val;
+                applyFilter(currentFilter);
+            };
 
-            renderGrid(filtered);
-        };
+            ['filter-type', 'warehouse-filter-type'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('change', syncTypeFilters);
+            });
 
-        // Initialize Listeners
-        ['filter-search', 'filter-bin', 'filter-rack'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('input', () => applyFilter(currentFilter));
-        });
-
-        const syncTypeFilters = (e) => {
-            const val = e.target.value;
-            document.getElementById('filter-type').value = val;
-            document.getElementById('warehouse-filter-type').value = val;
-            applyFilter(currentFilter);
-        };
-
-        ['filter-type', 'warehouse-filter-type'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('change', syncTypeFilters);
-        });
-
-        // Initial data load
-        fetchData();
-    </script>
+            // Initial data load
+            fetchData();
+        </script>
 </body>
 
 </html>
