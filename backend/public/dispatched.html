@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dispatched Report | Yarn Roll Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link rel="stylesheet" href="/navbar.css">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        .glass-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e2e8f0;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        th {
+            background: #f1f5f9;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.875rem;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: #f8fafc;
+        }
+
+        .filter-select {
+            height: 42px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            padding: 0 1rem;
+            outline: none;
+            font-size: 0.875rem;
+            background: white;
+            transition: border-color 0.2s;
+        }
+
+        .filter-select:focus {
+            border-color: #f97316;
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-type {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .badge-location {
+            background: #f0fdf4;
+            color: #166534;
+        }
+
+        /* Flatpickr Custom Styling */
+        .flatpickr-calendar {
+            background: white !important;
+            border-radius: 16px !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+            border: 1px solid #e2e8f0 !important;
+            font-family: 'Outfit', sans-serif !important;
+        }
+
+        .flatpickr-day.selected,
+        .flatpickr-day.startRange,
+        .flatpickr-day.endRange {
+            background: #f97316 !important;
+            border-color: #f97316 !important;
+        }
+
+        .flatpickr-day.inRange {
+            background: #fff7ed !important;
+            box-shadow: -5px 0 0 #fff7ed, 5px 0 0 #fff7ed !important;
+        }
+
+        .flatpickr-day:hover {
+            background: #f1f5f9 !important;
+        }
+
+        .range-input-wrapper {
+            position: relative;
+            min-width: 280px;
+        }
+
+        .range-input-wrapper svg {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            pointer-events: none;
+        }
+
+        .range-input-wrapper input {
+            padding-left: 40px !important;
+        }
+
+        /* Month Scroller Styling */
+        .month-scroller {
+            display: flex;
+            overflow-x: auto;
+            gap: 0.75rem;
+            padding: 0.5rem 0.25rem;
+            scrollbar-width: none;
+            /* Firefox */
+            -ms-overflow-style: none;
+            /* IE/Edge */
+        }
+
+        .month-scroller::-webkit-scrollbar {
+            display: none;
+            /* Chrome/Safari */
+        }
+
+        .month-pill {
+            padding: 0.5rem 1.25rem;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #64748b;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+
+        .month-pill:hover {
+            border-color: #f97316;
+            color: #f97316;
+            background: #fff7ed;
+        }
+
+        .month-pill.active {
+            background: #f97316;
+            color: white;
+            border-color: #f97316;
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.25);
+            transform: scale(1.05);
+        }
+
+        /* Month Popup Styling */
+        .month-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .month-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: white;
+            padding: 1.5rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            display: none;
+            width: 90%;
+            max-width: 600px;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .month-popup.show {
+            display: block;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .month-popup-overlay.show {
+            display: block;
+            opacity: 1;
+        }
+
+        .month-trigger {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 0 1rem;
+            height: 42px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .month-trigger:hover {
+            border-color: #f97316;
+            background: #fff7ed;
+        }
+
+        .month-trigger .current-val {
+            color: #f97316;
+            font-weight: 700;
+        }
+    </style>
+    </style>
+</head>
+
+<body class="min-h-screen pb-10">
+    <script src="/navbar.js"></script>
+
+    <main class="max-w-[1400px] mx-auto px-6 py-8 mt-20">
+        <header class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">Dispatched Rolls</h1>
+                <p class="text-slate-500 mt-2 text-lg">Detailed history of dispatched inventory</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="exportToCSV()"
+                    class="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-black transition-all active:scale-95 shadow-lg shadow-slate-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    EXPORT CSV
+                </button>
+            </div>
+        </header>
+
+        <!-- Filters Section -->
+        <div class="glass-card p-6 mb-8 flex flex-wrap items-center gap-6">
+            <div class="flex flex-col gap-2">
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-widest">Yarn Type</label>
+                <select id="type-filter" class="filter-select min-w-[200px]" onchange="applyFilters()">
+                    <option value="all">All Yarn Types</option>
+                </select>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-widest">Select Month</label>
+                <div class="month-trigger" onclick="toggleMonthPopup()">
+                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                    <span id="month-display" class="current-val">All Months</span>
+                </div>
+            </div>
+
+            <!-- Month Selection Popup -->
+            <div id="month-overlay" class="month-popup-overlay" onclick="toggleMonthPopup()"></div>
+            <div id="month-popup" class="month-popup">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-slate-800">Choose Month</h3>
+                    <button onclick="toggleMonthPopup()" class="text-slate-400 hover:text-slate-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="month-scroller" class="month-scroller">
+                    <!-- Pills injected here -->
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-widest">Date Range
+                    (Week/Custom)</label>
+                <div class="range-input-wrapper">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                    <input type="text" id="date-range-filter" class="filter-select w-full"
+                        placeholder="Select date range...">
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2 ml-auto">
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-widest text-right">Records
+                    Found</label>
+                <div id="results-count" class="text-2xl font-black text-orange-600">0</div>
+            </div>
+        </div>
+
+        <!-- Table Section -->
+        <div class="glass-card overflow-hidden">
+            <div class="table-container">
+                <table id="dispatched-table">
+                    <thead>
+                        <tr>
+                            <th>S.No</th>
+                            <th>Roll ID</th>
+                            <th>Item (Yarn Type)</th>
+                            <th>Count (Yarn Count)</th>
+                            <th>Weight / Rate</th>
+                            <th>Date Dispatched</th>
+                            <th>Status</th>
+                            <th>Location (Rack/Bin)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dispatched-tbody">
+                        <!-- Rows will be injected here -->
+                        <tr>
+                            <td colspan="7" class="py-20 text-center text-slate-400">
+                                <div class="flex flex-col items-center">
+                                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mb-4">
+                                    </div>
+                                    Loading dispatch records...
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let dispatchedData = [];
+        let filteredData = [];
+        let datePicker = null;
+        let selectedMonth = 'all';
+
+        async function init() {
+            try {
+                // Initialize Flatpickr
+                datePicker = flatpickr("#date-range-filter", {
+                    mode: "range",
+                    dateFormat: "Y-m-d",
+                    altInput: true,
+                    altFormat: "d M, Y",
+                    onChange: function () {
+                        applyFilters();
+                    }
+                });
+
+                const response = await fetch('/api/dispatched');
+                dispatchedData = await response.json();
+
+                // Initialize filters
+                populateFilters();
+
+                // Show data
+                applyFilters();
+            } catch (error) {
+                console.error('Failed to fetch dispatched rolls:', error);
+                document.getElementById('dispatched-tbody').innerHTML = `
+                    <tr>
+                        <td colspan="7" class="py-20 text-center text-rose-500 font-bold">
+                            Failed to load records. Please try again.
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function populateFilters() {
+            const typeFilter = document.getElementById('type-filter');
+            const scroller = document.getElementById('month-scroller');
+
+            // Unique Yarn Types
+            const types = [...new Set(dispatchedData.map(d => d.yarn_type))].filter(Boolean).sort();
+            types.forEach(type => {
+                const opt = document.createElement('option');
+                opt.value = type;
+                opt.textContent = type;
+                typeFilter.appendChild(opt);
+            });
+
+            // Unique Months
+            const monthMap = new Map();
+
+            dispatchedData.forEach(d => {
+                const dateStr = d.delivered_at || d.last_state_change || d.production_date;
+                if (!dateStr) return;
+
+                const date = new Date(dateStr);
+
+                // Month Logic
+                const monthName = date.toLocaleString('default', { month: 'long' });
+                const year = date.getFullYear();
+                const monthLabel = `${monthName} ${year}`;
+                const monthSortKey = date.getFullYear() * 100 + date.getMonth();
+                if (!monthMap.has(monthLabel)) monthMap.set(monthLabel, monthSortKey);
+            });
+
+            // Populate Month Pills
+            const sortedMonths = Array.from(monthMap.entries())
+                .sort((a, b) => b[1] - a[1]); // Newer first
+
+            // Reset and build scroller
+            scroller.innerHTML = `<div class="month-pill ${selectedMonth === 'all' ? 'active' : ''}" onclick="selectMonth('all')">All History</div>`;
+
+            sortedMonths.forEach(([month, _]) => {
+                const pill = document.createElement('div');
+                pill.className = `month-pill ${selectedMonth === month ? 'active' : ''}`;
+                pill.textContent = month;
+                pill.onclick = () => selectMonth(month);
+                scroller.appendChild(pill);
+            });
+        }
+
+        function selectMonth(month) {
+            selectedMonth = month;
+            const display = document.getElementById('month-display');
+            display.textContent = month === 'all' ? 'All Months' : month;
+
+            // Update UI
+            document.querySelectorAll('.month-pill').forEach(p => {
+                if (p.textContent === (month === 'all' ? 'All History' : month)) {
+                    p.classList.add('active');
+                } else {
+                    p.classList.remove('active');
+                }
+            });
+
+            toggleMonthPopup(); // Close popup
+            applyFilters();
+        }
+
+        function toggleMonthPopup() {
+            const popup = document.getElementById('month-popup');
+            const overlay = document.getElementById('month-overlay');
+            const isShowing = popup.classList.contains('show');
+
+            if (isShowing) {
+                popup.classList.remove('show');
+                overlay.classList.remove('show');
+            } else {
+                popup.classList.add('show');
+                overlay.classList.add('show');
+            }
+        }
+
+        function applyFilters() {
+            const typeVal = document.getElementById('type-filter').value;
+            const selectedDates = datePicker ? datePicker.selectedDates : [];
+
+            filteredData = dispatchedData.filter(d => {
+                const dateStr = d.delivered_at || d.last_state_change || d.production_date;
+                const dDate = new Date(dateStr);
+                dDate.setHours(0, 0, 0, 0); // Normalize to midnight for range comparison
+
+                // Type filter
+                const matchesType = typeVal === 'all' || d.yarn_type === typeVal;
+
+                // Month filter
+                const monthName = dDate.toLocaleString('default', { month: 'long' });
+                const year = dDate.getFullYear();
+                const monthStr = `${monthName} ${year}`;
+                const matchesMonth = selectedMonth === 'all' || monthStr === selectedMonth;
+
+                // Range filter (Week/Dates)
+                let matchesRange = true;
+                if (selectedDates.length === 1) {
+                    // Specific date
+                    const targetDate = new Date(selectedDates[0]);
+                    targetDate.setHours(0, 0, 0, 0);
+                    matchesRange = dDate.getTime() === targetDate.getTime();
+                } else if (selectedDates.length === 2) {
+                    // Range
+                    const start = new Date(selectedDates[0]);
+                    start.setHours(0, 0, 0, 0);
+                    const end = new Date(selectedDates[1]);
+                    end.setHours(23, 59, 59, 999);
+                    matchesRange = dDate >= start && dDate <= end;
+                }
+
+                return matchesType && matchesMonth && matchesRange;
+            });
+
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('dispatched-tbody');
+            const countEl = document.getElementById('results-count');
+
+            countEl.textContent = filteredData.length;
+
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="py-20 text-center text-slate-400">
+                            No records found matching your filters.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filteredData.map((d, index) => {
+                const dateObj = new Date(d.delivered_at || d.last_state_change || d.production_date);
+                const dateStr = dateObj.toLocaleDateString('en-IN', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                return `
+                    <tr>
+                        <td class="font-bold text-slate-400">${index + 1}</td>
+                        <td class="font-mono text-xs text-blue-600 font-bold">${d.id || 'N/A'}</td>
+                        <td class="font-bold text-slate-800">${d.yarn_type || 'Unknown'}</td>
+                        <td class="font-semibold text-slate-600">${d.yarn_count || 'N/A'}</td>
+                        <td>
+                            <div class="flex flex-col">
+                                <span class="font-bold text-slate-800">${d.weight || '0'} kg</span>
+                                <span class="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Rate: ${d.rate || '0.00'}</span>
+                            </div>
+                        </td>
+                        <td class="text-slate-500 font-medium">${dateStr}</td>
+                        <td>
+                            <span class="badge bg-green-100 text-green-700 uppercase">${d.state || 'DISPATCHED'}</span>
+                        </td>
+                        <td>
+                            <div class="flex items-center gap-2">
+                                <span class="badge badge-location">Rack ${d.rack_id || '?'}</span>
+                                <span class="badge badge-location">Bin ${d.bin || '?'}</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function exportToCSV() {
+            if (filteredData.length === 0) return;
+
+            const headers = ['S.No', 'Roll ID', 'Item', 'Count', 'Weight', 'Rate', 'Date', 'Status', 'Rack', 'Bin'];
+            const rows = filteredData.map((d, i) => [
+                i + 1,
+                d.id,
+                d.yarn_type,
+                d.yarn_count,
+                d.weight,
+                d.rate || 0,
+                new Date(d.delivered_at || d.last_state_change || d.production_date).toLocaleString(),
+                d.state || 'DISPATCHED',
+                d.rack_id,
+                d.bin
+            ]);
+
+            let csvContent = "data:text/csv;charset=utf-8,"
+                + headers.join(",") + "\n"
+                + rows.map(e => e.join(",")).join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `dispatched_report_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+
+</html>

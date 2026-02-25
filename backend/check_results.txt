@@ -1,0 +1,5 @@
+--- Checking for DISPATCHED State ---
+Deliveries Collection: 0 documents
+yarnRolls with state 'DISPATCHED': 4 documents
+Example: YR-2026-161
+inventory with state 'DISPATCHED': 0 documents

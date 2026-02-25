@@ -76,10 +76,13 @@
                                     <label
                                         class="block text-slate-500 text-xs font-medium mb-1 uppercase tracking-wider">Yarn
                                         Quality</label>
-                                    <select required name="yarn_type"
+                                    <select required name="yarn_type" onchange="updateRowStock(this)"
                                         class="yarn-type-select w-full p-4 rounded-xl input-field focus:outline-none focus:ring-1 focus:ring-orange-500 appearance-none">
-                                        <option value="" disabled selected>Loading qualities...</option>
+                                        <option value="" selected disabled>Select</option>
+                                        <option value="" disabled>Loading qualities...</option>
                                     </select>
+                                    <div class="row-stock-info mt-1 text-[10px] font-bold text-orange-600 h-4 px-1">
+                                    </div>
                                 </div>
                                 <div>
                                     <label
@@ -148,6 +151,16 @@
                 const container = document.getElementById('itemsContainer');
                 const row = document.createElement('div');
                 row.className = 'item-row glass p-4 rounded-2xl border border-orange-100/50 relative group animate-in slide-in-from-top-2 duration-300';
+
+                let qualityOptions = '<option value="" selected disabled>Select</option>';
+                if (cachedQualities.length > 0) {
+                    qualityOptions += cachedQualities.map(t =>
+                        `<option value="${t}">${t} (${typeCounts[t]} rolls)</option>`
+                    ).join('');
+                } else {
+                    qualityOptions += '<option disabled>Loading...</option>';
+                }
+
                 row.innerHTML = `
                     <button type="button" onclick="this.parentElement.remove()" 
                         class="absolute -right-2 -top-2 bg-white text-rose-500 rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity border border-rose-100">
@@ -156,10 +169,11 @@
                     <div class="grid grid-cols-1 gap-4">
                         <div>
                             <label class="block text-slate-500 text-sm font-medium mb-1 uppercase tracking-wider" style="font-size: 0.65rem;">Yarn Quality</label>
-                            <select required name="yarn_type"
+                            <select required name="yarn_type" onchange="updateRowStock(this)"
                                 class="yarn-type-select w-full p-4 rounded-xl input-field focus:outline-none focus:ring-1 focus:ring-orange-500 appearance-none">
-                                ${cachedQualities.map(t => `<option value="${t}">${t}</option>`).join('') || '<option disabled selected>Loading...</option>'}
+                                ${qualityOptions}
                             </select>
+                            <div class="row-stock-info mt-1 text-[10px] font-bold text-orange-600 h-4 px-1"></div>
                         </div>
                         <div>
                             <label class="block text-slate-500 text-sm font-medium mb-1 uppercase tracking-wider" style="font-size: 0.65rem;">Quantity (Rolls)</label>
@@ -170,13 +184,6 @@
                     </div>
                 `;
                 container.appendChild(row);
-                // If we already have qualities, update the new select
-                if (cachedQualities.length > 0) {
-                    const select = row.querySelector('.yarn-type-select');
-                    select.innerHTML = cachedQualities.map(t => `<option value="${t}">${t}</option>`).join('');
-                } else {
-                    populateQualities();
-                }
             }
 
             document.getElementById('orderForm').onsubmit = async (e) => {
@@ -220,30 +227,57 @@
                 }
             };
 
+            let typeCounts = {};
+
             async function populateQualities() {
                 try {
                     const response = await fetch('/api/rolls');
                     const rolls = await response.json();
 
-                    cachedQualities = [...new Set(rolls
-                        .filter(r => !r.id.toLowerCase().includes('test'))
-                        .map(r => r.yarn_type)
-                        .filter(t => t)
-                    )].sort();
+                    // Filter available rolls and calculate counts
+                    const availableRolls = rolls.filter(r =>
+                        !r.id.toLowerCase().includes('test') &&
+                        (r.state === 'IN STOCK' || r.state === 'AVAILABLE' || !r.state)
+                    );
+
+                    typeCounts = {};
+                    availableRolls.forEach(r => {
+                        const type = r.yarn_type || 'Unknown';
+                        typeCounts[type] = (typeCounts[type] || 0) + 1;
+                    });
+
+                    cachedQualities = Object.keys(typeCounts).sort();
 
                     const selects = document.querySelectorAll('.yarn-type-select');
                     selects.forEach(select => {
                         const currentVal = select.value;
+                        let options = '<option value="" selected disabled>Select</option>';
+
                         if (cachedQualities.length === 0) {
-                            select.innerHTML = '<option value="" disabled selected>No qualities available</option>';
+                            options = '<option value="" disabled>No qualities available</option>';
                         } else {
-                            select.innerHTML = cachedQualities.map(t =>
-                                `<option value="${t}" ${t === currentVal ? 'selected' : ''}>${t}</option>`
+                            options += cachedQualities.map(t =>
+                                `<option value="${t}" ${t === currentVal ? 'selected' : ''}>${t} (${typeCounts[t]} rolls)</option>`
                             ).join('');
                         }
+                        select.innerHTML = options;
+                        updateRowStock(select);
                     });
                 } catch (err) {
                     console.error('Failed to load qualities:', err);
+                }
+            }
+
+            function updateRowStock(select) {
+                const type = select.value;
+                const container = select.parentElement;
+                const infoDiv = container.querySelector('.row-stock-info');
+                if (infoDiv) {
+                    if (type && typeCounts[type] !== undefined) {
+                        infoDiv.innerText = `● ${typeCounts[type]} rolls available in warehouse`;
+                    } else {
+                        infoDiv.innerText = '';
+                    }
                 }
             }
 

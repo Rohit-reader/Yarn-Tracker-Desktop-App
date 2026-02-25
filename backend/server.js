@@ -429,6 +429,17 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
+app.get('/api/approved-orders', async (req, res) => {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'approved_orders'));
+    const approvedOrders = querySnapshot.docs.map(doc => doc.data());
+    res.json(approvedOrders);
+  } catch (error) {
+    console.error('Error fetching approved orders:', error);
+    res.status(500).json({ error: 'Failed to fetch approved orders' });
+  }
+});
+
 app.get('/api/reserved', async (req, res) => {
   try {
     const querySnapshot = await getDocs(collection(db, 'reserved_collection'));
@@ -437,6 +448,48 @@ app.get('/api/reserved', async (req, res) => {
   } catch (error) {
     console.error('Error fetching reserved collection:', error);
     res.status(500).json({ error: 'Failed to fetch reserved collection' });
+  }
+});
+
+app.get('/api/dispatched', async (req, res) => {
+  try {
+    console.log('\n🚚 GET /api/dispatched - Fetching all delivered rolls');
+
+    // 1. Fetch from 'deliveries' collection
+    const deliveriesQuery = query(collection(db, 'deliveries'), orderBy('delivered_at', 'desc'));
+    const deliveriesSnap = await getDocs(deliveriesQuery);
+    const deliveries = deliveriesSnap.docs.map(doc => ({
+      ...doc.data(),
+      firebaseId: doc.id
+    }));
+
+    // 2. Fetch from 'yarnRolls' where state is 'DISPATCHED' (Recovery/Legacy sync)
+    const legacyQuery = query(collection(db, 'yarnRolls'), where('state', '==', 'DISPATCHED'));
+    const legacySnap = await getDocs(legacyQuery);
+    const legacyDispatched = legacySnap.docs.map(doc => ({
+      ...doc.data(),
+      firebaseId: doc.id
+    }));
+
+    // Merge and deduplicate by ID
+    const mergedMap = new Map();
+    legacyDispatched.forEach(r => mergedMap.set(r.id, r));
+    deliveries.forEach(r => mergedMap.set(r.id, r)); // deliveries should overwrite legacy if both exist
+
+    const dispatched = Array.from(mergedMap.values());
+
+    // Sort by date (delivered_at or production_date)
+    dispatched.sort((a, b) => {
+      const dateA = new Date(a.delivered_at || a.production_date || 0);
+      const dateB = new Date(b.delivered_at || b.production_date || 0);
+      return dateB - dateA;
+    });
+
+    console.log(`🔍 Found ${dispatched.length} dispatched records.`);
+    res.json(dispatched);
+  } catch (error) {
+    console.error('Error fetching dispatched rolls:', error);
+    res.status(500).json({ error: 'Failed to fetch dispatched rolls' });
   }
 });
 app.post('/api/orders/:id/approve', async (req, res) => {
@@ -543,7 +596,26 @@ app.post('/api/orders/:id/approve', async (req, res) => {
       assignedRolls: rollsToReserve.map(r => r.id)
     });
 
-    console.log(`   ✅ Order ${orderId} approved successfully`);
+    // --- NEW: Save to approved_orders collection ---
+    const approvedOrderData = {
+      customer_name: orderData.customer_name,
+      order_id: orderId,
+      items_requested: orderItems,
+      allocations: rollsToReserve.map(r => ({
+        roll_id: r.id,
+        rack: r.rack_id || '1',
+        bin: r.bin || '1',
+        yarn_type: r.yarn_type || 'Unknown',
+        yarn_count: r.yarn_count || 'N/A'
+      })),
+      approved_at: now
+    };
+
+    // Using customer_name as document ID as requested
+    // Using setDoc to create or update the document for this specific customer
+    await setDoc(doc(db, 'approved_orders', orderData.customer_name), approvedOrderData);
+
+    console.log(`   ✅ Order ${orderId} approved successfully and recorded in approved_orders`);
     res.json({
       success: true,
       message: `Order approved and ${rollsToReserve.length} rolls reserved`,
@@ -901,7 +973,7 @@ app.delete('/api/rolls/clear-all', async (req, res) => {
     const collectionsToClear = [
       'inventory', 'racks', 'yarnRolls', 'reserved_collection',
       'picking_collection', 'deliveries', 'scanHistory', 'testing_qrs',
-      'orders', 'notifications'
+      'orders', 'notifications', 'approved_orders'
     ];
 
     const deletePromises = [];
