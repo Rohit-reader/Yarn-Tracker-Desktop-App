@@ -242,6 +242,7 @@
 </head>
 
 <body class="min-h-screen pb-10">
+    <div id="navbar-placeholder"></div>
     <!-- Navbar will be injected here -->
     <script src="/navbar.js"></script>
 
@@ -693,9 +694,12 @@
             renderWarehouseBreakdown(stats, activeTypeFilter);
         }
 
-        // Reuses the exact same HTML template logic as before - VISUAL RACK VERSION
+        let lastWarehouseState = "";
         function renderWarehouseBreakdown(racksBreakdown, highlightType = '') {
             const breakdownContainer = document.getElementById('warehouse-breakdown');
+            const currentState = JSON.stringify({ racksBreakdown, highlightType, BIN_CAPACITY, RACK_CAPACITY });
+            if (currentState === lastWarehouseState) return;
+            lastWarehouseState = currentState;
             document.getElementById('rack-count').textContent = `${racksBreakdown.length} Racks`;
 
             if (racksBreakdown.length === 0) {
@@ -965,8 +969,12 @@
             }
         }
 
+        let lastGridState = "";
         function renderGrid(rolls) {
             const grid = document.getElementById('rolls-grid');
+            const currentState = JSON.stringify(rolls);
+            if (currentState === lastGridState) return;
+            lastGridState = currentState;
             const empty = document.getElementById('empty-state');
             const count = document.getElementById('grid-count');
 

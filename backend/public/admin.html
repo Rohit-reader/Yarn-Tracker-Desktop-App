@@ -34,7 +34,8 @@
         }
 
         .glass-card:hover {
-            background: var(--glass-bg);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.1);
         }
 
         .notification-badge {
@@ -130,6 +131,7 @@
 </head>
 
 <body class="flex flex-col">
+    <div id="navbar-placeholder"></div>
     <!-- Main Content -->
     <main class="flex-1 main-content p-8 min-h-screen">
         <header class="flex justify-between items-center mb-10">
@@ -139,8 +141,7 @@
             </div>
             <div class="flex items-center gap-4">
                 <div class="relative group">
-                    <button onclick="toggleNotifications()"
-                        class="p-3 glass-card hover:bg-white/10 transition relative">
+                    <button onclick="toggleNotifications()" class="p-3 glass-card transition relative">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
                                 d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
@@ -162,8 +163,8 @@
                         </div>
                     </div>
                 </div>
-                <button id="refresh-btn" onclick="fetchData()"
-                    class="p-3 glass-card hover:bg-white/10 transition active:scale-95" title="Refresh Data">
+                <button id="refresh-btn" onclick="fetchData()" class="p-3 glass-card transition active:scale-95"
+                    title="Refresh Data">
                     <svg id="refresh-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
                             d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
@@ -450,7 +451,7 @@
             if (notifs.length > 0) {
                 badge.classList.remove('hidden');
                 container.innerHTML = notifs.map(n => `
-                    <div class="p-4 border-b border-slate-200 hover:bg-slate-50 transition cursor-pointer">
+                    <div class="p-4 border-b border-slate-200 transition cursor-pointer hover:translate-x-1">
                         <p class="text-xs text-orange-500 mb-1">${new Date(n.createdAt).toLocaleTimeString()}</p>
                         <p class="text-sm font-semibold text-slate-800">${n.title}</p>
                         <p class="text-xs text-slate-500 mt-1">${n.message}</p>
@@ -549,8 +550,12 @@
             renderQueue();
         }
 
+        let lastRenderedQueue = "";
         function renderQueue() {
             const container = document.getElementById('orderQueue');
+            const currentRender = JSON.stringify(filteredOrders);
+            if (currentRender === lastRenderedQueue) return;
+            lastRenderedQueue = currentRender;
 
             if (filteredOrders.length === 0) {
                 container.innerHTML = `
@@ -566,7 +571,7 @@
                 const isApproved = order.status === 'APPROVED';
 
                 return `
-                <div class="glass-card p-6 pr-12 flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0 relative group ${isApproved ? 'cursor-pointer hover:bg-emerald-50/30' : ''}" 
+                <div class="glass-card p-6 pr-12 flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0 relative group transition-all duration-300 ${isApproved ? 'cursor-pointer' : ''}" 
                      ${isApproved ? `onclick="openOrderModal('${order.id}')"` : ''}>
                     <!-- Individual Delete Icon -->
                     <button onclick="event.stopPropagation(); deleteOrder('${order.id}')" 
@@ -773,7 +778,7 @@
             // Render Asked Items
             const items = orderDoc.items || [{ yarn_type: orderDoc.yarn_type, quantity: orderDoc.quantity }];
             document.getElementById('modal-order-asked').innerHTML = items.map(item => `
-                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center transition-all hover:shadow-sm">
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center transition-all hover:-translate-y-1 hover:shadow-md">
                     <span class="font-bold text-slate-700">${item.yarn_type}</span>
                     <span class="bg-white px-2 py-1 rounded-lg border border-slate-200 text-xs font-bold text-orange-600">${item.quantity} Rolls</span>
                 </div>
@@ -782,7 +787,7 @@
             // Render Allocated Rolls
             document.getElementById('modal-allocated-count').textContent = `${orderAllocations.length} Rolls`;
             document.getElementById('modal-order-allocated').innerHTML = orderAllocations.map(roll => `
-                <div class="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl shadow-sm hover:border-orange-200 transition-colors">
+                <div class="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl shadow-sm transition-all hover:-translate-y-1 hover:shadow-md hover:border-orange-200">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center font-bold text-xs">
                             #${roll.id.slice(-4)}

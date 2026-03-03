@@ -8,7 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js"></script>
     <link rel="stylesheet" href="/navbar.css">
     <style>
         body {
@@ -118,6 +120,38 @@
             background: #f1f5f9 !important;
         }
 
+        .flatpickr-monthDropdown-months {
+            background: white !important;
+            color: #1e293b !important;
+            font-weight: 600 !important;
+            border-radius: 8px !important;
+            padding: 4px 8px !important;
+            cursor: pointer !important;
+            border: none !important;
+            transition: all 0.2s !important;
+        }
+
+        .flatpickr-monthDropdown-months:hover {
+            background: #f1f5f9 !important;
+        }
+
+        .flatpickr-monthDropdown-month {
+            background-color: white !important;
+            color: #1e293b !important;
+            padding: 8px !important;
+        }
+
+        /* Styling the dropdown options when the select is focused or active */
+        .flatpickr-monthDropdown-months option {
+            background-color: white !important;
+            color: #1e293b !important;
+        }
+
+        .flatpickr-monthDropdown-months option:checked {
+            background-color: #f97316 !important;
+            color: white !important;
+        }
+
         .range-input-wrapper {
             position: relative;
             min-width: 280px;
@@ -136,121 +170,85 @@
             padding-left: 40px !important;
         }
 
-        /* Month Scroller Styling */
-        .month-scroller {
+        /* Filter Mode Pills */
+        .filter-modes {
             display: flex;
-            overflow-x: auto;
-            gap: 0.75rem;
-            padding: 0.5rem 0.25rem;
-            scrollbar-width: none;
-            /* Firefox */
-            -ms-overflow-style: none;
-            /* IE/Edge */
-        }
-
-        .month-scroller::-webkit-scrollbar {
-            display: none;
-            /* Chrome/Safari */
-        }
-
-        .month-pill {
-            padding: 0.5rem 1.25rem;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: #64748b;
-            white-space: nowrap;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            user-select: none;
-        }
-
-        .month-pill:hover {
-            border-color: #f97316;
-            color: #f97316;
-            background: #fff7ed;
-        }
-
-        .month-pill.active {
-            background: #f97316;
-            color: white;
-            border-color: #f97316;
-            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.25);
-            transform: scale(1.05);
-        }
-
-        /* Month Popup Styling */
-        .month-popup-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(4px);
-            z-index: 1000;
-            display: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .month-popup {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.9);
-            background: white;
-            padding: 1.5rem;
-            border-radius: 24px;
-            box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.2);
-            z-index: 1001;
-            display: none;
-            width: 90%;
-            max-width: 600px;
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .month-popup.show {
-            display: block;
-            transform: translate(-50%, -50%) scale(1);
-        }
-
-        .month-popup-overlay.show {
-            display: block;
-            opacity: 1;
-        }
-
-        .month-trigger {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            background: white;
-            border: 1px solid #e2e8f0;
-            padding: 0 1rem;
-            height: 42px;
+            background: #f1f5f9;
+            padding: 4px;
             border-radius: 12px;
+            gap: 4px;
+        }
+
+        .mode-pill {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.813rem;
+            font-weight: 700;
+            color: #64748b;
             cursor: pointer;
             transition: all 0.2s;
-            font-weight: 600;
-            color: #475569;
+            border: none;
+            background: transparent;
+            white-space: nowrap;
         }
 
-        .month-trigger:hover {
-            border-color: #f97316;
-            background: #fff7ed;
+        .mode-pill:hover {
+            color: #1e293b;
         }
 
-        .month-trigger .current-val {
+        .mode-pill.active {
+            background: white;
             color: #f97316;
-            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
-    </style>
+
+        .range-input-wrapper {
+            position: relative;
+            min-width: 250px;
+        }
+
+        .range-input-wrapper svg {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            pointer-events: none;
+            transition: color 0.2s;
+        }
+
+        .range-input-wrapper input {
+            padding-left: 40px !important;
+        }
+
+        .range-input-wrapper:focus-within svg {
+            color: #f97316;
+        }
+
+        .clear-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #ef4444;
+            background: #fef2f2;
+            border: 1px solid #fee2e2;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .clear-btn:hover {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
     </style>
 </head>
 
 <body class="min-h-screen pb-10">
+    <div id="navbar-placeholder"></div>
     <script src="/navbar.js"></script>
 
     <main class="max-w-[1400px] mx-auto px-6 py-8 mt-20">
@@ -281,51 +279,40 @@
             </div>
 
             <div class="flex flex-col gap-2">
-                <label class="text-xs font-bold text-slate-400 uppercase tracking-widest">Select Month</label>
-                <div class="month-trigger" onclick="toggleMonthPopup()">
-                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
-                        </path>
-                    </svg>
-                    <span id="month-display" class="current-val">All Months</span>
-                </div>
-            </div>
-
-            <!-- Month Selection Popup -->
-            <div id="month-overlay" class="month-popup-overlay" onclick="toggleMonthPopup()"></div>
-            <div id="month-popup" class="month-popup">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-bold text-slate-800">Choose Month</h3>
-                    <button onclick="toggleMonthPopup()" class="text-slate-400 hover:text-slate-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-                <div id="month-scroller" class="month-scroller">
-                    <!-- Pills injected here -->
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-widest">Filter Option</label>
+                <div class="filter-modes">
+                    <button onclick="setFilterMode('month')" id="mode-month" class="mode-pill">MONTH</button>
+                    <button onclick="setFilterMode('single')" id="mode-single" class="mode-pill active">DATE</button>
+                    <button onclick="setFilterMode('range')" id="mode-range" class="mode-pill">RANGE</button>
                 </div>
             </div>
 
             <div class="flex flex-col gap-2">
-                <label class="text-xs font-bold text-slate-400 uppercase tracking-widest">Date Range
-                    (Week/Custom)</label>
+                <label id="calendar-label" class="text-xs font-bold text-slate-400 uppercase tracking-widest">Select
+                    Date</label>
                 <div class="range-input-wrapper">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
                         </path>
                     </svg>
-                    <input type="text" id="date-range-filter" class="filter-select w-full"
-                        placeholder="Select date range...">
+                    <input type="text" id="calendar-filter" class="filter-select w-full" placeholder="Pick a date...">
                 </div>
             </div>
 
-            <div class="flex flex-col gap-2 ml-auto">
-                <label class="text-xs font-bold text-slate-400 uppercase tracking-widest text-right">Records
-                    Found</label>
+            <div class="flex flex-col gap-2 ml-auto items-end">
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-widest text-right">Records
+                        Found</label>
+                    <button onclick="clearFilters()" class="clear-btn">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                            </path>
+                        </svg>
+                        CLEAR
+                    </button>
+                </div>
                 <div id="results-count" class="text-2xl font-black text-orange-600">0</div>
             </div>
         </div>
@@ -367,28 +354,20 @@
         let dispatchedData = [];
         let filteredData = [];
         let datePicker = null;
-        let selectedMonth = 'all';
+        let currentFilterMode = 'single'; // 'month', 'single', 'range'
 
         async function init() {
             try {
-                // Initialize Flatpickr
-                datePicker = flatpickr("#date-range-filter", {
-                    mode: "range",
-                    dateFormat: "Y-m-d",
-                    altInput: true,
-                    altFormat: "d M, Y",
-                    onChange: function () {
-                        applyFilters();
-                    }
-                });
+                // Initialize default date picker
+                initDatePicker('single');
 
                 const response = await fetch('/api/dispatched');
                 dispatchedData = await response.json();
 
-                // Initialize filters
-                populateFilters();
+                // Initialize filters (Yarn Types)
+                populateTypeFilter();
 
-                // Show data
+                // Show all data initially
                 applyFilters();
             } catch (error) {
                 console.error('Failed to fetch dispatched rolls:', error);
@@ -402,11 +381,84 @@
             }
         }
 
-        function populateFilters() {
-            const typeFilter = document.getElementById('type-filter');
-            const scroller = document.getElementById('month-scroller');
+        function initDatePicker(mode) {
+            if (datePicker) datePicker.destroy();
 
-            // Unique Yarn Types
+            const plugins = [];
+            // Month mode stays open, others (Single/Range) close on completion
+            // Note: In Range mode, Flatpickr automatically waits for the 2nd date before closing if closeOnSelect is true.
+            const shouldClose = (mode !== 'month');
+
+            const config = {
+                dateFormat: "Y-m-d",
+                altInput: true,
+                altFormat: "d M, Y",
+                disableMobile: true,
+                closeOnSelect: false, // We will handle closing manually to prevent vanishing during header navigation
+                onChange: function (selectedDates, dateStr, instance) {
+                    applyFilters();
+
+                    // Manual Close Logic:
+                    // 1. Single Mode: Close only if a date is actually picked (not just browsing months)
+                    if (currentFilterMode === 'single' && selectedDates.length === 1) {
+                        // Only close if the interaction was a click on a day
+                        // Flatpickr doesn't provide a direct 'isDayClick' in onChange, 
+                        // but we can check if the internal calendar is visible and if selecting a date was the intent.
+                        // Actually, the issue was mostly the custom select hijacking.
+                        // However, to be extra safe, we ensure it's not a header interaction.
+                        instance.close();
+                    }
+                    // 2. Range Mode: Close after 2 dates are picked (the range is complete)
+                    else if (currentFilterMode === 'range' && selectedDates.length === 2) {
+                        instance.close();
+                    }
+                },
+                plugins: plugins
+            };
+
+            const label = document.getElementById('calendar-label');
+            const input = document.getElementById('calendar-filter');
+
+            if (mode === 'single') {
+                config.mode = "single";
+                label.textContent = "Filter Day";
+                input.placeholder = "Click a specific date...";
+                // Ensure field is clear when switching modes
+            } else if (mode === 'range') {
+                config.mode = "range";
+                label.textContent = "Filter Period";
+                input.placeholder = "Pick start & end date...";
+            } else if (mode === 'month') {
+                plugins.push(new monthSelectPlugin({
+                    shorthand: true,
+                    dateFormat: "Y-m",
+                    altFormat: "F Y"
+                }));
+                label.textContent = "Filter Month";
+                input.placeholder = "Browse months...";
+            }
+
+            datePicker = flatpickr("#calendar-filter", config);
+        }
+
+        function setFilterMode(mode) {
+            currentFilterMode = mode;
+
+            // Update Pills UI
+            document.querySelectorAll('.mode-pill').forEach(pill => {
+                pill.classList.remove('active');
+            });
+            document.getElementById(`mode-${mode}`).classList.add('active');
+
+            // Re-init picker
+            initDatePicker(mode);
+
+            // Re-apply filters with new (cleared) picker
+            applyFilters();
+        }
+
+        function populateTypeFilter() {
+            const typeFilter = document.getElementById('type-filter');
             const types = [...new Set(dispatchedData.map(d => d.yarn_type))].filter(Boolean).sort();
             types.forEach(type => {
                 const opt = document.createElement('option');
@@ -414,70 +466,6 @@
                 opt.textContent = type;
                 typeFilter.appendChild(opt);
             });
-
-            // Unique Months
-            const monthMap = new Map();
-
-            dispatchedData.forEach(d => {
-                const dateStr = d.delivered_at || d.last_state_change || d.production_date;
-                if (!dateStr) return;
-
-                const date = new Date(dateStr);
-
-                // Month Logic
-                const monthName = date.toLocaleString('default', { month: 'long' });
-                const year = date.getFullYear();
-                const monthLabel = `${monthName} ${year}`;
-                const monthSortKey = date.getFullYear() * 100 + date.getMonth();
-                if (!monthMap.has(monthLabel)) monthMap.set(monthLabel, monthSortKey);
-            });
-
-            // Populate Month Pills
-            const sortedMonths = Array.from(monthMap.entries())
-                .sort((a, b) => b[1] - a[1]); // Newer first
-
-            // Reset and build scroller
-            scroller.innerHTML = `<div class="month-pill ${selectedMonth === 'all' ? 'active' : ''}" onclick="selectMonth('all')">All History</div>`;
-
-            sortedMonths.forEach(([month, _]) => {
-                const pill = document.createElement('div');
-                pill.className = `month-pill ${selectedMonth === month ? 'active' : ''}`;
-                pill.textContent = month;
-                pill.onclick = () => selectMonth(month);
-                scroller.appendChild(pill);
-            });
-        }
-
-        function selectMonth(month) {
-            selectedMonth = month;
-            const display = document.getElementById('month-display');
-            display.textContent = month === 'all' ? 'All Months' : month;
-
-            // Update UI
-            document.querySelectorAll('.month-pill').forEach(p => {
-                if (p.textContent === (month === 'all' ? 'All History' : month)) {
-                    p.classList.add('active');
-                } else {
-                    p.classList.remove('active');
-                }
-            });
-
-            toggleMonthPopup(); // Close popup
-            applyFilters();
-        }
-
-        function toggleMonthPopup() {
-            const popup = document.getElementById('month-popup');
-            const overlay = document.getElementById('month-overlay');
-            const isShowing = popup.classList.contains('show');
-
-            if (isShowing) {
-                popup.classList.remove('show');
-                overlay.classList.remove('show');
-            } else {
-                popup.classList.add('show');
-                overlay.classList.add('show');
-            }
         }
 
         function applyFilters() {
@@ -486,38 +474,66 @@
 
             filteredData = dispatchedData.filter(d => {
                 const dateStr = d.delivered_at || d.last_state_change || d.production_date;
+                if (!dateStr) return false;
+
                 const dDate = new Date(dateStr);
-                dDate.setHours(0, 0, 0, 0); // Normalize to midnight for range comparison
+                dDate.setHours(0, 0, 0, 0);
 
                 // Type filter
                 const matchesType = typeVal === 'all' || d.yarn_type === typeVal;
 
-                // Month filter
-                const monthName = dDate.toLocaleString('default', { month: 'long' });
-                const year = dDate.getFullYear();
-                const monthStr = `${monthName} ${year}`;
-                const matchesMonth = selectedMonth === 'all' || monthStr === selectedMonth;
+                // Calendar filter based on mode
+                let matchesCalendar = true;
 
-                // Range filter (Week/Dates)
-                let matchesRange = true;
-                if (selectedDates.length === 1) {
-                    // Specific date
-                    const targetDate = new Date(selectedDates[0]);
-                    targetDate.setHours(0, 0, 0, 0);
-                    matchesRange = dDate.getTime() === targetDate.getTime();
-                } else if (selectedDates.length === 2) {
-                    // Range
-                    const start = new Date(selectedDates[0]);
-                    start.setHours(0, 0, 0, 0);
-                    const end = new Date(selectedDates[1]);
-                    end.setHours(23, 59, 59, 999);
-                    matchesRange = dDate >= start && dDate <= end;
+                if (selectedDates.length > 0) {
+                    if (currentFilterMode === 'single') {
+                        const target = new Date(selectedDates[0]);
+                        target.setHours(0, 0, 0, 0);
+                        matchesCalendar = dDate.getTime() === target.getTime();
+                    } else if (currentFilterMode === 'range') {
+                        if (selectedDates.length === 2) {
+                            const start = new Date(selectedDates[0]);
+                            start.setHours(0, 0, 0, 0);
+                            const end = new Date(selectedDates[1]);
+                            end.setHours(23, 59, 59, 999);
+                            matchesCalendar = dDate >= start && dDate <= end;
+                        } else {
+                            // While picking a range (only 1 date selected), we show all data
+                            // or keep previous view? Let's show all until range is complete.
+                            matchesCalendar = true;
+                        }
+                    } else if (currentFilterMode === 'month') {
+                        if (selectedDates[0]) {
+                            const targetMonth = selectedDates[0].getMonth();
+                            const targetYear = selectedDates[0].getFullYear();
+                            matchesCalendar = dDate.getMonth() === targetMonth && dDate.getFullYear() === targetYear;
+                        }
+                    }
                 }
 
-                return matchesType && matchesMonth && matchesRange;
+                return matchesType && matchesCalendar;
             });
 
             renderTable();
+        }
+
+        function clearFilters() {
+            // Reset Yarn Type
+            const typeFilter = document.getElementById('type-filter');
+            typeFilter.value = 'all';
+
+            // Re-trigger custom select update if needed (it syncs via MutationObserver usually)
+
+            // Reset Date Picker
+            if (datePicker) {
+                datePicker.clear();
+            }
+
+            // Reset Mode to 'single'
+            setFilterMode('single');
+
+            // Apply filters (which will now show all)
+            applyFilters();
         }
 
         function renderTable() {

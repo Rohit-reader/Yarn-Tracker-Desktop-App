@@ -19,6 +19,12 @@
             backdrop-filter: blur(12px);
             border: 1px solid rgba(226, 232, 240, 0.8);
             border-radius: 16px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
         }
 
         .success-toast {
@@ -42,6 +48,7 @@
 </head>
 
 <body class="flex flex-col min-h-screen">
+    <div id="navbar-placeholder"></div>
     <!-- Navbar injected here by navbar.js -->
 
     <main class="flex-1 mt-20 p-8 max-w-5xl mx-auto w-full">
@@ -50,9 +57,9 @@
             <p class="text-slate-500 mt-2 text-lg">Define warehouse storage limits and rack rules</p>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
             <!-- Rolls per Bin Config -->
-            <div class="glass-card p-10 shadow-sm hover:shadow-md transition-shadow">
+            <div class="glass-card p-10 shadow-sm">
                 <div class="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-600 mb-8">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -61,17 +68,36 @@
                     </svg>
                 </div>
                 <h3 class="text-2xl font-bold mb-3">Rolls per Bin</h3>
-                <p class="text-slate-500 mb-8 leading-relaxed">Set the maximum roll count for each bin. The system uses
-                    this to automatically calculate overflow during bulk intake.</p>
+                <p class="text-slate-500 mb-8 leading-relaxed">Maximum roll count for each bin. System calculates
+                    overflow during intake based on this.</p>
                 <div class="space-y-2">
                     <label class="text-xs font-bold text-slate-400 uppercase tracking-widest">Max Capacity</label>
-                    <input type="number" id="maxBinCapacity" value="30"
+                    <input type="number" id="bin_capacity" value="30"
                         class="w-full px-6 py-4 border-2 border-slate-100 rounded-2xl focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none font-bold text-2xl transition-all">
                 </div>
             </div>
 
+            <!-- Max Weight Config -->
+            <div class="glass-card p-10 shadow-sm">
+                <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center text-green-600 mb-8">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3">
+                        </path>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-bold mb-3">Max Bin Weight</h3>
+                <p class="text-slate-500 mb-8 leading-relaxed">Weight threshold (kg) allowed per bin. Helps in
+                    maintaining structural safety of racks.</p>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-widest">Weight Limit (kg)</label>
+                    <input type="number" id="max_bin_weight" value="500" step="0.1"
+                        class="w-full px-6 py-4 border-2 border-slate-100 rounded-2xl focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none font-bold text-2xl transition-all">
+                </div>
+            </div>
+
             <!-- Bins per Rack Config -->
-            <div class="glass-card p-10 shadow-sm hover:shadow-md transition-shadow">
+            <div class="glass-card p-10 shadow-sm">
                 <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 mb-8">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -79,11 +105,11 @@
                     </svg>
                 </div>
                 <h3 class="text-2xl font-bold mb-3">Bins per Rack</h3>
-                <p class="text-slate-500 mb-8 leading-relaxed">Specify how many bins are available in each rack. This
-                    helps the system guide placement during the intake process.</p>
+                <p class="text-slate-500 mb-8 leading-relaxed">Total bins available vertically in each rack. Guides
+                    placement during intake.</p>
                 <div class="space-y-2">
                     <label class="text-xs font-bold text-slate-400 uppercase tracking-widest">Bins Count</label>
-                    <input type="number" id="binsPerRack" value="10"
+                    <input type="number" id="max_bins" value="10"
                         class="w-full px-6 py-4 border-2 border-slate-100 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none font-bold text-2xl transition-all">
                 </div>
             </div>
@@ -98,7 +124,6 @@
 
         <hr class="border-slate-200 mb-12">
 
-
         <!-- Danger Zone -->
 
     </main>
@@ -106,84 +131,57 @@
     <div id="toastContainer" class="fixed bottom-8 right-8 z-[100]"></div>
 
     <script>
-        async function confirmClearInventory() {
-            const btn = document.getElementById('clearBtn');
-            const originalText = btn.innerText;
+        let initialSettings = {};
 
-            if (btn.dataset.confirming !== "true") {
-                btn.innerText = "ARE YOU SURE? (CLICK AGAIN)";
-                btn.classList.add('bg-rose-600', 'text-white');
-                btn.dataset.confirming = "true";
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.classList.remove('bg-rose-600', 'text-white');
-                    btn.dataset.confirming = "false";
-                }, 5000);
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerText = 'WIPING...';
-
-            try {
-                const response = await fetch('/api/rolls/clear-all', { method: 'DELETE' });
-                const result = await response.json();
-
-                if (response.ok) {
-                    showToast('System Reset', 'All inventory records have been deleted.');
-                    // If dashboard or other tabs are open, they will refresh on next visit
-                } else {
-                    showToast('Error', result.error || 'Failed to clear inventory.', 'error');
-                }
-            } catch (err) {
-                showToast('Error', 'Server unreachable.', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerText = originalText;
-                btn.dataset.confirming = "false";
-                btn.classList.remove('bg-rose-600', 'text-white');
-            }
-        }
         async function fetchSettings() {
             try {
                 const response = await fetch('/api/settings');
                 const settings = await response.json();
-                if (settings) {
-                    // Update specific fields by ID if they exist in the response
-                    if (settings.max_bin_capacity) {
-                        document.getElementById('maxBinCapacity').value = settings.max_bin_capacity.value;
-                    }
-                    if (settings.bins_per_rack) {
-                        document.getElementById('binsPerRack').value = settings.bins_per_rack.value;
-                    }
+                console.log('Fetched Settings:', settings);
 
-                    // Store the labels for saving back
-                    window.currentSettings = settings;
+                if (settings) {
+                    const extract = (v, def) => {
+                        if (v === undefined || v === null) return def;
+                        if (typeof v === 'object' && v.value !== undefined) return v.value;
+                        return v;
+                    };
+
+                    initialSettings = {
+                        bin_capacity: extract(settings.bin_capacity, 10),
+                        max_bin_weight: extract(settings.max_bin_weight, 500.0),
+                        max_bins: extract(settings.max_bins, 50)
+                    };
+
+                    document.getElementById('bin_capacity').value = initialSettings.bin_capacity;
+                    document.getElementById('max_bin_weight').value = initialSettings.max_bin_weight;
+                    document.getElementById('max_bins').value = initialSettings.max_bins;
                 }
             } catch (err) {
                 console.error('Failed to fetch settings:', err);
+                showToast('Error', 'Failed to load settings from server.', 'error');
             }
         }
 
         async function saveSettings() {
-            const maxBinCapacity = parseInt(document.getElementById('maxBinCapacity').value);
-            const binsPerRack = parseInt(document.getElementById('binsPerRack').value);
+            const bin_capacity = parseInt(document.getElementById('bin_capacity').value);
+            const max_bin_weight = parseFloat(document.getElementById('max_bin_weight').value);
+            const max_bins = parseInt(document.getElementById('max_bins').value);
             const btn = document.getElementById('saveBtn');
+
+            // Validation logic from Flutter app
+            if (bin_capacity < (initialSettings.bin_capacity || 0)) {
+                showToast('Validation Error', `Roll capacity cannot be reduced below current (${initialSettings.bin_capacity})`, 'error');
+                return;
+            }
+            if (max_bins < (initialSettings.max_bins || 0)) {
+                showToast('Validation Error', `Bin count cannot be reduced below current (${initialSettings.max_bins})`, 'error');
+                return;
+            }
 
             btn.disabled = true;
             btn.innerText = 'SAVING...';
 
-            // Prepare payload according to new collection structure
-            const payload = {
-                max_bin_capacity: {
-                    value: maxBinCapacity,
-                    label: 'Rolls per Bin'
-                },
-                bins_per_rack: {
-                    value: binsPerRack,
-                    label: 'Bins per Rack'
-                }
-            };
+            const payload = { bin_capacity, max_bin_weight, max_bins };
 
             try {
                 const response = await fetch('/api/settings', {
@@ -194,6 +192,7 @@
 
                 if (response.ok) {
                     showToast('Settings Saved', 'System configuration updated successfully.');
+                    initialSettings = { ...payload }; // Update initial state for next validation
                 } else {
                     showToast('Error', 'Failed to save settings.', 'error');
                 }

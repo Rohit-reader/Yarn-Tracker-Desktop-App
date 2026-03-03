@@ -19,7 +19,13 @@ body {
     background-color: var(--bg-color) !important;
     color: var(--text-primary);
     margin: 0;
-    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+#navbar-placeholder {
+    height: 70px;
+    width: 100%;
+    background: var(--nav-bg);
+    border-bottom: 1px solid var(--nav-border);
 }
 
 #app-navbar {

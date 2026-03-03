@@ -930,19 +930,29 @@ app.delete('/api/orders', async (req, res) => {
 // 7. Settings Management
 app.get('/api/settings', async (req, res) => {
   try {
-    const rulesSnap = await getDocs(collection(db, 'config', 'inventory_rules', 'rules'));
-    const settings = {};
-    if (rulesSnap.empty) {
-      // Return defaults if collection is empty
-      return res.json({
-        max_bin_capacity: { value: 30, label: 'Rolls per Bin' },
-        bins_per_rack: { value: 10, label: 'Bins per Rack' }
-      });
+    const docRef = doc(db, 'config', 'inventory_rules');
+    const rulesSnap = await getDoc(docRef);
+
+    let rawData = {};
+    if (rulesSnap.exists()) {
+      rawData = rulesSnap.data();
     }
-    rulesSnap.forEach(doc => {
-      settings[doc.id] = doc.data();
-    });
-    res.json(settings);
+
+    // Helper to extract numeric value from potentially nested object or direct value
+    const extractNum = (val, fallback) => {
+      if (val === undefined || val === null) return fallback;
+      if (typeof val === 'object' && val.value !== undefined) return parseFloat(val.value) || fallback;
+      return parseFloat(val) || fallback;
+    };
+
+    const sanitized = {
+      bin_capacity: extractNum(rawData.bin_capacity, 10),
+      max_bin_weight: extractNum(rawData.max_bin_weight, 500.0),
+      max_bins: extractNum(rawData.max_bins, 50)
+    };
+
+    console.log('📡 API /api/settings - Returning sanitized:', sanitized);
+    res.json(sanitized);
   } catch (error) {
     console.error('Error fetching settings:', error);
     res.status(500).json({ error: 'Failed to fetch settings' });
@@ -951,15 +961,14 @@ app.get('/api/settings', async (req, res) => {
 
 app.post('/api/settings', async (req, res) => {
   try {
-    const settings = req.body; // Expecting { rule_id: { value, label, ... } }
-    const batch = [];
+    const settings = req.body; // Expecting { bin_capacity, max_bin_weight, max_bins }
+    const docRef = doc(db, 'config', 'inventory_rules');
 
-    for (const [id, data] of Object.entries(settings)) {
-      const docRef = doc(db, 'config', 'inventory_rules', 'rules', id);
-      batch.push(setDoc(docRef, { ...data, updatedAt: new Date().toISOString() }));
-    }
+    await setDoc(docRef, {
+      ...settings,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
 
-    await Promise.all(batch);
     res.json({ success: true, message: 'Settings updated' });
   } catch (error) {
     console.error('Error saving settings:', error);
@@ -1046,8 +1055,8 @@ app.post('/api/rolls/bulk', async (req, res) => {
     console.log(`\n📦 Bulk creating ${roll_count} rolls...`);
 
     // Fetch max capacity from rules collection
-    const capacityDoc = await getDoc(doc(db, 'config', 'inventory_rules', 'rules', 'max_bin_capacity'));
-    const maxCapacity = capacityDoc.exists() ? (parseInt(capacityDoc.data().value) || 30) : 30;
+    const capacityDoc = await getDoc(doc(db, 'config', 'inventory_rules'));
+    const maxCapacity = capacityDoc.exists() ? (parseInt(capacityDoc.data().bin_capacity) || 10) : 10;
 
     let currentBinNum = parseInt(start_bin_num) || 1;
     let rollsCreatedInCurrentBin = 0;
